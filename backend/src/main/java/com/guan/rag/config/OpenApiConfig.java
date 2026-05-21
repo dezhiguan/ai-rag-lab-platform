@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Configuration;
 @OpenAPIDefinition(
         info = @Info(
                 title = "AI RAG Lab Platform API",
-                description = "V0 项目骨架版 - 系统基础接口",
-                version = "V0"
+                description = "V1 文档导入与分块版",
+                version = "V1"
         )
 )
 public class OpenApiConfig {

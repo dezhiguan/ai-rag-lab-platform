@@ -1,22 +1,21 @@
 # AI RAG Lab Platform
 
-企业级 RAG 知识库实验平台。当前为 **V0 项目骨架版**，仅提供可运行的前后端基础工程，不包含任何 RAG 业务实现。
+企业级 RAG 知识库实验平台。当前为 **V1 文档导入与分块版**，支持知识库管理、Markdown/TXT 文档上传、解析与固定大小分块。
 
-## 当前版本：V0 项目骨架版
+## 当前版本：V1 文档导入与分块版
 
-### V0 目标
+### V1 目标
 
-- 搭建 Spring Boot 3 + Vue 3 单体仓库结构
-- 提供系统健康检查接口 `GET /api/system/health`
-- 集成 PostgreSQL 数据源（无业务表）
-- 集成 Knife4j 接口文档
-- 前端 Dashboard 展示后端连接状态
+- 知识库 CRUD
+- Markdown/TXT 文档上传、解析、固定大小分块（约 800 字，overlap 100）
+- 样例数据一键初始化（3 个 Markdown 文档）
+- 前端查看文档列表与 Chunk
+- Dashboard 统计知识库/文档/Chunk 数量
 
-### V0 不做
+### V1 不做
 
-- Embedding、向量检索、PgVector、Elasticsearch
+- Embedding、向量检索、PgVector、Elasticsearch、LLM 问答
 - Reranker、Evaluation、权限、多轮对话
-- 知识库、文档、Chunk 等业务代码与表结构
 
 ## 技术栈
 
@@ -64,6 +63,8 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 - 服务地址：http://localhost:8080
 - Knife4j 文档：http://localhost:8080/doc.html
 - 健康检查：http://localhost:8080/api/system/health
+- 知识库 API：`/api/kb`
+- 样例初始化：`POST /api/sample/init`
 
 ### 3. 启动前端
 
@@ -77,18 +78,24 @@ npm run dev
 
 - 前端地址：http://localhost:5173
 - Dashboard：http://localhost:5173/dashboard
+- 知识库：http://localhost:5173/kb
 
 前端通过 Vite 代理将 `/api` 请求转发到后端 `8080` 端口。
 
-## V0 验收标准
+**注意：** 不要用 IDE 的 Node 直接运行 `src/main.ts`。Vue 项目必须通过 Vite 启动，否则会出现 `Unknown file extension ".css"` 或 `.vue` 相关错误。
+
+- IntelliJ IDEA：选择运行配置 **Frontend Dev**（npm run dev），不要对 `main.ts` 点 Run
+- Cursor / VS Code：运行 **Frontend: Vite Dev Server**，或终端执行 `npm run dev`
+
+## V1 验收标准
 
 - [ ] `docker compose up -d` 可以启动 PostgreSQL
-- [ ] 后端可以启动成功
-- [ ] Knife4j 可以访问（`/doc.html`）
-- [ ] `GET /api/system/health` 可以正常返回（status=UP, version=V0）
-- [ ] 前端可以启动成功
-- [ ] Dashboard 页面可以显示「后端连接成功」
-- [ ] 项目中不出现 RAG、Embedding、Vector、Rerank、Evaluation 等后续版本业务代码
+- [ ] 后端可以启动成功，Swagger/Knife4j 可访问
+- [ ] 可以创建知识库、上传 Markdown/TXT，文档状态变为 COMPLETED
+- [ ] 可以查看文档 Chunk 列表
+- [ ] `POST /api/sample/init` 可导入 3 个样例文档
+- [ ] Dashboard 显示知识库/文档/Chunk 统计
+- [ ] 不出现 Embedding、Vector、Chat、LLM、Rerank、Evaluation 等后续版本代码
 
 ## 版本规划
 

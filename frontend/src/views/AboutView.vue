@@ -7,7 +7,7 @@
       AI RAG Lab Platform 是企业级 RAG 知识库实验平台。
     </p>
     <p>
-      当前为 <strong>V0 项目骨架版</strong>，仅包含基础工程结构与系统健康检查，不包含 RAG 业务功能。
+      当前为 <strong>V1 文档导入与分块版</strong>，支持知识库管理、文档上传解析与固定大小分块查看。
     </p>
     <p>
       后续版本规划请查看仓库 <code>docs/version-plan.md</code>。

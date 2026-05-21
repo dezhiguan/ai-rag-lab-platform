@@ -16,3 +16,6 @@ dist/
 
 # Logs
 *.log
+
+# Upload storage
+data/

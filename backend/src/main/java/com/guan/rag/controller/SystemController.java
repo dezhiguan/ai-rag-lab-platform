@@ -22,7 +22,7 @@ public class SystemController {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("status", "UP");
         data.put("appName", "ai-rag-lab-platform");
-        data.put("version", "V0");
+        data.put("version", "V1");
         data.put("timestamp", Instant.now().toString());
         return ApiResponse.success(data);
     }

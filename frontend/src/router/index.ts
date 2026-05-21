@@ -18,6 +18,21 @@ const router = createRouter({
           component: () => import('@/views/DashboardView.vue'),
         },
         {
+          path: 'kb',
+          name: 'KnowledgeBaseList',
+          component: () => import('@/views/KbListView.vue'),
+        },
+        {
+          path: 'kb/:kbId/documents',
+          name: 'DocumentList',
+          component: () => import('@/views/DocumentListView.vue'),
+        },
+        {
+          path: 'documents/:documentId/chunks',
+          name: 'ChunkList',
+          component: () => import('@/views/ChunkListView.vue'),
+        },
+        {
           path: 'about',
           name: 'About',
           component: () => import('@/views/AboutView.vue'),

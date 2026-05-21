@@ -3,6 +3,14 @@ spring:
     name: ai-rag-lab-platform
   profiles:
     active: dev
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
 
 server:
   port: 8080
@@ -21,3 +29,10 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+
+rag:
+  storage:
+    path: ./data/uploads
+  document:
+    chunk-size: 800
+    chunk-overlap: 100
