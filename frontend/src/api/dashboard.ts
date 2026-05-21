@@ -4,6 +4,9 @@ export interface DashboardStats {
   knowledgeBaseCount: number
   documentCount: number
   chunkCount: number
+  embeddedChunkCount: number
+  chatSessionCount: number
+  chatMessageCount: number
   sampleDataInitialized: boolean
 }
 

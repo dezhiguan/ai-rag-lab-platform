@@ -10,5 +10,8 @@ public class DashboardStatsResponse {
     private long knowledgeBaseCount;
     private long documentCount;
     private long chunkCount;
+    private long embeddedChunkCount;
+    private long chatSessionCount;
+    private long chatMessageCount;
     private boolean sampleDataInitialized;
 }

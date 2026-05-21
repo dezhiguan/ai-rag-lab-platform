@@ -2,7 +2,9 @@ package com.guan.rag.controller;
 
 import com.guan.rag.common.ApiResponse;
 import com.guan.rag.controller.response.DashboardStatsResponse;
+import com.guan.rag.module.chat.service.ChatService;
 import com.guan.rag.module.document.service.DocumentService;
+import com.guan.rag.module.embedding.service.EmbeddingService;
 import com.guan.rag.module.kb.service.KnowledgeBaseService;
 import com.guan.rag.module.sample.service.SampleDataService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +22,8 @@ public class DashboardController {
 
     private final KnowledgeBaseService knowledgeBaseService;
     private final DocumentService documentService;
+    private final EmbeddingService embeddingService;
+    private final ChatService chatService;
     private final SampleDataService sampleDataService;
 
     @Operation(summary = "仪表盘统计")
@@ -29,6 +33,9 @@ public class DashboardController {
                 .knowledgeBaseCount(knowledgeBaseService.count())
                 .documentCount(documentService.count())
                 .chunkCount(documentService.countChunks())
+                .embeddedChunkCount(embeddingService.countEmbeddedChunks())
+                .chatSessionCount(chatService.countSessions())
+                .chatMessageCount(chatService.countMessages())
                 .sampleDataInitialized(sampleDataService.isInitialized())
                 .build();
         return ApiResponse.success(response);

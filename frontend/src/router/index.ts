@@ -33,6 +33,11 @@ const router = createRouter({
           component: () => import('@/views/ChunkListView.vue'),
         },
         {
+          path: 'chat',
+          name: 'Chat',
+          component: () => import('@/views/ChatView.vue'),
+        },
+        {
           path: 'about',
           name: 'About',
           component: () => import('@/views/AboutView.vue'),

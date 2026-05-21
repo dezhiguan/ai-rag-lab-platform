@@ -10,6 +10,7 @@
       >
         <el-menu-item index="/dashboard">Dashboard</el-menu-item>
         <el-menu-item index="/kb">知识库</el-menu-item>
+        <el-menu-item index="/chat">问答</el-menu-item>
         <el-menu-item index="/about">About</el-menu-item>
       </el-menu>
     </el-header>

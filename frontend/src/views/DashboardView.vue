@@ -10,7 +10,7 @@
             AI RAG Lab Platform
           </el-descriptions-item>
           <el-descriptions-item label="当前版本">
-            V1 文档导入与分块版
+            V2 Naive RAG 问答版
           </el-descriptions-item>
           <el-descriptions-item label="后端连接状态">
             <el-tag v-if="healthLoading" type="info">检测中...</el-tag>
@@ -26,7 +26,7 @@
     <el-col :span="12">
       <el-card v-loading="statsLoading" shadow="never">
         <template #header>
-          <span>V1 统计</span>
+          <span>平台统计</span>
         </template>
         <el-descriptions :column="1" border>
           <el-descriptions-item label="知识库数量">
@@ -38,6 +38,15 @@
           <el-descriptions-item label="Chunk 数量">
             {{ stats?.chunkCount ?? 0 }}
           </el-descriptions-item>
+          <el-descriptions-item label="已向量化 Chunk">
+            {{ stats?.embeddedChunkCount ?? 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="Chat 会话数">
+            {{ stats?.chatSessionCount ?? 0 }}
+          </el-descriptions-item>
+          <el-descriptions-item label="Chat 消息数">
+            {{ stats?.chatMessageCount ?? 0 }}
+          </el-descriptions-item>
           <el-descriptions-item label="样例数据">
             <el-tag :type="stats?.sampleDataInitialized ? 'success' : 'info'">
               {{ stats?.sampleDataInitialized ? '已初始化' : '未初始化' }}
@@ -46,6 +55,7 @@
         </el-descriptions>
         <div class="actions">
           <el-button type="primary" @click="router.push('/kb')">进入知识库</el-button>
+          <el-button @click="router.push('/chat')">进入问答</el-button>
         </div>
       </el-card>
     </el-col>

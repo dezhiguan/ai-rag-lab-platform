@@ -1,10 +1,6 @@
-
----
-
-# 二、docs/AI_CONTEXT.md
-
-```markdown
 # AI_CONTEXT.md
+
+**当前开发版本：V2（Naive RAG 问答版）**
 
 ## 项目背景
 
@@ -55,6 +51,8 @@ ai-rag-lab-platform 是一个 RAG 知识库实验平台。
 - 固定大小分块
 - Chunk 查看页面
 
+状态：已完成
+
 V1 允许：
 
 - knowledge_base 表
@@ -85,14 +83,48 @@ V1 禁止：
 
 ### V2：Naive RAG 问答版
 
-目标：
+目标流水线：
 
-- 接入 Embedding
-- 存储 Chunk 向量
-- 实现基础向量检索
-- 接入 LLM
-- 实现基础问答
-- 返回引用来源
+```text
+Chunk
+  ↓
+Embedding
+  ↓
+向量存储
+  ↓
+用户提问
+  ↓
+向量检索
+  ↓
+Prompt 拼接
+  ↓
+LLM 回答
+  ↓
+返回引用来源
+```
+
+V2 允许：
+
+- Embedding
+- PgVector
+- Chunk 向量化
+- 基础向量检索
+- Chat 问答
+- Prompt 构造
+- LLM 调用
+- 引用来源
+
+V2 禁止：
+
+- BM25
+- Elasticsearch
+- Hybrid Search
+- Reranker
+- Query Rewrite
+- Debug Console
+- Evaluation
+- 权限控制
+- 多轮问题重构
 
 ---
 

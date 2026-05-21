@@ -15,7 +15,7 @@
     <artifactId>backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>backend</name>
-    <description>AI RAG Lab Platform Backend - V0</description>
+    <description>AI RAG Lab Platform Backend - V2</description>
 
     <properties>
         <java.version>17</java.version>
@@ -37,6 +37,7 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- pgvector 通过 PostgreSQL 扩展与 SQL CAST 使用，无需额外 Java 库 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>

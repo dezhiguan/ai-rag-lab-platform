@@ -7,10 +7,10 @@
       AI RAG Lab Platform 是企业级 RAG 知识库实验平台。
     </p>
     <p>
-      当前为 <strong>V1 文档导入与分块版</strong>，支持知识库管理、文档上传解析与固定大小分块查看。
+      当前为 <strong>V2 Naive RAG 问答版</strong>，在 V1 基础上支持 Chunk 向量化、PgVector 检索、Chat 问答与引用来源展示。
     </p>
     <p>
-      后续版本规划请查看仓库 <code>docs/version-plan.md</code>。
+      版本规划请查看 <code>docs/AI_CONTEXT.md</code> 与 <code>docs/CURRENT_VERSION.md</code>。
     </p>
   </el-card>
 </template>

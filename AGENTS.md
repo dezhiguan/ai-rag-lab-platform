@@ -22,6 +22,12 @@ ai-rag-lab-platform
 - V7：评测中心版
 - V8：工程化增强版
 
+## 当前版本
+
+V2：Naive RAG 问答版
+
+详细允许/禁止与流水线见 `docs/CURRENT_VERSION.md` 与 `docs/AI_CONTEXT.md`。
+
 ## 当前开发原则
 
 1. 只做当前版本要求的功能。
@@ -40,6 +46,8 @@ ai-rag-lab-platform
 - JDK 17
 - Maven
 - PostgreSQL
+- pgvector（向量存储）
+- Embedding API、LLM API（具体厂商由实现阶段在配置中选定）
 - MyBatis-Plus
 - Lombok
 - Swagger / Knife4j

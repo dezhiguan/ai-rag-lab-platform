@@ -36,3 +36,14 @@ rag:
   document:
     chunk-size: 800
     chunk-overlap: 100
+  embedding:
+    provider: mock
+    model: mock-embedding
+    dimension: 384
+    api-key: ""
+    base-url: https://api.openai.com/v1
+  chat:
+    provider: mock
+    model: mock-chat
+    api-key: ""
+    base-url: https://api.openai.com/v1
