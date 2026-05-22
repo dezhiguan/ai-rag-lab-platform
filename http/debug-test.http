@@ -1,0 +1,15 @@
+### V3 Debug 查询
+POST http://localhost:8080/api/debug/query
+Content-Type: application/json
+
+{
+  "kbId": 1,
+  "question": "短信验证码发不出去怎么排查？",
+  "topK": 5
+}
+
+### Debug 查询历史
+GET http://localhost:8080/api/debug/query-logs?kbId=1
+
+### Debug 查询详情（将 queryLogId 替换为实际 ID）
+GET http://localhost:8080/api/debug/query-logs/1

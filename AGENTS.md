@@ -24,7 +24,7 @@ ai-rag-lab-platform
 
 ## 当前版本
 
-V2：Naive RAG 问答版
+V3：RAG Debug 可观察版
 
 详细允许/禁止与流水线见 `docs/CURRENT_VERSION.md` 与 `docs/AI_CONTEXT.md`。
 

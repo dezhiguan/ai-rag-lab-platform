@@ -2,11 +2,9 @@
 
 ## 当前版本
 
-**V2.5：真实模型接入版**
+**V3：RAG Debug 可观察版**
 
-在 V2 Naive RAG 问答版基础上，保留 Mock Provider，新增 Qwen Embedding 与 DeepSeek Chat，并支持配置切换。
-
-> **暂停 V3**。本版本不接 BM25 / Hybrid / Reranker / Debug Console / Evaluation。
+在 V2 Naive RAG 与 V2.5 真实模型接入基础上，新增 Debug 查询与历史记录，让用户在前端看到一次 RAG 问答的完整内部过程。
 
 ## 版本关系
 
@@ -14,139 +12,102 @@
 |------|------|
 | V1 文档导入与分块 | 已完成 |
 | V2 Naive RAG 问答 | 已完成 |
-| **V2.5 真实模型接入** | **当前** |
-| V3 RAG Debug | 未开始 |
+| V2.5 真实模型接入 | 已完成 |
+| **V3 RAG Debug 可观察** | **当前** |
+| V4 关键词检索 | 未开始 |
 
-## V2.5 完成内容
+## V3 完成内容
 
-### Provider 体系
+### 后端 debug 模块
 
-| 类型 | 配置值 | 实现类 | 说明 |
-|------|--------|--------|------|
-| Embedding | `mock`（默认） | `MockEmbeddingProvider` | 确定性 n-gram，无 API Key 可运行 |
-| Embedding | `qwen` | `QwenEmbeddingProvider` | DashScope OpenAI-compatible `/embeddings` |
-| Chat | `mock`（默认） | `MockChatModelProvider` | 本地演示回答 |
-| Chat | `deepseek` | `DeepSeekChatModelProvider` | DeepSeek `/chat/completions` |
+包路径：`com.guan.rag.module.debug`
 
-路由：
+| 类型 | 说明 |
+|------|------|
+| `DebugController` | Debug API |
+| `DebugService` | 检索 → Context → Prompt → 回答 → 落库 |
+| `DebugQueryLog` / `DebugRetrievalLog` | 实体 |
+| `DebugQueryLogMapper` / `DebugRetrievalLogMapper` | MyBatis-Plus |
 
-- `EmbeddingProviderRouter`（`@Primary`）→ `rag.embedding.provider`
-- `ChatModelProviderRouter`（`@Primary`）→ `rag.chat.provider`
+### 数据库表
 
-不支持的 provider 会抛出明确 `BusinessException`（不会静默回退 mock）。
+| 表 | 说明 |
+|----|------|
+| `rag_query_log` | Debug 查询主记录（问题、Context、Prompt、回答、Provider、耗时） |
+| `rag_retrieval_log` | 单次查询的召回 Chunk 明细（分数、排名、内容） |
 
-### 新增接口
+### API
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/model/providers` | 查看当前 Embedding / Chat Provider 配置 |
+| POST | `/api/debug/query` | 执行 Debug 查询，返回完整过程 |
+| GET | `/api/debug/query-logs` | 最近 Debug 查询列表（可选 `kbId`） |
+| GET | `/api/debug/query-logs/{queryLogId}` | 单次 Debug 查询详情 |
 
-### 向量一致性
+### Debug 查询返回内容
 
-- `POST /api/kb/{kbId}/embedding/rebuild`：重建前**删除**该库全部 `chunk_embedding`，再用**当前** Provider 写入
-- 检索 / 问答前校验：若库内向量 `model` 或 `dimension` 与当前配置不一致 → 明确错误，提示重建
-- Chunk 与 Query **共用**同一 `EmbeddingProvider`（经 Router）
+1. 原始问题
+2. Embedding Provider / Model
+3. Chat Provider / Model
+4. 召回 Chunk（含相似度、排名）
+5. 注入 Prompt 的 Context
+6. 完整 Prompt
+7. 模型回答
+8. 检索 / 生成 / 总耗时
 
 ### 前端
 
-- `/chat` 展示：Embedding Provider / Model / Dimension、Chat Provider / Model
-- 重建向量旁提示：切换 Embedding Provider 或模型后须重建
-- `frontend/src/api/model.ts`
+| 路由 | 说明 |
+|------|------|
+| `/debug` | Debug 查询页（执行查询、展示过程、历史列表） |
+| `/debug/:queryLogId` | 单次 Debug 查询详情 |
 
-## 配置说明
+- `frontend/src/api/debug.ts`
+- `frontend/src/types/debug.ts`
 
-### application-dev.yml（推荐）
+### 复用 V2 / V2.5 能力
 
-```yaml
-rag:
-  embedding:
-    provider: mock          # mock | qwen
-    model: mock-embedding # qwen 示例: text-embedding-v3
-    dimension: 384          # qwen 常用: 1024（须与模型一致）
-    api-key: ${DASHSCOPE_API_KEY:}
-    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
-  chat:
-    provider: mock          # mock | deepseek
-    model: mock-chat        # deepseek 示例: deepseek-chat
-    api-key: ${DEEPSEEK_API_KEY:}
-    base-url: https://api.deepseek.com
-```
+- `VectorRetrievalService` 向量检索
+- `ChatRelevanceFilter` 相关性过滤（Context 与 Chat 一致）
+- `PromptBuilder` Prompt 构造
+- `ChatModelProvider` / `EmbeddingProviderRouter` 模型调用与 Provider 信息
 
-### 环境变量（见 `.env.example`）
+## V3 允许内容
 
-- `DASHSCOPE_API_KEY` — 通义 / DashScope Embedding
-- `DEEPSEEK_API_KEY` — DeepSeek Chat
+- Debug 查询接口
+- 召回 Chunk 展示
+- Context 展示
+- Prompt 展示
+- Answer 展示
+- Provider 信息展示
+- 耗时统计
+- Debug 查询历史
 
-**不要把 API Key 写死在代码或提交到 Git。**
+## V3 明确不做
 
-## 如何切换 Provider
+- BM25
+- Elasticsearch
+- Hybrid Search
+- Reranker
+- Query Rewrite
+- Evaluation
+- 权限
+- 多轮对话
+- 新增真实模型 Provider（继续使用 V2.5 已有 Provider）
 
-### 1. 仅 Mock（默认，无需 Key）
+**不要**为上述功能创建空类、空接口、空页面、空表。
 
-```yaml
-rag.embedding.provider: mock
-rag.chat.provider: mock
-```
+## V3 验收问题
 
-启动后即可使用 V2 全部能力。
+在 `/debug` 页面可测试：
 
-### 2. Qwen Embedding
-
-```yaml
-rag.embedding.provider: qwen
-rag.embedding.model: text-embedding-v3
-rag.embedding.dimension: 1024   # 与模型输出维度一致
-```
-
-设置环境变量 `DASHSCOPE_API_KEY`，**重启后端**，对每个知识库执行 **重建向量**。
-
-### 3. DeepSeek Chat
-
-```yaml
-rag.chat.provider: deepseek
-rag.chat.model: deepseek-chat
-```
-
-设置环境变量 `DEEPSEEK_API_KEY`，重启后端。Chat 使用真实模型；Embedding 仍可为 mock。
-
-### 4. 组合示例
-
-| Embedding | Chat | 需要 |
-|-----------|------|------|
-| mock | mock | 无 |
-| qwen | mock | DASHSCOPE_API_KEY + 重建向量 |
-| mock | deepseek | DEEPSEEK_API_KEY |
-| qwen | deepseek | 两个 Key + 重建向量 |
-
-## 切换 Embedding 后必须重建向量
-
-修改以下任一项后，必须调用：
-
-```http
-POST /api/kb/{kbId}/embedding/rebuild
-```
-
-- `rag.embedding.provider`（mock ↔ qwen）
-- `rag.embedding.model`
-- `rag.embedding.dimension`
-
-否则检索时会提示维度/模型不一致。
-
-## V2 验收问题（保持不变）
-
-| # | 问题 | mock 模式预期 |
-|---|------|----------------|
-| 1 | 短信验证码发不出去怎么排查？ | Top1 `03-troubleshooting.md` |
-| 2 | SMS_429 是什么意思？ | Top1 `02-api-spec.md` |
-| 3 | send-code 接口路径是什么？ | Top1 `02-api-spec.md` |
-| 4 | 为什么后续会使用 PgVector？ | Top1 `01-project-guideline.md` |
-| 5 | 公司年终奖发几个月？ | 无相关依据 |
-
-测试文件：`http/retrieval-test.http`、`http/chat-test.http`
-
-## 明确不做（V2.5）
-
-DeepSeek Embedding、Qwen Chat、BM25、Elasticsearch、Hybrid Search、Reranker、Query Rewrite、Debug Console、Evaluation、权限、多轮对话
+| # | 问题 |
+|---|------|
+| 1 | 短信验证码发不出去怎么排查？ |
+| 2 | SMS_429 是什么意思？ |
+| 3 | send-code 接口路径是什么？ |
+| 4 | 这个项目为什么后续会使用 PgVector？ |
+| 5 | 公司年终奖发几个月？ |
 
 ## 快速启动
 
@@ -156,10 +117,20 @@ cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
 cd frontend && npm run dev
 ```
 
-- 查看 Provider：`GET http://localhost:8080/api/model/providers`
+- Debug 页：http://localhost:5173/debug
 - 问答页：http://localhost:5173/chat
 - Swagger：http://localhost:8080/doc.html
+- Provider：`GET http://localhost:8080/api/model/providers`
 
-## 下一步（V3，暂停）
+## V2.5 配置说明（保持不变）
 
-RAG Debug 可观察版：召回/Prompt/耗时/日志可视化（仍不引入 BM25 / Hybrid / Reranker）。
+见 `application-dev.yml` 与 `.env.example`：
+
+- `DASHSCOPE_API_KEY` — Qwen Embedding
+- `DEEPSEEK_API_KEY` — DeepSeek Chat
+
+切换 Embedding Provider / 模型后须对每个知识库执行 `POST /api/kb/{kbId}/embedding/rebuild`。
+
+## 下一步（V4，未开始）
+
+关键词检索版：Elasticsearch、BM25（本版本未引入）。

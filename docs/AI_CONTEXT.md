@@ -1,6 +1,6 @@
 # AI_CONTEXT.md
 
-**当前开发版本：V2（Naive RAG 问答版）**
+**当前开发版本：V3（RAG Debug 可观察版）**
 
 ## 项目背景
 
@@ -12,12 +12,12 @@ ai-rag-lab-platform 是一个 RAG 知识库实验平台。
 2. 文档解析
 3. 文本分块
 4. Naive RAG
-5. 检索过程可视化
-6. BM25 关键词检索
-7. Hybrid Search 混合检索
-8. Reranker 重排
-9. 评测指标
-10. 工程化增强
+5. 检索过程可视化（V3）
+6. BM25 关键词检索（V4+）
+7. Hybrid Search 混合检索（V5+）
+8. Reranker 重排（V6+）
+9. 评测指标（V7+）
+10. 工程化增强（V8+）
 
 ## 项目开发方式
 
@@ -29,162 +29,106 @@ ai-rag-lab-platform 是一个 RAG 知识库实验平台。
 
 ### V0：项目骨架版
 
-目标：
-
-- 后端 Spring Boot 项目能启动
-- 前端 Vue 项目能启动
-- PostgreSQL 能启动
-- 前端能调用后端 health 接口
-
 状态：已完成
 
 ---
 
 ### V1：文档导入与分块版
 
-目标：
-
-- 知识库 CRUD
-- Markdown / TXT 文档上传
-- 样例数据初始化
-- 文档解析
-- 固定大小分块
-- Chunk 查看页面
-
 状态：已完成
 
-V1 允许：
+V1 允许：知识库、文档、Chunk、样例数据、Dashboard
 
-- knowledge_base 表
-- document 表
-- document_chunk 表
-- kb 模块
-- document 模块
-- sample 模块
-- dashboard 统计
-
-V1 禁止：
-
-- Embedding
-- 向量检索
-- PgVector
-- Elasticsearch
-- BM25
-- Hybrid Search
-- LLM
-- Chat
-- Prompt
-- Reranker
-- Evaluation
-- 权限控制
-- 多轮对话
+V1 禁止：Embedding、向量检索、LLM、Chat
 
 ---
 
 ### V2：Naive RAG 问答版
 
-目标流水线：
+状态：已完成
 
-```text
-Chunk
-  ↓
-Embedding
-  ↓
-向量存储
-  ↓
-用户提问
-  ↓
-向量检索
-  ↓
-Prompt 拼接
-  ↓
-LLM 回答
-  ↓
-返回引用来源
-```
+V2 允许：Embedding、PgVector、向量检索、Chat、Prompt、引用来源
 
-V2 允许：
+V2 禁止：BM25、Elasticsearch、Hybrid、Reranker、Debug Console、Evaluation、权限、多轮对话
 
-- Embedding
-- PgVector
-- Chunk 向量化
-- 基础向量检索
-- Chat 问答
-- Prompt 构造
-- LLM 调用
-- 引用来源
+---
 
-V2 禁止：
+### V2.5：真实模型接入版
+
+状态：已完成
+
+在 V2 基础上增加 Qwen Embedding、DeepSeek Chat，配置切换，向量一致性校验。
+
+---
+
+### V3：RAG Debug 可观察版（当前）
+
+目标：让用户在前端看到一次 RAG 问答的完整内部过程。
+
+V3 允许：
+
+- Debug 查询接口（`POST /api/debug/query`）
+- 召回 Chunk 展示（含相似度分数）
+- Context 展示
+- Prompt 展示
+- Answer 展示
+- Provider 信息展示（Embedding / Chat）
+- 耗时统计（检索 / 生成 / 总耗时）
+- Debug 查询历史（列表 + 详情）
+- 表：`rag_query_log`、`rag_retrieval_log`
+
+V3 禁止：
 
 - BM25
 - Elasticsearch
 - Hybrid Search
 - Reranker
 - Query Rewrite
-- Debug Console
 - Evaluation
-- 权限控制
-- 多轮问题重构
-
----
-
-### V3：RAG Debug 可观察版
-
-目标：
-
-- 展示召回 Chunk
-- 展示 Prompt
-- 展示引用来源
-- 展示耗时
-- 记录问答日志
+- 权限
+- 多轮对话
+- 新增真实模型 Provider（沿用 V2.5）
+- 为后续版本创建空类、空接口、空页面、空表
 
 ---
 
 ### V4：关键词检索版
 
-目标：
-
-- 接入 Elasticsearch
-- 实现 BM25 检索
-- 对比向量检索和关键词检索
+目标：Elasticsearch、BM25（未开始）
 
 ---
 
 ### V5：混合检索版
 
-目标：
-
-- 实现 Vector + BM25 混合检索
-- 实现 RRF 融合
+目标：Vector + BM25、RRF（未开始）
 
 ---
 
 ### V6：Reranker 重排版
 
-目标：
-
-- 实现粗召回后重排
-- 展示重排前后结果变化
+目标：粗召回后重排（未开始）
 
 ---
 
 ### V7：评测中心版
 
-目标：
-
-- 维护测试用例
-- 批量运行评测
-- 统计命中率、Recall@K、MRR、耗时
+目标：测试用例、批量评测、Recall@K、MRR（未开始）
 
 ---
 
 ### V8：工程化增强版
 
-目标：
+目标：权限、多轮对话、Token 成本等（未开始）
 
-- 文档版本管理
-- 增量更新
-- 权限过滤
-- 多轮对话问题重构
-- Token 成本统计
-- 用户反馈
+## 当前技术栈
+
+后端：Spring Boot 3、JDK 17、PostgreSQL、PgVector、MyBatis-Plus
+
+前端：Vue 3、TypeScript、Vite、Element Plus
+
+## 开发原则
+
+1. 只做当前版本功能
+2. 不提前实现后续版本
+3. 保证 V1、V2、V2.5 既有能力不受影响
+4. 完成后更新 `docs/CURRENT_VERSION.md`

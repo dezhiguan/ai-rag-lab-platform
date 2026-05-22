@@ -11,6 +11,7 @@
         <el-menu-item index="/dashboard">Dashboard</el-menu-item>
         <el-menu-item index="/kb">知识库</el-menu-item>
         <el-menu-item index="/chat">问答</el-menu-item>
+        <el-menu-item index="/debug">Debug</el-menu-item>
         <el-menu-item index="/about">About</el-menu-item>
       </el-menu>
     </el-header>
@@ -25,7 +26,10 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const activeMenu = computed(() => route.path)
+const activeMenu = computed(() => {
+  if (route.path.startsWith('/debug')) return '/debug'
+  return route.path
+})
 </script>
 
 <style scoped>
