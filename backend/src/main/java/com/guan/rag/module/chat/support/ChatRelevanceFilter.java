@@ -23,8 +23,15 @@ public final class ChatRelevanceFilter {
         }
         List<RetrievedChunkResponse> relevant = new ArrayList<>();
         for (RetrievedChunkResponse chunk : chunks) {
-            if (hasNgramOverlap(question, chunk.getContent())) {
+            if (hasNgramOverlap(question, chunk.getContent())
+                    || hasNgramOverlap(question, chunk.getDocumentName())) {
                 relevant.add(chunk);
+            }
+        }
+        if (relevant.isEmpty() && !chunks.isEmpty()) {
+            RetrievedChunkResponse top = chunks.get(0);
+            if (top.getScore() != null && top.getScore() >= 0.12) {
+                relevant.add(top);
             }
         }
         return relevant;

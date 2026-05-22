@@ -36,14 +36,15 @@ rag:
   document:
     chunk-size: 800
     chunk-overlap: 100
+  # V2 默认使用 Mock，不接 DeepSeek / Qwen / OpenAI 真实 Embedding 与 LLM
   embedding:
     provider: mock
-    model: mock-embedding
+    model: mock-embedding-ngram
     dimension: 384
     api-key: ""
-    base-url: https://api.openai.com/v1
+    base-url: ""
   chat:
     provider: mock
     model: mock-chat
     api-key: ""
-    base-url: https://api.openai.com/v1
+    base-url: ""

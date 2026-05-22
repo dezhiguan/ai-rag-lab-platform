@@ -2,8 +2,10 @@ package com.guan.rag.module.embedding.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.guan.rag.common.util.VectorUtils;
+import com.guan.rag.module.document.entity.Document;
 import com.guan.rag.module.document.entity.DocumentChunk;
 import com.guan.rag.module.document.mapper.DocumentChunkMapper;
+import com.guan.rag.module.document.mapper.DocumentMapper;
 import com.guan.rag.module.embedding.entity.ChunkEmbedding;
 import com.guan.rag.module.embedding.mapper.ChunkEmbeddingMapper;
 import com.guan.rag.module.embedding.provider.EmbeddingProvider;
@@ -22,6 +24,7 @@ public class EmbeddingService {
 
     private final KnowledgeBaseService knowledgeBaseService;
     private final DocumentChunkMapper documentChunkMapper;
+    private final DocumentMapper documentMapper;
     private final ChunkEmbeddingMapper chunkEmbeddingMapper;
     private final EmbeddingProvider embeddingProvider;
 
@@ -41,7 +44,7 @@ public class EmbeddingService {
         );
 
         for (DocumentChunk chunk : chunks) {
-            float[] vector = embeddingProvider.embed(chunk.getContent());
+            float[] vector = embeddingProvider.embed(textForEmbedding(chunk));
             if (vector.length != dimension) {
                 throw new IllegalStateException(
                         "Embedding 维度不一致: 期望 " + dimension + ", 实际 " + vector.length);
@@ -82,6 +85,30 @@ public class EmbeddingService {
                 .embeddedChunks(embeddedChunks)
                 .notEmbeddedChunks(Math.max(totalChunks - embeddedChunks, 0))
                 .build();
+    }
+
+    /**
+     * 向量化时强化 Markdown 标题行，提升「排查 / API / 规范」类问题的召回稳定性。
+     */
+    private String textForEmbedding(DocumentChunk chunk) {
+        String content = chunk.getContent();
+        if (content == null || content.isBlank()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        Document document = documentMapper.selectById(chunk.getDocumentId());
+        if (document != null && document.getFileName() != null) {
+            sb.append(document.getFileName()).append('\n');
+        }
+        int newline = content.indexOf('\n');
+        if (newline > 0) {
+            String titleLine = content.substring(0, newline).trim();
+            if (!titleLine.isEmpty()) {
+                sb.append(titleLine).append('\n').append(titleLine).append('\n');
+            }
+        }
+        sb.append(content);
+        return sb.toString();
     }
 
     public long countEmbeddedChunks() {

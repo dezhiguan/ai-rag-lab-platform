@@ -8,10 +8,12 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 确定性字符 n-gram 哈希向量（Mock）。
- * 同文本向量一致；共享 n-gram 的文本具有更高余弦相似度；支持中文。
+ * 同文本向量一致；共享 n-gram 的文本具有更高余弦相似度；支持中文；无随机数。
  */
 @Component
 @ConditionalOnProperty(prefix = "rag.embedding", name = "provider", havingValue = "mock", matchIfMissing = true)
@@ -20,7 +22,9 @@ public class MockEmbeddingProvider implements EmbeddingProvider {
 
     private static final int BIGRAM_SIZE = 2;
     private static final int TRIGRAM_SIZE = 3;
+    private static final int FOURGRAM_SIZE = 4;
     private static final float TRIGRAM_WEIGHT = 1.2f;
+    private static final float FOURGRAM_WEIGHT = 1.35f;
 
     private final RagProperties ragProperties;
 
@@ -33,8 +37,9 @@ public class MockEmbeddingProvider implements EmbeddingProvider {
             return vector;
         }
 
-        accumulateNgrams(vector, normalized, BIGRAM_SIZE, 1.0f);
-        accumulateNgrams(vector, normalized, TRIGRAM_SIZE, TRIGRAM_WEIGHT);
+        accumulateWeightedNgrams(vector, normalized, BIGRAM_SIZE, 1.0f);
+        accumulateWeightedNgrams(vector, normalized, TRIGRAM_SIZE, TRIGRAM_WEIGHT);
+        accumulateWeightedNgrams(vector, normalized, FOURGRAM_SIZE, FOURGRAM_WEIGHT);
         normalize(vector);
         return vector;
     }
@@ -49,21 +54,29 @@ public class MockEmbeddingProvider implements EmbeddingProvider {
         return ragProperties.getEmbedding().getDimension();
     }
 
-    private void accumulateNgrams(float[] vector, String text, int n, float weight) {
+    /**
+     * 使用 sqrt(tf) 降低长文档重复词对向量的主导效应。
+     */
+    private void accumulateWeightedNgrams(float[] vector, String text, int n, float baseWeight) {
         if (text.length() < n) {
-            for (int i = 0; i < text.length(); i++) {
-                addFeature(vector, String.valueOf(text.charAt(i)), weight * 0.8f);
+            if (!text.isEmpty()) {
+                addFeature(vector, text, baseWeight * 0.8f);
             }
             return;
         }
+        Map<String, Integer> termFreq = new HashMap<>();
         for (int i = 0; i <= text.length() - n; i++) {
-            addFeature(vector, text.substring(i, i + n), weight);
+            String gram = text.substring(i, i + n);
+            if (!gram.isBlank()) {
+                termFreq.merge(gram, 1, Integer::sum);
+            }
+        }
+        for (Map.Entry<String, Integer> entry : termFreq.entrySet()) {
+            float weight = baseWeight * (float) Math.sqrt(entry.getValue());
+            addFeature(vector, entry.getKey(), weight);
         }
     }
 
-    /**
-     * 特征哈希到固定维度，使用双哈希降低碰撞。
-     */
     private void addFeature(float[] vector, String feature, float weight) {
         int h1 = stableHash(feature, 0);
         int h2 = stableHash(feature, 1);
@@ -90,9 +103,6 @@ public class MockEmbeddingProvider implements EmbeddingProvider {
         }
     }
 
-    /**
-     * 归一化：小写 ASCII、保留中文等字符、合并空白。
-     */
     private String normalize(String text) {
         if (text == null || text.isBlank()) {
             return "";

@@ -2,7 +2,13 @@
   <div class="chat-page">
     <el-card shadow="never" class="panel">
       <template #header>
-        <span>知识库问答（V2 Naive RAG）</span>
+        <div class="card-header">
+          <span>知识库问答（V2 Naive RAG）</span>
+          <el-space>
+            <el-tag type="info" size="small">Mock Embedding</el-tag>
+            <el-tag type="info" size="small">Mock Chat</el-tag>
+          </el-space>
+        </div>
       </template>
 
       <el-form label-width="100px">
@@ -27,11 +33,7 @@
             <el-tag type="info">总 Chunk：{{ embeddingStatus?.totalChunks ?? 0 }}</el-tag>
             <el-tag type="success">已向量化：{{ embeddingStatus?.embeddedChunks ?? 0 }}</el-tag>
             <el-tag type="warning">未向量化：{{ embeddingStatus?.notEmbeddedChunks ?? 0 }}</el-tag>
-            <el-button
-              type="primary"
-              :loading="rebuilding"
-              @click="handleRebuild"
-            >
+            <el-button type="primary" :loading="rebuilding" @click="handleRebuild">
               重建向量
             </el-button>
           </el-space>
@@ -50,13 +52,13 @@
           <el-input-number v-model="topK" :min="1" :max="20" />
         </el-form-item>
 
-        <el-form-item label="快捷测试">
+        <el-form-item label="V2 验收">
           <el-space wrap>
             <el-button
               v-for="item in quickTests"
               :key="item.label"
               size="small"
-              @click="applyQuickTest(item.question)"
+              @click="applyQuickTest(item)"
             >
               {{ item.label }}
             </el-button>
@@ -74,14 +76,17 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button
-            type="primary"
-            :disabled="!selectedKbId || !question.trim()"
-            :loading="sending"
-            @click="handleSend"
-          >
-            发送问题
-          </el-button>
+          <el-space>
+            <el-button
+              type="primary"
+              :disabled="!selectedKbId || !question.trim()"
+              :loading="sending"
+              @click="handleSend"
+            >
+              发送问题
+            </el-button>
+            <el-button :disabled="sending" @click="handleNewSession">新会话</el-button>
+          </el-space>
         </el-form-item>
       </el-form>
     </el-card>
@@ -94,6 +99,14 @@
         </div>
       </template>
       <div class="answer-text">{{ lastAnswer }}</div>
+      <el-alert
+        v-if="lastAnswer && !lastSources.length"
+        type="info"
+        :closable="false"
+        show-icon
+        class="no-source-alert"
+        title="本次回答未附带引用来源（可能为知识库中无相关依据）。"
+      />
     </el-card>
 
     <el-card v-if="lastSources.length" shadow="never" class="panel">
@@ -122,6 +135,12 @@ import { sendChat } from '@/api/chat'
 import type { EmbeddingStatus } from '@/types/embedding'
 import type { ChatSource } from '@/types/chat'
 
+interface QuickTest {
+  label: string
+  question: string
+  expect?: string
+}
+
 const knowledgeBases = ref<KnowledgeBase[]>([])
 const selectedKbId = ref<number | undefined>()
 const embeddingStatus = ref<EmbeddingStatus | null>(null)
@@ -133,18 +152,20 @@ const sessionId = ref<number | undefined>()
 const lastAnswer = ref('')
 const lastSources = ref<ChatSource[]>([])
 
-const quickTests = [
-  { label: '验证码排查', question: '短信验证码发不出去怎么排查？' },
-  { label: 'SMS_429', question: 'SMS_429 是什么意思？' },
-  { label: 'send-code', question: 'send-code 接口路径是什么？' },
-  { label: 'PgVector', question: '这个项目为什么后续会使用 PgVector？' },
-  { label: '无关问题', question: '公司年终奖发几个月？' },
+const quickTests: QuickTest[] = [
+  { label: '验证码排查', question: '短信验证码发不出去怎么排查？', expect: '03-troubleshooting.md' },
+  { label: 'SMS_429', question: 'SMS_429 是什么意思？', expect: '02-api-spec.md' },
+  { label: 'send-code', question: 'send-code 接口路径是什么？', expect: '02-api-spec.md' },
+  { label: 'PgVector', question: '这个项目为什么后续会使用 PgVector？', expect: '01-project-guideline.md' },
+  { label: '无关问题', question: '公司年终奖发几个月？', expect: '无相关依据' },
 ]
 
 onMounted(async () => {
   const res = await listKnowledgeBases()
-  if (res.code === 200) {
-    knowledgeBases.value = res.data ?? []
+  if (res.code === 200 && res.data?.length) {
+    knowledgeBases.value = res.data
+    selectedKbId.value = res.data[0].id
+    await loadEmbeddingStatus()
   }
 })
 
@@ -157,10 +178,14 @@ async function loadEmbeddingStatus() {
 }
 
 async function onKbChange() {
+  handleNewSession()
+  await loadEmbeddingStatus()
+}
+
+function handleNewSession() {
   sessionId.value = undefined
   lastAnswer.value = ''
   lastSources.value = []
-  await loadEmbeddingStatus()
 }
 
 async function handleRebuild() {
@@ -171,6 +196,7 @@ async function handleRebuild() {
     if (res.code === 200) {
       ElMessage.success(`向量重建完成，已向量化 ${res.data?.embeddedChunks ?? 0} 个 Chunk`)
       await loadEmbeddingStatus()
+      handleNewSession()
     } else {
       ElMessage.error(res.message || '重建失败')
     }
@@ -181,8 +207,11 @@ async function handleRebuild() {
   }
 }
 
-function applyQuickTest(q: string) {
-  question.value = q
+function applyQuickTest(item: QuickTest) {
+  question.value = item.question
+  if (item.expect) {
+    ElMessage.info(`预期：${item.expect}`)
+  }
 }
 
 async function handleSend() {
@@ -203,7 +232,12 @@ async function handleSend() {
       sessionId.value = res.data.sessionId
       lastAnswer.value = res.data.answer
       lastSources.value = res.data.sources ?? []
-      ElMessage.success('回答已生成')
+      const topDoc = lastSources.value[0]?.documentName
+      if (topDoc) {
+        ElMessage.success(`回答已生成，Top 引用：${topDoc}`)
+      } else {
+        ElMessage.success('回答已生成')
+      }
     } else {
       ElMessage.error(res.message || '问答失败')
     }
@@ -230,8 +264,17 @@ function formatScore(score: number) {
   width: 100%;
 }
 
-.embed-alert {
-  margin-bottom: 16px;
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.embed-alert,
+.no-source-alert {
+  margin-top: 12px;
 }
 
 .answer-header {
