@@ -3,15 +3,32 @@
     <el-card shadow="never" class="panel">
       <template #header>
         <div class="card-header">
-          <span>知识库问答（V2 Naive RAG）</span>
-          <el-space>
-            <el-tag type="info" size="small">Mock Embedding</el-tag>
-            <el-tag type="info" size="small">Mock Chat</el-tag>
-          </el-space>
+          <span>知识库问答（V2.5）</span>
         </div>
       </template>
 
-      <el-form label-width="100px">
+      <el-descriptions v-if="modelProviders" :column="2" border size="small" class="model-status">
+        <el-descriptions-item label="Embedding Provider">
+          {{ modelProviders.embeddingProvider }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Embedding Model">
+          {{ modelProviders.embeddingModel }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Embedding Dimension">
+          {{ modelProviders.embeddingDimension }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Embedding 实现">
+          {{ modelProviders.embeddingDelegate }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Chat Provider">
+          {{ modelProviders.chatProvider }}
+        </el-descriptions-item>
+        <el-descriptions-item label="Chat Model">
+          {{ modelProviders.chatModel }}
+        </el-descriptions-item>
+      </el-descriptions>
+
+      <el-form label-width="100px" class="chat-form">
         <el-form-item label="知识库">
           <el-select
             v-model="selectedKbId"
@@ -37,6 +54,9 @@
               重建向量
             </el-button>
           </el-space>
+          <div class="rebuild-hint">
+            切换 Embedding Provider 或模型后，需要重新重建向量。
+          </div>
         </el-form-item>
 
         <el-alert
@@ -132,6 +152,7 @@ import { ElMessage } from 'element-plus'
 import { listKnowledgeBases, type KnowledgeBase } from '@/api/knowledgeBase'
 import { getEmbeddingStatus, rebuildEmbedding } from '@/api/embedding'
 import { sendChat } from '@/api/chat'
+import { getModelProviders, type ModelProviders } from '@/api/model'
 import type { EmbeddingStatus } from '@/types/embedding'
 import type { ChatSource } from '@/types/chat'
 
@@ -141,6 +162,7 @@ interface QuickTest {
   expect?: string
 }
 
+const modelProviders = ref<ModelProviders | null>(null)
 const knowledgeBases = ref<KnowledgeBase[]>([])
 const selectedKbId = ref<number | undefined>()
 const embeddingStatus = ref<EmbeddingStatus | null>(null)
@@ -161,6 +183,7 @@ const quickTests: QuickTest[] = [
 ]
 
 onMounted(async () => {
+  await loadModelProviders()
   const res = await listKnowledgeBases()
   if (res.code === 200 && res.data?.length) {
     knowledgeBases.value = res.data
@@ -168,6 +191,17 @@ onMounted(async () => {
     await loadEmbeddingStatus()
   }
 })
+
+async function loadModelProviders() {
+  try {
+    const res = await getModelProviders()
+    if (res.code === 200) {
+      modelProviders.value = res.data
+    }
+  } catch {
+    // 非阻塞
+  }
+}
 
 async function loadEmbeddingStatus() {
   if (!selectedKbId.value) return
@@ -270,6 +304,21 @@ function formatScore(score: number) {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.model-status {
+  margin-bottom: 16px;
+}
+
+.chat-form {
+  margin-top: 8px;
+}
+
+.rebuild-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.5;
 }
 
 .embed-alert,

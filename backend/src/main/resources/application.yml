@@ -36,15 +36,15 @@ rag:
   document:
     chunk-size: 800
     chunk-overlap: 100
-  # V2 默认使用 Mock，不接 DeepSeek / Qwen / OpenAI 真实 Embedding 与 LLM
+  # V2.5：默认 mock；dev 环境见 application-dev.yml，支持 mock / qwen / deepseek
   embedding:
     provider: mock
-    model: mock-embedding-ngram
+    model: mock-embedding
     dimension: 384
     api-key: ""
-    base-url: ""
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
   chat:
     provider: mock
     model: mock-chat
     api-key: ""
-    base-url: ""
+    base-url: https://api.deepseek.com

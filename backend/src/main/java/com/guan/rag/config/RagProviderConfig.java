@@ -19,10 +19,12 @@ public class RagProviderConfig {
     @PostConstruct
     public void logActiveProviders() {
         log.info(
-                "V2 RAG providers: embedding={} ({} dim), chat={}",
+                "V2.5 RAG providers: embedding={} / {} ({} dim), chat={} / {}",
                 ragProperties.getEmbedding().getProvider(),
+                embeddingProvider.model(),
                 embeddingProvider.dimension(),
-                ragProperties.getChat().getProvider()
+                ragProperties.getChat().getProvider(),
+                chatModelProvider.model()
         );
         log.info("Embedding implementation: {}", embeddingProvider.getClass().getSimpleName());
         log.info("Chat implementation: {}", chatModelProvider.getClass().getSimpleName());

@@ -2,7 +2,6 @@ package com.guan.rag.module.embedding.provider;
 
 import com.guan.rag.config.RagProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -16,7 +15,6 @@ import java.util.Map;
  * 同文本向量一致；共享 n-gram 的文本具有更高余弦相似度；支持中文；无随机数。
  */
 @Component
-@ConditionalOnProperty(prefix = "rag.embedding", name = "provider", havingValue = "mock", matchIfMissing = true)
 @RequiredArgsConstructor
 public class MockEmbeddingProvider implements EmbeddingProvider {
 

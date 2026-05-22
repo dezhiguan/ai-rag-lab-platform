@@ -3,6 +3,7 @@ package com.guan.rag.module.retrieval.service;
 import com.guan.rag.common.util.VectorUtils;
 import com.guan.rag.module.embedding.mapper.ChunkEmbeddingMapper;
 import com.guan.rag.module.embedding.provider.EmbeddingProvider;
+import com.guan.rag.module.embedding.service.EmbeddingConsistencyService;
 import com.guan.rag.module.kb.service.KnowledgeBaseService;
 import com.guan.rag.module.retrieval.model.VectorSearchHit;
 import com.guan.rag.module.retrieval.response.RetrievedChunkResponse;
@@ -18,9 +19,11 @@ public class VectorRetrievalService {
     private final KnowledgeBaseService knowledgeBaseService;
     private final ChunkEmbeddingMapper chunkEmbeddingMapper;
     private final EmbeddingProvider embeddingProvider;
+    private final EmbeddingConsistencyService embeddingConsistencyService;
 
     public List<RetrievedChunkResponse> retrieve(Long kbId, String question, int topK) {
         knowledgeBaseService.requireKb(kbId);
+        embeddingConsistencyService.ensureKbVectorsMatchCurrentConfig(kbId);
         int limit = topK <= 0 ? 5 : topK;
         float[] queryVector = embeddingProvider.embed(question);
         int dimension = embeddingProvider.dimension();

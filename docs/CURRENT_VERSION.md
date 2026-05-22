@@ -2,131 +2,151 @@
 
 ## 当前版本
 
-**V2：Naive RAG 问答版 — 收尾完成（Mock Embedding + Mock Chat）**
+**V2.5：真实模型接入版**
 
-> 本阶段 **不接** DeepSeek / Qwen / OpenAI 真实 Embedding 与 LLM，**不进入 V3**。
+在 V2 Naive RAG 问答版基础上，保留 Mock Provider，新增 Qwen Embedding 与 DeepSeek Chat，并支持配置切换。
 
-## 上一版本
+> **暂停 V3**。本版本不接 BM25 / Hybrid / Reranker / Debug Console / Evaluation。
 
-V1：文档导入与分块版 — 已完成
+## 版本关系
 
-## V2 完成状态
+| 版本 | 状态 |
+|------|------|
+| V1 文档导入与分块 | 已完成 |
+| V2 Naive RAG 问答 | 已完成 |
+| **V2.5 真实模型接入** | **当前** |
+| V3 RAG Debug | 未开始 |
 
-| 模块 | 状态 | 说明 |
+## V2.5 完成内容
+
+### Provider 体系
+
+| 类型 | 配置值 | 实现类 | 说明 |
+|------|--------|--------|------|
+| Embedding | `mock`（默认） | `MockEmbeddingProvider` | 确定性 n-gram，无 API Key 可运行 |
+| Embedding | `qwen` | `QwenEmbeddingProvider` | DashScope OpenAI-compatible `/embeddings` |
+| Chat | `mock`（默认） | `MockChatModelProvider` | 本地演示回答 |
+| Chat | `deepseek` | `DeepSeekChatModelProvider` | DeepSeek `/chat/completions` |
+
+路由：
+
+- `EmbeddingProviderRouter`（`@Primary`）→ `rag.embedding.provider`
+- `ChatModelProviderRouter`（`@Primary`）→ `rag.chat.provider`
+
+不支持的 provider 会抛出明确 `BusinessException`（不会静默回退 mock）。
+
+### 新增接口
+
+| 方法 | 路径 | 说明 |
 |------|------|------|
-| MockEmbeddingProvider | 已完成 | 默认 provider，`mock`，384 维，确定性 n-gram + sqrt(tf) + L2 |
-| Chunk 向量化 / 重建 / 状态 | 已完成 | 重建时清空旧向量；标题行双重加权 |
-| PgVector 检索 | 已完成 | cosine distance，`ORDER BY distance ASC`，score = 1 - distance |
-| POST /api/retrieval/test | 已完成 | 仅 TopK，无阈值过滤 |
-| POST /api/chat | 已完成 | answer + sources + 会话持久化 |
-| PromptBuilder | 已完成 | 固定 Prompt 模板 |
-| MockChatModelProvider | 已完成 | 基于上下文生成回答；无关问题返回固定文案 |
-| 前端 /chat | 已完成 | 向量化状态、重建、验收快捷问题、引用来源 |
-| 单元测试 | 已完成 | `V2RetrievalRankingTest` 覆盖 4 条验收检索排序 |
+| GET | `/api/model/providers` | 查看当前 Embedding / Chat Provider 配置 |
 
-## 默认 Provider 配置
+### 向量一致性
+
+- `POST /api/kb/{kbId}/embedding/rebuild`：重建前**删除**该库全部 `chunk_embedding`，再用**当前** Provider 写入
+- 检索 / 问答前校验：若库内向量 `model` 或 `dimension` 与当前配置不一致 → 明确错误，提示重建
+- Chunk 与 Query **共用**同一 `EmbeddingProvider`（经 Router）
+
+### 前端
+
+- `/chat` 展示：Embedding Provider / Model / Dimension、Chat Provider / Model
+- 重建向量旁提示：切换 Embedding Provider 或模型后须重建
+- `frontend/src/api/model.ts`
+
+## 配置说明
+
+### application-dev.yml（推荐）
 
 ```yaml
 rag:
   embedding:
-    provider: mock          # 默认，不接 DeepSeek Embedding
-    model: mock-embedding-ngram
-    dimension: 384
+    provider: mock          # mock | qwen
+    model: mock-embedding # qwen 示例: text-embedding-v3
+    dimension: 384          # qwen 常用: 1024（须与模型一致）
+    api-key: ${DASHSCOPE_API_KEY:}
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
   chat:
-    provider: mock          # 默认，不接真实 LLM
-    model: mock-chat
+    provider: mock          # mock | deepseek
+    model: mock-chat        # deepseek 示例: deepseek-chat
+    api-key: ${DEEPSEEK_API_KEY:}
+    base-url: https://api.deepseek.com
 ```
 
-启动日志会输出当前激活的 Provider 实现类（`RagProviderConfig`）。
+### 环境变量（见 `.env.example`）
 
-## 流水线
+- `DASHSCOPE_API_KEY` — 通义 / DashScope Embedding
+- `DEEPSEEK_API_KEY` — DeepSeek Chat
 
-```text
-Chunk → Mock Embedding → PgVector (chunk_embedding)
-  → 用户提问 → 向量 TopK → Chat 相关性过滤 → Prompt → Mock Chat → answer + sources
+**不要把 API Key 写死在代码或提交到 Git。**
+
+## 如何切换 Provider
+
+### 1. 仅 Mock（默认，无需 Key）
+
+```yaml
+rag.embedding.provider: mock
+rag.chat.provider: mock
 ```
 
-## 接口清单
+启动后即可使用 V2 全部能力。
 
-| 方法 | 路径 | 用途 |
-|------|------|------|
-| POST | `/api/kb/{kbId}/embedding/rebuild` | 清空并重建知识库向量 |
-| GET | `/api/kb/{kbId}/embedding/status` | 向量化状态 |
-| POST | `/api/retrieval/test` | V2 检索基线验证（非 Debug Console） |
-| POST | `/api/chat` | Naive RAG 问答 |
-| GET | `/api/chat/sessions` | 会话列表 |
-| GET | `/api/chat/sessions/{id}/messages` | 会话消息 |
+### 2. Qwen Embedding
 
-### POST /api/chat 请求示例
-
-```json
-{
-  "kbId": 1,
-  "sessionId": null,
-  "question": "短信验证码发不出去怎么排查？",
-  "topK": 5
-}
+```yaml
+rag.embedding.provider: qwen
+rag.embedding.model: text-embedding-v3
+rag.embedding.dimension: 1024   # 与模型输出维度一致
 ```
 
-### 响应示例
+设置环境变量 `DASHSCOPE_API_KEY`，**重启后端**，对每个知识库执行 **重建向量**。
 
-```json
-{
-  "sessionId": 1001,
-  "answer": "根据知识库内容：...",
-  "sources": [
-    {
-      "documentId": 14,
-      "documentName": "03-troubleshooting.md",
-      "chunkId": 23,
-      "chunkIndex": 0,
-      "score": 0.42,
-      "content": "..."
-    }
-  ]
-}
+### 3. DeepSeek Chat
+
+```yaml
+rag.chat.provider: deepseek
+rag.chat.model: deepseek-chat
 ```
 
-## 前端页面
+设置环境变量 `DEEPSEEK_API_KEY`，重启后端。Chat 使用真实模型；Embedding 仍可为 mock。
 
-| 路由 | 文件 | 功能 |
-|------|------|------|
-| `/chat` | `ChatView.vue` | 知识库选择、向量化状态、重建向量、TopK、V2 验收快捷问题、回答与引用来源 |
+### 4. 组合示例
 
-API：`src/api/embedding.ts`、`src/api/chat.ts`
+| Embedding | Chat | 需要 |
+|-----------|------|------|
+| mock | mock | 无 |
+| qwen | mock | DASHSCOPE_API_KEY + 重建向量 |
+| mock | deepseek | DEEPSEEK_API_KEY |
+| qwen | deepseek | 两个 Key + 重建向量 |
 
-## V2 验收用例（需先重建向量）
+## 切换 Embedding 后必须重建向量
 
-使用 `http/retrieval-test.http` 或 `http/chat-test.http`，或在 `/chat` 点击快捷按钮。
+修改以下任一项后，必须调用：
 
-| # | 问题 | retrieval Top1 | chat 预期 |
-|---|------|----------------|-----------|
-| 1 | 短信验证码发不出去怎么排查？ | `03-troubleshooting.md` | 有回答 + sources |
-| 2 | SMS_429 是什么意思？ | `02-api-spec.md` | 有回答 + sources |
-| 3 | send-code 接口路径是什么？ | `02-api-spec.md` | 有回答 + sources |
-| 4 | 这个项目为什么后续会使用 PgVector？ | `01-project-guideline.md` | 有回答 + sources |
-| 5 | 公司年终奖发几个月？ | 任意 TopK | **知识库中没有找到相关依据。** |
+```http
+POST /api/kb/{kbId}/embedding/rebuild
+```
 
-验收步骤：
+- `rag.embedding.provider`（mock ↔ qwen）
+- `rag.embedding.model`
+- `rag.embedding.dimension`
 
-1. `docker compose up -d`（`pgvector/pgvector:pg16`）
-2. 启动后端 / 前端
-3. V1 样例初始化或上传文档
-4. **重启后端**（代码变更后必须重启，否则仍使用旧 Embedding 逻辑）
-5. `/chat` → **重建向量**
-6. 执行上表 5 条问题验证
+否则检索时会提示维度/模型不一致。
 
-> 若 Top1 文档不符合预期，请确认已重启后端并重新 rebuild；可用 `mvn test -Dtest=V2RetrievalRankingTest` 在本地验证 Mock 排序。
+## V2 验收问题（保持不变）
 
-## V2 明确不做
+| # | 问题 | mock 模式预期 |
+|---|------|----------------|
+| 1 | 短信验证码发不出去怎么排查？ | Top1 `03-troubleshooting.md` |
+| 2 | SMS_429 是什么意思？ | Top1 `02-api-spec.md` |
+| 3 | send-code 接口路径是什么？ | Top1 `02-api-spec.md` |
+| 4 | 为什么后续会使用 PgVector？ | Top1 `01-project-guideline.md` |
+| 5 | 公司年终奖发几个月？ | 无相关依据 |
 
-BM25、Elasticsearch、Hybrid Search、Reranker、Query Rewrite、Debug Console、Evaluation、权限、多轮对话、DeepSeek/Qwen 真实 Embedding
+测试文件：`http/retrieval-test.http`、`http/chat-test.http`
 
-## 下一步建议（V3，不在本阶段）
+## 明确不做（V2.5）
 
-1. RAG Debug 可观察版：召回列表、Prompt、耗时、问答日志 UI
-2. 可选接入稳定官方 Embedding / Chat API（非 DeepSeek Embedding）
-3. 检索可视化（仍不引入 BM25 / Hybrid / Reranker）
+DeepSeek Embedding、Qwen Chat、BM25、Elasticsearch、Hybrid Search、Reranker、Query Rewrite、Debug Console、Evaluation、权限、多轮对话
 
 ## 快速启动
 
@@ -136,5 +156,10 @@ cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
 cd frontend && npm run dev
 ```
 
-- 前端：http://localhost:5173/chat  
+- 查看 Provider：`GET http://localhost:8080/api/model/providers`
+- 问答页：http://localhost:5173/chat
 - Swagger：http://localhost:8080/doc.html
+
+## 下一步（V3，暂停）
+
+RAG Debug 可观察版：召回/Prompt/耗时/日志可视化（仍不引入 BM25 / Hybrid / Reranker）。

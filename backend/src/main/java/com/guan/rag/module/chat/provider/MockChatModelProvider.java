@@ -3,11 +3,9 @@ package com.guan.rag.module.chat.provider;
 import com.guan.rag.config.RagProperties;
 import com.guan.rag.module.chat.support.ChatRelevanceFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConditionalOnProperty(prefix = "rag.chat", name = "provider", havingValue = "mock", matchIfMissing = true)
 @RequiredArgsConstructor
 public class MockChatModelProvider implements ChatModelProvider {
 

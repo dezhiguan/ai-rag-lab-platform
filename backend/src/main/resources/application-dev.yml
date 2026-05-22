@@ -1,11 +1,24 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: amy
-    password: amy
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:postgres}
+    username: ${POSTGRES_USER:amy}
+    password: ${POSTGRES_PASSWORD:amy}
     driver-class-name: org.postgresql.Driver
 
 # dev 环境：MyBatis SQL 直接输出到控制台，便于调试
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+rag:
+  embedding:
+    provider: qwen
+    model: text-embedding-v4
+    dimension: 1024
+    api-key: ${DASHSCOPE_API_KEY:}
+    base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  chat:
+    provider: deepseek
+    model: deepseek-v4-pro
+    api-key: ${DEEPSEEK_API_KEY:}
+    base-url: https://api.deepseek.com

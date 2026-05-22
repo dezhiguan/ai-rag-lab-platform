@@ -6,7 +6,8 @@
       "name": "RagApplication",
       "request": "launch",
       "mainClass": "com.guan.rag.RagApplication",
-      "projectName": "rag-lab-backend"
+      "projectName": "rag-lab-backend",
+      "envFile": "${workspaceFolder}/.env"
     },
     {
       "name": "Frontend: Vite Dev Server",
