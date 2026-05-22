@@ -39,17 +39,25 @@ public interface ChunkEmbeddingMapper extends BaseMapper<ChunkEmbedding> {
     int updateEmbedding(ChunkEmbedding entity);
 
     @Select("""
-            SELECT ce.chunk_id AS chunkId,
-                   ce.document_id AS documentId,
-                   dc.chunk_index AS chunkIndex,
-                   d.file_name AS documentName,
-                   dc.content AS content,
-                   (1 - (ce.embedding <=> CAST(#{queryVector} AS vector))) AS score
-            FROM chunk_embedding ce
-            INNER JOIN document_chunk dc ON ce.chunk_id = dc.id AND dc.deleted = 0
-            INNER JOIN document d ON ce.document_id = d.id AND d.deleted = 0
-            WHERE ce.kb_id = #{kbId}
-            ORDER BY ce.embedding <=> CAST(#{queryVector} AS vector)
+            SELECT chunkId,
+                   documentId,
+                   chunkIndex,
+                   documentName,
+                   content,
+                   (1 - distance) AS score
+            FROM (
+                SELECT ce.chunk_id AS chunkId,
+                       ce.document_id AS documentId,
+                       dc.chunk_index AS chunkIndex,
+                       d.file_name AS documentName,
+                       dc.content AS content,
+                       (ce.embedding <=> CAST(#{queryVector} AS vector)) AS distance
+                FROM chunk_embedding ce
+                INNER JOIN document_chunk dc ON ce.chunk_id = dc.id AND dc.deleted = 0
+                INNER JOIN document d ON ce.document_id = d.id AND d.deleted = 0
+                WHERE ce.kb_id = #{kbId}
+            ) ranked
+            ORDER BY distance ASC
             LIMIT #{topK}
             """)
     List<VectorSearchHit> searchSimilar(

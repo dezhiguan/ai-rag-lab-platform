@@ -45,6 +45,7 @@ LLM 回答（ChatModelProvider）
   - `POST /api/chat`
   - `GET /api/chat/sessions`
   - `GET /api/chat/sessions/{sessionId}/messages`
+  - `POST /api/retrieval/test`（V2 向量检索基线验证，非 Debug Console）
 
 ### 前端
 
@@ -93,8 +94,15 @@ LLM 回答（ChatModelProvider）
 1. 启动带 pgvector 的 PostgreSQL（`docker compose up -d`）
 2. 启动后端与前端
 3. 在 V1 流程中创建知识库并导入文档 / 初始化样例数据
-4. 打开 `/chat`，选择知识库，点击「重建向量」
-5. 输入问题并发送，查看回答与引用来源
+4. 打开 `/chat`，选择知识库，点击「重建向量」（**修复 Mock Embedding 后必须重建**）
+5. 可用 `POST /api/retrieval/test` 验证检索是否命中预期文档
+6. 输入问题并发送，查看回答与引用来源
+
+### Mock Embedding（V2 基线）
+
+- 使用确定性字符 **bigram / trigram** 特征哈希（384 维，L2 归一化）
+- 同文本向量一致；共享关键词的 query 与 chunk 余弦相似度更高
+- 不使用 `Random`、不依赖空格分词，支持中文
 
 ## 切换真实模型（可选）
 

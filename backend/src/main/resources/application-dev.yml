@@ -4,3 +4,8 @@ spring:
     username: amy
     password: amy
     driver-class-name: org.postgresql.Driver
+
+# dev 环境：MyBatis SQL 直接输出到控制台，便于调试
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

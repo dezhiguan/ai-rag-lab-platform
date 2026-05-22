@@ -23,6 +23,11 @@ public class VectorRetrievalService {
         knowledgeBaseService.requireKb(kbId);
         int limit = topK <= 0 ? 5 : topK;
         float[] queryVector = embeddingProvider.embed(question);
+        int dimension = embeddingProvider.dimension();
+        if (queryVector.length != dimension) {
+            throw new IllegalStateException(
+                    "Query embedding 维度不一致: 期望 " + dimension + ", 实际 " + queryVector.length);
+        }
         String vectorLiteral = VectorUtils.toPgVectorLiteral(queryVector);
 
         List<VectorSearchHit> hits = chunkEmbeddingMapper.searchSimilar(kbId, vectorLiteral, limit);

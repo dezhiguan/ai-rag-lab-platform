@@ -2,14 +2,26 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "java",
+      "name": "RagApplication",
+      "request": "launch",
+      "mainClass": "com.guan.rag.RagApplication",
+      "projectName": "rag-lab-backend"
+    },
+    {
       "name": "Frontend: Vite Dev Server",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "cwd": "${workspaceFolder}/frontend",
       "console": "integratedTerminal",
-      "skipFiles": ["<node_internals>/**"]
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
     },
     {
       "name": "Frontend: Chrome (需先启动 Vite)",

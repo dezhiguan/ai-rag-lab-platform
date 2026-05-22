@@ -14,9 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -36,46 +34,26 @@ public class EmbeddingService {
 
         String model = embeddingProvider.model();
         int dimension = embeddingProvider.dimension();
-        Set<Long> chunkIds = new HashSet<>();
+
+        // 清空旧向量，避免维度或算法变更后残留脏数据
+        chunkEmbeddingMapper.delete(
+                new LambdaQueryWrapper<ChunkEmbedding>().eq(ChunkEmbedding::getKbId, kbId)
+        );
 
         for (DocumentChunk chunk : chunks) {
-            chunkIds.add(chunk.getId());
             float[] vector = embeddingProvider.embed(chunk.getContent());
-            String vectorLiteral = VectorUtils.toPgVectorLiteral(vector);
-
-            ChunkEmbedding existing = chunkEmbeddingMapper.selectOne(
-                    new LambdaQueryWrapper<ChunkEmbedding>().eq(ChunkEmbedding::getChunkId, chunk.getId())
-            );
-
-            if (existing != null) {
-                existing.setKbId(kbId);
-                existing.setDocumentId(chunk.getDocumentId());
-                existing.setEmbeddingModel(model);
-                existing.setEmbeddingDimension(dimension);
-                existing.setEmbeddingVector(vectorLiteral);
-                chunkEmbeddingMapper.updateEmbedding(existing);
-            } else {
-                ChunkEmbedding entity = new ChunkEmbedding();
-                entity.setKbId(kbId);
-                entity.setDocumentId(chunk.getDocumentId());
-                entity.setChunkId(chunk.getId());
-                entity.setEmbeddingModel(model);
-                entity.setEmbeddingDimension(dimension);
-                entity.setEmbeddingVector(vectorLiteral);
-                chunkEmbeddingMapper.insertEmbedding(entity);
+            if (vector.length != dimension) {
+                throw new IllegalStateException(
+                        "Embedding 维度不一致: 期望 " + dimension + ", 实际 " + vector.length);
             }
-        }
-
-        if (!chunkIds.isEmpty()) {
-            chunkEmbeddingMapper.delete(
-                    new LambdaQueryWrapper<ChunkEmbedding>()
-                            .eq(ChunkEmbedding::getKbId, kbId)
-                            .notIn(ChunkEmbedding::getChunkId, chunkIds)
-            );
-        } else {
-            chunkEmbeddingMapper.delete(
-                    new LambdaQueryWrapper<ChunkEmbedding>().eq(ChunkEmbedding::getKbId, kbId)
-            );
+            ChunkEmbedding entity = new ChunkEmbedding();
+            entity.setKbId(kbId);
+            entity.setDocumentId(chunk.getDocumentId());
+            entity.setChunkId(chunk.getId());
+            entity.setEmbeddingModel(model);
+            entity.setEmbeddingDimension(dimension);
+            entity.setEmbeddingVector(VectorUtils.toPgVectorLiteral(vector));
+            chunkEmbeddingMapper.insertEmbedding(entity);
         }
 
         long embedded = chunkEmbeddingMapper.countByKbId(kbId);
@@ -89,10 +67,16 @@ public class EmbeddingService {
 
     public EmbeddingStatusResponse status(Long kbId) {
         knowledgeBaseService.requireKb(kbId);
+        int expectedDimension = embeddingProvider.dimension();
         long totalChunks = documentChunkMapper.selectCount(
                 new LambdaQueryWrapper<DocumentChunk>().eq(DocumentChunk::getKbId, kbId)
         );
-        long embeddedChunks = chunkEmbeddingMapper.countByKbId(kbId);
+        long embeddedChunks = chunkEmbeddingMapper.selectCount(
+                new LambdaQueryWrapper<ChunkEmbedding>()
+                        .eq(ChunkEmbedding::getKbId, kbId)
+                        .eq(ChunkEmbedding::getEmbeddingDimension, expectedDimension)
+                        .eq(ChunkEmbedding::getEmbeddingModel, embeddingProvider.model())
+        );
         return EmbeddingStatusResponse.builder()
                 .totalChunks(totalChunks)
                 .embeddedChunks(embeddedChunks)
@@ -101,6 +85,9 @@ public class EmbeddingService {
     }
 
     public long countEmbeddedChunks() {
-        return chunkEmbeddingMapper.selectCount(null);
+        return chunkEmbeddingMapper.selectCount(
+                new LambdaQueryWrapper<ChunkEmbedding>()
+                        .eq(ChunkEmbedding::getEmbeddingDimension, embeddingProvider.dimension())
+        );
     }
 }
