@@ -52,3 +52,8 @@ rag:
     max-chunks: 2
     min-score: 0.45
     max-score-gap: 0.35
+  elasticsearch:
+    hosts: ${ES_HOSTS:http://localhost:9200}
+    username: ${ES_USERNAME:elastic}
+    password: ${ES_PASSWORD:}
+    index: rag_document_chunk

@@ -1,0 +1,39 @@
+# 如何看返回值
+# 1. 光标放在 POST 行 → Send Request（需安装 REST Client 扩展）
+# 2. 响应在标签栏新标签（Response / 200）；若一闪就没了：已配置 .vscode/settings.json 禁止预览标签被顶掉，重载窗口后再试
+# 3. 找历史响应：Cmd+Shift+P → Rest Client: Request History
+# 4. 或终端：curl -s -X POST http://localhost:8080/api/search/bm25 -H "Content-Type: application/json" -d '{"kbId":1,"query":"SMS_429","topK":5}'
+
+### V4 全量重建 ES 索引
+POST http://localhost:8080/api/search/index/rebuild
+
+### V4 BM25 检索 - SMS_429
+POST http://localhost:8080/api/search/bm25
+Content-Type: application/json
+
+{
+  "kbId": 1,
+  "query": "SMS_429 是什么意思？",
+  "topK": 5
+}
+
+### V4 BM25 检索 - send-code
+POST http://localhost:8080/api/search/bm25
+Content-Type: application/json
+
+{
+  "kbId": 1,
+  "query": "send-code 接口路径是什么？",
+  "topK": 5
+}
+
+### V4 Debug 查询 - BM25 模式
+POST http://localhost:8080/api/debug/query
+Content-Type: application/json
+
+{
+  "kbId": 1,
+  "question": "SMS_429 是什么意思？",
+  "topK": 5,
+  "searchMode": "BM25"
+}

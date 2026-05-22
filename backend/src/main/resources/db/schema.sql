@@ -121,3 +121,4 @@ CREATE INDEX IF NOT EXISTS idx_rag_retrieval_log_query_log_id ON rag_retrieval_l
 
 ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS used_in_prompt SMALLINT NOT NULL DEFAULT 0;
 ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS filter_reason VARCHAR(50);
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS search_mode VARCHAR(20);

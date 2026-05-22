@@ -5,7 +5,19 @@ Content-Type: application/json
 {
   "kbId": 1,
   "question": "短信验证码发不出去怎么排查？",
-  "topK": 5
+  "topK": 5,
+  "searchMode": "VECTOR"
+}
+
+### V4 Debug 查询 - BM25 模式
+POST http://localhost:8080/api/debug/query
+Content-Type: application/json
+
+{
+  "kbId": 1,
+  "question": "SMS_429 是什么意思？",
+  "topK": 5,
+  "searchMode": "BM25"
 }
 
 ### Debug 查询历史

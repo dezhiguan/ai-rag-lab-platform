@@ -10,8 +10,13 @@
 
     <template v-else-if="detail">
       <el-card shadow="never" class="panel">
-        <template #header><span>Provider 信息</span></template>
+        <template #header><span>检索与 Provider</span></template>
         <el-descriptions :column="2" border size="small">
+          <el-descriptions-item label="检索模式">
+            <el-tag :type="detail.searchMode === 'BM25' ? 'warning' : 'primary'" size="small">
+              {{ detail.searchMode ?? 'VECTOR' }}
+            </el-tag>
+          </el-descriptions-item>
           <el-descriptions-item label="Embedding Provider">
             {{ detail.embeddingProvider }}
           </el-descriptions-item>

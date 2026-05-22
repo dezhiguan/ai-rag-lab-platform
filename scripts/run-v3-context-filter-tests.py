@@ -18,6 +18,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 RESULT_PATH = ROOT / "docs" / "test-cases" / "V3_CONTEXT_FILTER_TEST_RESULT.md"
 
+sys.path.insert(0, str(ROOT / "scripts"))
+from lib.load_dotenv import load_dotenv  # noqa: E402
+
+load_dotenv()
+
 BASE_URL = os.environ.get("RAG_API_BASE_URL", "http://localhost:8080").rstrip("/")
 KB_ID = int(os.environ.get("RAG_TEST_KB_ID", "1"))
 TOP_K = int(os.environ.get("RAG_TEST_TOP_K", "5"))

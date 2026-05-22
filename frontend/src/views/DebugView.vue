@@ -3,8 +3,8 @@
     <el-card shadow="never" class="panel">
       <template #header>
         <div class="card-header">
-          <span>RAG Debug（V3）</span>
-          <el-tag type="info" size="small">可观察版</el-tag>
+          <span>RAG Debug（V4）</span>
+          <el-tag type="info" size="small">Vector / BM25</el-tag>
         </div>
       </template>
 
@@ -49,11 +49,38 @@
         </el-form-item>
 
         <el-alert
-          v-if="selectedKbId && (embeddingStatus?.notEmbeddedChunks ?? 0) > 0"
+          v-if="searchMode === 'VECTOR' && selectedKbId && (embeddingStatus?.notEmbeddedChunks ?? 0) > 0"
           type="warning"
           :closable="false"
           show-icon
-          title="存在未向量化的 Chunk，请先前往问答页重建向量。"
+          title="Vector 模式：存在未向量化的 Chunk，请先前往问答页重建向量。"
+          class="embed-alert"
+        />
+
+        <el-form-item label="检索模式">
+          <el-radio-group v-model="searchMode">
+            <el-radio-button value="VECTOR">Vector</el-radio-button>
+            <el-radio-button value="BM25">BM25</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item v-if="searchMode === 'BM25'" label="ES 索引">
+          <el-space wrap>
+            <el-button size="small" :loading="rebuildingIndex" @click="handleRebuildEsIndex">
+              重建 ES 索引
+            </el-button>
+            <span v-if="esIndexInfo" class="es-hint">
+              已同步 {{ esIndexInfo.syncedCount }} 条 → {{ esIndexInfo.indexName }}
+            </span>
+          </el-space>
+        </el-form-item>
+
+        <el-alert
+          v-if="searchMode === 'BM25'"
+          type="info"
+          :closable="false"
+          show-icon
+          title="BM25 模式不依赖向量；请先重建 ES 索引后再查询。"
           class="embed-alert"
         />
 
@@ -61,7 +88,7 @@
           <el-input-number v-model="topK" :min="1" :max="20" />
         </el-form-item>
 
-        <el-form-item label="V3 验收">
+        <el-form-item label="V4 验收">
           <el-space wrap>
             <el-button
               v-for="item in quickTests"
@@ -106,9 +133,16 @@
 
       <el-card shadow="never" class="panel">
         <template #header>
-          <span>耗时统计</span>
+          <span>检索与耗时</span>
         </template>
-        <el-descriptions :column="3" border size="small">
+        <el-descriptions :column="2" border size="small" class="mode-block">
+          <el-descriptions-item label="检索模式">
+            <el-tag :type="result.searchMode === 'BM25' ? 'warning' : 'primary'" size="small">
+              {{ result.searchMode ?? 'VECTOR' }}
+            </el-tag>
+          </el-descriptions-item>
+        </el-descriptions>
+        <el-descriptions :column="3" border size="small" class="latency-block">
           <el-descriptions-item label="检索耗时">
             {{ result.latency.retrievalTimeMs }} ms
           </el-descriptions-item>
@@ -129,7 +163,7 @@
           <el-table-column prop="rankPosition" label="#" width="50" />
           <el-table-column prop="documentName" label="文档" min-width="160" show-overflow-tooltip />
           <el-table-column prop="chunkIndex" label="Chunk" width="70" />
-          <el-table-column label="相似度" width="100">
+          <el-table-column :label="result.searchMode === 'BM25' ? 'BM25 分' : '相似度'" width="100">
             <template #default="{ row }">{{ formatScore(row.score) }}</template>
           </el-table-column>
           <el-table-column label="进入 Prompt" width="130">
@@ -226,8 +260,9 @@ import { listKnowledgeBases, type KnowledgeBase } from '@/api/knowledgeBase'
 import { getEmbeddingStatus } from '@/api/embedding'
 import { getModelProviders, type ModelProviders } from '@/api/model'
 import { executeDebugQuery, listDebugQueryLogs } from '@/api/debug'
+import { rebuildSearchIndex, type EsIndexRebuildResult } from '@/api/search'
 import type { EmbeddingStatus } from '@/types/embedding'
-import type { DebugQueryLogSummary, DebugQueryResult } from '@/types/debug'
+import type { DebugQueryLogSummary, DebugQueryResult, DebugSearchMode } from '@/types/debug'
 import { filterReasonLabel } from '@/utils/contextFilter'
 
 interface QuickTest {
@@ -242,17 +277,20 @@ const selectedKbId = ref<number | undefined>()
 const embeddingStatus = ref<EmbeddingStatus | null>(null)
 const question = ref('')
 const topK = ref(5)
+const searchMode = ref<DebugSearchMode>('VECTOR')
+const rebuildingIndex = ref(false)
+const esIndexInfo = ref<EsIndexRebuildResult | null>(null)
 const querying = ref(false)
 const result = ref<DebugQueryResult | null>(null)
 const history = ref<DebugQueryLogSummary[]>([])
 const loadingHistory = ref(false)
 
 const quickTests: QuickTest[] = [
-  { label: '验证码排查', question: '短信验证码发不出去怎么排查？' },
   { label: 'SMS_429', question: 'SMS_429 是什么意思？' },
   { label: 'send-code', question: 'send-code 接口路径是什么？' },
+  { label: 'send-code路径', question: '/api/sms/send-code 是什么接口？' },
+  { label: '验证码排查', question: '短信验证码发不出去怎么排查？' },
   { label: 'PgVector', question: '这个项目为什么后续会使用 PgVector？' },
-  { label: '无关问题', question: '公司年终奖发几个月？' },
 ]
 
 onMounted(async () => {
@@ -313,10 +351,30 @@ function applyQuickTest(item: QuickTest) {
   question.value = item.question
 }
 
+async function handleRebuildEsIndex() {
+  rebuildingIndex.value = true
+  try {
+    const res = await rebuildSearchIndex()
+    if (res.code === 200 && res.data) {
+      esIndexInfo.value = res.data
+      ElMessage.success(`ES 索引重建完成，同步 ${res.data.syncedCount} 条`)
+    } else {
+      ElMessage.error(res.message || 'ES 索引重建失败')
+    }
+  } catch {
+    ElMessage.error('ES 索引重建请求失败，请确认 Elasticsearch 已启动')
+  } finally {
+    rebuildingIndex.value = false
+  }
+}
+
 async function handleDebugQuery() {
   if (!selectedKbId.value || !question.value.trim()) return
-  if ((embeddingStatus.value?.notEmbeddedChunks ?? 0) > 0) {
-    ElMessage.warning('请先完成向量重建后再执行 Debug 查询')
+  if (
+    searchMode.value === 'VECTOR' &&
+    (embeddingStatus.value?.notEmbeddedChunks ?? 0) > 0
+  ) {
+    ElMessage.warning('Vector 模式请先完成向量重建后再执行 Debug 查询')
     return
   }
   querying.value = true
@@ -325,6 +383,7 @@ async function handleDebugQuery() {
       kbId: selectedKbId.value,
       question: question.value.trim(),
       topK: topK.value,
+      searchMode: searchMode.value,
     })
     if (res.code === 200 && res.data) {
       result.value = res.data
@@ -417,5 +476,18 @@ async function copyText(text: string) {
 .mono-area :deep(textarea) {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 13px;
+}
+
+.es-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.mode-block {
+  margin-bottom: 12px;
+}
+
+.latency-block {
+  margin-top: 0;
 }
 </style>

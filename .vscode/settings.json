@@ -1,3 +1,5 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "rest-client.previewResponseInUntitledDocument": false,
+    "rest-client.showResponseInDifferentTab": true
 }

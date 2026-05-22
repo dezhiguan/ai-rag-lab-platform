@@ -24,7 +24,7 @@ ai-rag-lab-platform
 
 ## 当前版本
 
-V3：RAG Debug 可观察版
+V4：关键词检索版
 
 详细允许/禁止与流水线见 `docs/CURRENT_VERSION.md` 与 `docs/AI_CONTEXT.md`。
 

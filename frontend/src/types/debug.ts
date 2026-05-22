@@ -16,16 +16,20 @@ export interface DebugLatency {
   totalTimeMs: number
 }
 
+export type DebugSearchMode = 'VECTOR' | 'BM25'
+
 export interface DebugQueryRequest {
   kbId: number
   question: string
   topK?: number
+  searchMode?: DebugSearchMode
 }
 
 export interface DebugQueryResult {
   queryLogId: number
   kbId: number
   question: string
+  searchMode?: string
   embeddingProvider: string
   embeddingModel: string
   chatProvider: string

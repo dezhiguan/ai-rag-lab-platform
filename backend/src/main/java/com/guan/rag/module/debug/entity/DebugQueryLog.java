@@ -29,6 +29,8 @@ public class DebugQueryLog {
 
     private Integer topK;
 
+    private String searchMode;
+
     private String embeddingProvider;
 
     private String embeddingModel;

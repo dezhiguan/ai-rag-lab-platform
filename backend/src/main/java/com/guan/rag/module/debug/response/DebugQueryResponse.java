@@ -12,6 +12,7 @@ public class DebugQueryResponse {
     private Long queryLogId;
     private Long kbId;
     private String question;
+    private String searchMode;
     private String embeddingProvider;
     private String embeddingModel;
     private String chatProvider;

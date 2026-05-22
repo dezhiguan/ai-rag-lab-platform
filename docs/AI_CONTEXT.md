@@ -1,6 +1,6 @@
 # AI_CONTEXT.md
 
-**当前开发版本：V3（RAG Debug 可观察版）**
+**当前开发版本：V4（关键词检索版）**
 
 ## 项目背景
 
@@ -13,7 +13,7 @@ ai-rag-lab-platform 是一个 RAG 知识库实验平台。
 3. 文本分块
 4. Naive RAG
 5. 检索过程可视化（V3）
-6. BM25 关键词检索（V4+）
+6. BM25 关键词检索（V4，当前）
 7. Hybrid Search 混合检索（V5+）
 8. Reranker 重排（V6+）
 9. 评测指标（V7+）
@@ -61,40 +61,41 @@ V2 禁止：BM25、Elasticsearch、Hybrid、Reranker、Debug Console、Evaluatio
 
 ---
 
-### V3：RAG Debug 可观察版（当前）
+### V3：RAG Debug 可观察版
+
+状态：已完成
 
 目标：让用户在前端看到一次 RAG 问答的完整内部过程。
 
-V3 允许：
+V3 允许：Debug 查询、召回/Context/Prompt/Answer 展示、Context 过滤、查询历史、耗时统计
 
-- Debug 查询接口（`POST /api/debug/query`）
-- 召回 Chunk 展示（含相似度分数）
-- Context 展示
-- Prompt 展示
-- Answer 展示
-- Provider 信息展示（Embedding / Chat）
-- 耗时统计（检索 / 生成 / 总耗时）
-- Debug 查询历史（列表 + 详情）
-- 表：`rag_query_log`、`rag_retrieval_log`
-
-V3 禁止：
-
-- BM25
-- Elasticsearch
-- Hybrid Search
-- Reranker
-- Query Rewrite
-- Evaluation
-- 权限
-- 多轮对话
-- 新增真实模型 Provider（沿用 V2.5）
-- 为后续版本创建空类、空接口、空页面、空表
+V3 禁止：BM25、Elasticsearch、Hybrid、Reranker、Evaluation 等（已在 V4 单独实现 BM25）
 
 ---
 
-### V4：关键词检索版
+### V4：关键词检索版（当前）
 
-目标：Elasticsearch、BM25（未开始）
+目标：引入 Elasticsearch + BM25，解决错误码、接口路径、专有名词等场景下纯向量检索不稳定的问题。
+
+V4 允许：
+
+- Elasticsearch（本地 docker-compose 单节点）
+- BM25 关键词检索（`POST /api/search/bm25`）
+- Chunk 同步 ES（`POST /api/search/index/rebuild`）
+- ES 索引 `rag_document_chunk` 全量重建
+- Debug 页 `searchMode`：`VECTOR` / `BM25` 切换
+- Debug 流程在 BM25 模式下仍走 V3 Context 过滤、Prompt、回答生成
+
+V4 禁止：
+
+- Hybrid Search
+- RRF 融合
+- Reranker
+- Query Rewrite
+- Evaluation
+- 权限控制
+- 多轮对话
+- 为 V5+ 创建空类、空接口、空页面、空表
 
 ---
 
@@ -122,7 +123,7 @@ V3 禁止：
 
 ## 当前技术栈
 
-后端：Spring Boot 3、JDK 17、PostgreSQL、PgVector、MyBatis-Plus
+后端：Spring Boot 3、JDK 17、PostgreSQL、PgVector、Elasticsearch、MyBatis-Plus
 
 前端：Vue 3、TypeScript、Vite、Element Plus
 
@@ -130,5 +131,5 @@ V3 禁止：
 
 1. 只做当前版本功能
 2. 不提前实现后续版本
-3. 保证 V1、V2、V2.5 既有能力不受影响
+3. 保证 V1～V3 既有能力不受影响
 4. 完成后更新 `docs/CURRENT_VERSION.md`

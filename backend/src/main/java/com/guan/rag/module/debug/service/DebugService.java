@@ -21,6 +21,8 @@ import com.guan.rag.module.embedding.provider.EmbeddingProviderRouter;
 import com.guan.rag.module.kb.service.KnowledgeBaseService;
 import com.guan.rag.module.retrieval.response.RetrievedChunkResponse;
 import com.guan.rag.module.retrieval.service.VectorRetrievalService;
+import com.guan.rag.module.search.SearchMode;
+import com.guan.rag.module.search.service.Bm25SearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,7 @@ public class DebugService {
 
     private final KnowledgeBaseService knowledgeBaseService;
     private final VectorRetrievalService vectorRetrievalService;
+    private final Bm25SearchService bm25SearchService;
     private final ContextChunkFilter contextChunkFilter;
     private final PromptBuilder promptBuilder;
     private final ChatModelProvider chatModelProvider;
@@ -51,6 +54,7 @@ public class DebugService {
         knowledgeBaseService.requireKb(request.getKbId());
         int topK = request.getTopK() == null ? 5 : request.getTopK();
         String question = request.getQuestion().trim();
+        SearchMode searchMode = SearchMode.from(request.getSearchMode());
 
         String embeddingProvider = embeddingProviderRouter.configuredProvider();
         String embeddingModel = embeddingProviderRouter.model();
@@ -58,11 +62,13 @@ public class DebugService {
         String chatModel = chatModelProviderRouter.model();
 
         long retrievalStart = System.currentTimeMillis();
-        List<RetrievedChunkResponse> retrieved = vectorRetrievalService.retrieve(
-                request.getKbId(), question, topK);
+        List<RetrievedChunkResponse> retrieved = retrieveChunks(searchMode, request.getKbId(), question, topK);
         long retrievalTimeMs = System.currentTimeMillis() - retrievalStart;
 
-        ContextFilterResult filterResult = contextChunkFilter.filter(retrieved);
+        List<RetrievedChunkResponse> forFilter = searchMode == SearchMode.BM25
+                ? bm25SearchService.retrieveNormalizedForFilter(request.getKbId(), question, topK)
+                : retrieved;
+        ContextFilterResult filterResult = contextChunkFilter.filter(forFilter);
         List<DebugRetrievedChunkResponse> retrievedChunks = toRetrievedChunks(retrieved, filterResult);
         List<DebugRetrievedChunkResponse> contextChunks = toContextChunkResponses(
                 filterResult.getContextChunks(), filterResult);
@@ -86,6 +92,7 @@ public class DebugService {
         queryLog.setContext(context);
         queryLog.setAnswer(result.answer());
         queryLog.setTopK(topK);
+        queryLog.setSearchMode(searchMode.name());
         queryLog.setEmbeddingProvider(embeddingProvider);
         queryLog.setEmbeddingModel(embeddingModel);
         queryLog.setChatProvider(chatProvider);
@@ -101,6 +108,7 @@ public class DebugService {
                 .queryLogId(queryLog.getId())
                 .kbId(request.getKbId())
                 .question(question)
+                .searchMode(searchMode.name())
                 .embeddingProvider(embeddingProvider)
                 .embeddingModel(embeddingModel)
                 .chatProvider(chatProvider)
@@ -149,6 +157,7 @@ public class DebugService {
                 .queryLogId(queryLog.getId())
                 .kbId(queryLog.getKbId())
                 .question(queryLog.getQuestion())
+                .searchMode(queryLog.getSearchMode() != null ? queryLog.getSearchMode() : SearchMode.VECTOR.name())
                 .embeddingProvider(queryLog.getEmbeddingProvider())
                 .embeddingModel(queryLog.getEmbeddingModel())
                 .chatProvider(queryLog.getChatProvider())
@@ -164,6 +173,13 @@ public class DebugService {
                         .totalTimeMs(queryLog.getTotalTimeMs())
                         .build())
                 .build();
+    }
+
+    private List<RetrievedChunkResponse> retrieveChunks(SearchMode searchMode, Long kbId, String question, int topK) {
+        if (searchMode == SearchMode.BM25) {
+            return bm25SearchService.retrieve(kbId, question, topK);
+        }
+        return vectorRetrievalService.retrieve(kbId, question, topK);
     }
 
     private void saveRetrievalLogs(Long queryLogId, Long kbId, List<DebugRetrievedChunkResponse> chunks) {

@@ -2,9 +2,9 @@
 
 ## 当前版本
 
-**V3：RAG Debug 可观察版（含轻量级 Context 过滤）**
+**V4：关键词检索版**
 
-在 V2 / V2.5 基础上提供 Debug 可观察能力，并对进入 Prompt 的 Chunk 做分数与 Top1 差距过滤，降低弱相关噪声。
+在 V3 Debug 可观察能力基础上，引入 Elasticsearch + BM25 关键词检索，解决错误码、接口路径、专有名词等场景下纯向量检索不稳定的问题。
 
 ## 版本关系
 
@@ -13,28 +13,126 @@
 | V1 文档导入与分块 | 已完成 |
 | V2 Naive RAG 问答 | 已完成 |
 | V2.5 真实模型接入 | 已完成 |
-| **V3 RAG Debug 可观察** | **当前** |
-| V4 关键词检索 | 未开始 |
+| V3 RAG Debug 可观察 | 已完成 |
+| **V4 关键词检索** | **当前** |
+| V5 混合检索 | 未开始 |
 
-## V3 完成内容
+## V4 完成内容
 
-### 轻量级 Context 组装过滤（本次增强）
+### 基础设施
 
-| 组件 | 说明 |
+| 项 | 说明 |
+|----|------|
+| `docker-compose.yml` | 新增 Elasticsearch 8.11 单节点，端口 9200，开发模式关闭 xpack.security |
+| `rag.elasticsearch` | `hosts` / `index` / 可选 `username` / `password`（`application.yml`） |
+
+### 后端 search 模块
+
+| 类型 | 说明 |
 |------|------|
-| `ContextChunkFilter` | 按 score / Top1 差距 / maxChunks 过滤进入 Prompt 的 Chunk |
-| `ContextTextBuilder` | 仅拼接 contextChunks 为 Context 文本 |
-| `ContextFilterReason` | `SCORE_TOO_LOW` / `SCORE_GAP_TOO_LARGE` / `EXCEED_MAX_CONTEXT_CHUNKS` |
+| `SearchController` | 检索 API |
+| `EsIndexService` | 索引 `rag_document_chunk` 创建与全量重建 |
+| `Bm25SearchService` | BM25 检索；Debug 模式下分数归一化后走 V3 Context 过滤 |
+| `SearchMode` | `VECTOR` / `BM25`（不含 HYBRID） |
 
-**规则：**
+**索引字段：** `kbId`、`documentId`、`documentName`、`chunkId`、`chunkIndex`、`content`（text，standard analyzer）
 
-1. `retrievedChunks`：完整 TopK 召回，供 Debug 表格展示
-2. `contextChunks`：过滤后实际进入 Prompt 的片段
-3. 按 score 降序 → 过滤 `score < minScore` → 过滤 `top1Score - score > maxScoreGap` → 最多 `maxChunks` 个
-4. 若全部被过滤，保留 Top1，避免 Context 为空
-5. Prompt 与持久化 Context **仅**使用 `contextChunks`
+### API
 
-**默认配置（`application.yml`）：**
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/search/index/rebuild` | 从 `document_chunk` 全量同步 ES |
+| POST | `/api/search/bm25` | BM25 关键词检索 |
+| POST | `/api/debug/query` | 新增 `searchMode`：`VECTOR`（默认）/ `BM25` |
+
+**`POST /api/search/bm25` 请求示例：**
+
+```json
+{
+  "kbId": 1,
+  "query": "SMS_429 是什么意思？",
+  "topK": 5
+}
+```
+
+**`POST /api/debug/query` 新增字段：**
+
+```json
+{
+  "kbId": 1,
+  "question": "SMS_429 是什么意思？",
+  "topK": 5,
+  "searchMode": "BM25"
+}
+```
+
+返回增加 `searchMode`；BM25 模式仍经 `ContextChunkFilter` → `PromptBuilder` → Chat。
+
+### Debug 前端
+
+| 项 | 说明 |
+|----|------|
+| `/debug` | 检索模式 Vector / BM25；BM25 下可「重建 ES 索引」 |
+| 结果展示 | 检索模式、耗时、召回、Context、Prompt、Answer |
+| V4 快捷问题 | SMS_429、send-code、`/api/sms/send-code`、验证码排查、PgVector |
+
+### 复用 V1～V3
+
+- 文档导入、分块、向量检索、Chat、Context 过滤、Debug 历史均保留
+- `/api/chat` 仍仅向量检索（未改）
+
+## V4 明确不做
+
+Hybrid Search、RRF 融合、Reranker、Query Rewrite、Evaluation、权限、多轮对话、后续版本空实现
+
+## V4 验收问题
+
+在 `/debug` 分别用 **Vector** 与 **BM25** 测试：
+
+| # | 问题 | BM25 预期 Top1 |
+|---|------|----------------|
+| 1 | SMS_429 是什么意思？ | `02-api-spec.md` |
+| 2 | send-code 接口路径是什么？ | `02-api-spec.md` |
+| 3 | /api/sms/send-code 是什么接口？ | `02-api-spec.md` |
+| 4 | 短信验证码发不出去怎么排查？ | `03-troubleshooting.md` 或 api-spec |
+| 5 | 这个项目为什么后续会使用 PgVector？ | `01-project-guideline.md` |
+
+## 快速启动
+
+**方式 A：无 Docker（推荐旧机器）** — 配置见项目根 `.env`，说明见 [LOCAL_DEV_WITHOUT_DOCKER.md](LOCAL_DEV_WITHOUT_DOCKER.md)
+
+```bash
+# PostgreSQL、ES 使用 .env 中的地址（可为远程 ES）
+# VS Code 启动 RagApplication（launch.json 已加载 .env）
+python3 scripts/probe-rag-services.py   # 探测 ES / 后端是否可用
+cd frontend && npm run dev
+```
+
+**方式 B：Docker Compose（可选）**
+
+```bash
+docker compose up -d
+cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
+cd frontend && npm run dev
+```
+
+**V4 首次使用 BM25 前：**
+
+```bash
+# 1. 确保样例库已有 Chunk（Dashboard 初始化样例或上传文档）
+# 2. 全量重建 ES 索引
+curl -X POST http://localhost:8080/api/search/index/rebuild
+
+# 3. BM25 检索验证
+curl -X POST http://localhost:8080/api/search/bm25 \
+  -H 'Content-Type: application/json' \
+  -d '{"kbId":1,"query":"SMS_429","topK":5}'
+```
+
+- Debug：http://localhost:5173/debug
+- HTTP 用例：`http/search-test.http`
+
+## V3 Context 过滤（仍生效）
 
 ```yaml
 rag:
@@ -44,92 +142,19 @@ rag:
     max-score-gap: 0.35
 ```
 
-**示例（短信验证码排查）：**
-
-| 文档 | score | 进入 Prompt | 原因 |
-|------|-------|-------------|------|
-| 03-troubleshooting.md | 0.82 | 是 | — |
-| 02-api-spec.md | 0.62 | 是 | — |
-| 01-project-guideline.md | 0.27 | 否 | SCORE_TOO_LOW |
-
-### 后端 debug 模块
-
-| 类型 | 说明 |
-|------|------|
-| `DebugController` | Debug API |
-| `DebugService` | 检索 → Context 过滤 → Prompt → 回答 → 落库 |
-| `rag_query_log` / `rag_retrieval_log` | 查询与召回日志 |
-
-`rag_retrieval_log` 新增字段：
-
-- `used_in_prompt`：是否进入 Prompt
-- `filter_reason`：未进入时的过滤原因
-
-### API
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/debug/query` | 执行 Debug 查询 |
-| GET | `/api/debug/query-logs` | 历史列表 |
-| GET | `/api/debug/query-logs/{queryLogId}` | 详情 |
-
-**`POST /api/debug/query` 返回新增/增强：**
-
-- `retrievedChunks[]`：含 `usedInPrompt`、`filterReason`
-- `contextChunks[]`：进入 Prompt 的片段
-- `context` / `prompt`：仅基于 `contextChunks`
-
-### Prompt 模板（轻微优化）
-
-- 优先使用最相关片段
-- 多片段综合回答，不引入无关内容
-- 无依据时回答：「知识库中没有找到相关依据。」
-
-### 前端 Debug 页
-
-| 路由 | 说明 |
-|------|------|
-| `/debug` | 召回表格：是否进入 Prompt、过滤原因；Context/Prompt 仅展示过滤后内容 |
-| `/debug/:queryLogId` | 历史详情同上 |
-
-- `frontend/src/utils/contextFilter.ts` — 过滤原因中文标签
-
-### 复用 V2 / V2.5
-
-- `VectorRetrievalService`、`PromptBuilder`、`ChatModelProvider`、`EmbeddingProviderRouter`
-
-> Debug 流程已改用 `ContextChunkFilter`（按分数过滤），不再使用 `ChatRelevanceFilter`（n-gram 过滤）。`/chat` 问答页仍使用 `ChatRelevanceFilter`。
-
-## V3 明确不做
-
-BM25、Elasticsearch、Hybrid Search、Reranker、Query Rewrite、Evaluation、权限、多轮对话
-
-## V3 验收问题
-
-| # | 问题 | Context 预期 |
-|---|------|----------------|
-| 1 | 短信验证码发不出去怎么排查？ | troubleshooting + api-spec（不含 guideline） |
-| 2 | SMS_429 是什么意思？ | api-spec 相关 |
-| 3 | send-code 接口路径是什么？ | api-spec 相关 |
-| 4 | 为什么后续会使用 PgVector？ | guideline 相关 |
-| 5 | 公司年终奖发几个月？ | 可能为空或 Top1（视召回分数） |
-
-## 快速启动
-
-```bash
-docker compose up -d
-cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
-cd frontend && npm run dev
-```
-
-- Debug：http://localhost:5173/debug
-- 单元测试：`mvn test -Dtest=ContextChunkFilterTest`
+BM25 原始分数量纲与向量不同，Debug 流程在过滤前将 BM25 分数按 Top1 归一化到 [0,1]，再应用上述规则。
 
 ## V2.5 配置（Embedding / Chat）
 
-见 `application-dev.yml`：`rag.embedding.provider`、`rag.chat.provider`  
-切换 Embedding 后须 `POST /api/kb/{kbId}/embedding/rebuild`
+见 `application-dev.yml`；Vector 模式切换 Embedding 后须 `POST /api/kb/{kbId}/embedding/rebuild`。
 
-## 下一步（V4）
+## 环境变量（可选）
 
-关键词检索（Elasticsearch / BM25），本版本未引入。
+| 变量 | 说明 |
+|------|------|
+| `ES_HOSTS` | 默认 `http://localhost:9200` |
+| `ES_USERNAME` / `ES_PASSWORD` | 生产 ES 鉴权（本地 compose 无需） |
+
+## 下一步（V5）
+
+混合检索（Vector + BM25、RRF），本版本未引入。

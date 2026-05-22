@@ -14,6 +14,7 @@ public class RagProperties {
     private Embedding embedding = new Embedding();
     private Chat chat = new Chat();
     private Context context = new Context();
+    private Elasticsearch elasticsearch = new Elasticsearch();
 
     @Data
     public static class Storage {
@@ -51,5 +52,13 @@ public class RagProperties {
         private double minScore = 0.45;
         /** 与 Top1 分数差距超过该值不进入 Prompt */
         private double maxScoreGap = 0.35;
+    }
+
+    @Data
+    public static class Elasticsearch {
+        private String hosts = "http://localhost:9200";
+        private String username = "";
+        private String password = "";
+        private String index = "rag_document_chunk";
     }
 }
