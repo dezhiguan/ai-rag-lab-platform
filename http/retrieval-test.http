@@ -1,10 +1,45 @@
 ### 向量检索测试（V2 基线验证）
 ### 使用前：后端已启动；该 kbId 已导入文档并执行 POST /api/kb/{kbId}/embedding/rebuild
-POST http://localhost:8080/api/retrieval/test
+
+@kbId = 1
+@baseUrl = http://localhost:8080
+
+### 1. 短信验证码排查 — 预期 Top1: 03-troubleshooting.md
+POST {{baseUrl}}/api/retrieval/test
 Content-Type: application/json
 
 {
-  "kbId": 1,
+  "kbId": {{kbId}},
   "query": "短信验证码发不出去怎么排查？",
+  "topK": 5
+}
+
+### 2. SMS_429 — 预期 Top1: 02-api-spec.md
+POST {{baseUrl}}/api/retrieval/test
+Content-Type: application/json
+
+{
+  "kbId": {{kbId}},
+  "query": "SMS_429 是什么意思？",
+  "topK": 5
+}
+
+### 3. send-code — 预期 Top1: 02-api-spec.md
+POST {{baseUrl}}/api/retrieval/test
+Content-Type: application/json
+
+{
+  "kbId": {{kbId}},
+  "query": "send-code 接口路径是什么？",
+  "topK": 5
+}
+
+### 4. PgVector — 预期 Top1: 01-project-guideline.md
+POST {{baseUrl}}/api/retrieval/test
+Content-Type: application/json
+
+{
+  "kbId": {{kbId}},
+  "query": "这个项目为什么后续会使用 PgVector？",
   "topK": 5
 }

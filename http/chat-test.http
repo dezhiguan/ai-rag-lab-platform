@@ -1,0 +1,60 @@
+### Naive RAG Chat 测试（V2）
+### 使用前：后端已启动；kbId 已导入样例并执行 embedding/rebuild
+
+@kbId = 1
+@baseUrl = http://localhost:8080
+
+### 1. 短信验证码排查 — 预期 03-troubleshooting.md
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "kbId": {{kbId}},
+  "sessionId": null,
+  "question": "短信验证码发不出去怎么排查？",
+  "topK": 5
+}
+
+### 2. SMS_429 — 预期 02-api-spec.md
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "kbId": {{kbId}},
+  "sessionId": null,
+  "question": "SMS_429 是什么意思？",
+  "topK": 5
+}
+
+### 3. send-code 路径 — 预期 02-api-spec.md
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "kbId": {{kbId}},
+  "sessionId": null,
+  "question": "send-code 接口路径是什么？",
+  "topK": 5
+}
+
+### 4. PgVector — 预期 01-project-guideline.md
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "kbId": {{kbId}},
+  "sessionId": null,
+  "question": "这个项目为什么后续会使用 PgVector？",
+  "topK": 5
+}
+
+### 5. 无关问题 — 预期：知识库中没有找到相关依据
+POST {{baseUrl}}/api/chat
+Content-Type: application/json
+
+{
+  "kbId": {{kbId}},
+  "sessionId": null,
+  "question": "公司年终奖发几个月？",
+  "topK": 5
+}

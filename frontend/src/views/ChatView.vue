@@ -37,8 +37,30 @@
           </el-space>
         </el-form-item>
 
+        <el-alert
+          v-if="selectedKbId && (embeddingStatus?.notEmbeddedChunks ?? 0) > 0"
+          type="warning"
+          :closable="false"
+          show-icon
+          title="存在未向量化的 Chunk，请先点击「重建向量」再提问。"
+          class="embed-alert"
+        />
+
         <el-form-item label="TopK">
           <el-input-number v-model="topK" :min="1" :max="20" />
+        </el-form-item>
+
+        <el-form-item label="快捷测试">
+          <el-space wrap>
+            <el-button
+              v-for="item in quickTests"
+              :key="item.label"
+              size="small"
+              @click="applyQuickTest(item.question)"
+            >
+              {{ item.label }}
+            </el-button>
+          </el-space>
         </el-form-item>
 
         <el-form-item label="问题">
@@ -66,7 +88,10 @@
 
     <el-card v-if="lastAnswer" shadow="never" class="panel answer-card">
       <template #header>
-        <span>回答</span>
+        <div class="answer-header">
+          <span>回答</span>
+          <el-tag v-if="sessionId" size="small" type="info">会话 #{{ sessionId }}</el-tag>
+        </div>
       </template>
       <div class="answer-text">{{ lastAnswer }}</div>
     </el-card>
@@ -108,6 +133,14 @@ const sessionId = ref<number | undefined>()
 const lastAnswer = ref('')
 const lastSources = ref<ChatSource[]>([])
 
+const quickTests = [
+  { label: '验证码排查', question: '短信验证码发不出去怎么排查？' },
+  { label: 'SMS_429', question: 'SMS_429 是什么意思？' },
+  { label: 'send-code', question: 'send-code 接口路径是什么？' },
+  { label: 'PgVector', question: '这个项目为什么后续会使用 PgVector？' },
+  { label: '无关问题', question: '公司年终奖发几个月？' },
+]
+
 onMounted(async () => {
   const res = await listKnowledgeBases()
   if (res.code === 200) {
@@ -148,8 +181,16 @@ async function handleRebuild() {
   }
 }
 
+function applyQuickTest(q: string) {
+  question.value = q
+}
+
 async function handleSend() {
   if (!selectedKbId.value || !question.value.trim()) return
+  if ((embeddingStatus.value?.notEmbeddedChunks ?? 0) > 0) {
+    ElMessage.warning('请先重建向量后再提问')
+    return
+  }
   sending.value = true
   try {
     const res = await sendChat({
@@ -187,6 +228,17 @@ function formatScore(score: number) {
 
 .panel {
   width: 100%;
+}
+
+.embed-alert {
+  margin-bottom: 16px;
+}
+
+.answer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .answer-text {

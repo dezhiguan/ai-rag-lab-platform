@@ -16,6 +16,7 @@ import com.guan.rag.module.chat.response.ChatMessageResponse;
 import com.guan.rag.module.chat.response.ChatResponse;
 import com.guan.rag.module.chat.response.ChatSessionResponse;
 import com.guan.rag.module.chat.response.ChatSourceResponse;
+import com.guan.rag.module.chat.support.ChatRelevanceFilter;
 import com.guan.rag.module.kb.service.KnowledgeBaseService;
 import com.guan.rag.module.retrieval.response.RetrievedChunkResponse;
 import com.guan.rag.module.retrieval.service.VectorRetrievalService;
@@ -25,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,9 +52,10 @@ public class ChatService {
 
         List<RetrievedChunkResponse> retrieved = vectorRetrievalService.retrieve(
                 request.getKbId(), request.getQuestion(), topK);
-        List<ChatSourceResponse> sources = retrieved.stream().map(this::toSource).toList();
+        List<RetrievedChunkResponse> relevant = ChatRelevanceFilter.filter(request.getQuestion(), retrieved);
+        List<ChatSourceResponse> sources = relevant.stream().map(this::toSource).toList();
 
-        String context = buildContext(retrieved);
+        String context = buildContext(relevant);
         String prompt = promptBuilder.build(context, request.getQuestion());
 
         long start = System.currentTimeMillis();
