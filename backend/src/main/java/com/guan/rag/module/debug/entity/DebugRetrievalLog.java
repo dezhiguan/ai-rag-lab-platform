@@ -34,6 +34,10 @@ public class DebugRetrievalLog {
 
     private Integer rankPosition;
 
+    private Integer usedInPrompt;
+
+    private String filterReason;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 }

@@ -118,3 +118,6 @@ CREATE TABLE IF NOT EXISTS rag_retrieval_log (
 CREATE INDEX IF NOT EXISTS idx_rag_query_log_kb_id ON rag_query_log (kb_id);
 CREATE INDEX IF NOT EXISTS idx_rag_query_log_created_at ON rag_query_log (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_rag_retrieval_log_query_log_id ON rag_retrieval_log (query_log_id);
+
+ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS used_in_prompt SMALLINT NOT NULL DEFAULT 0;
+ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS filter_reason VARCHAR(50);

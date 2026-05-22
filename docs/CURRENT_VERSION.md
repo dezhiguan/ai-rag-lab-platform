@@ -2,9 +2,9 @@
 
 ## 当前版本
 
-**V3：RAG Debug 可观察版**
+**V3：RAG Debug 可观察版（含轻量级 Context 过滤）**
 
-在 V2 Naive RAG 与 V2.5 真实模型接入基础上，新增 Debug 查询与历史记录，让用户在前端看到一次 RAG 问答的完整内部过程。
+在 V2 / V2.5 基础上提供 Debug 可观察能力，并对进入 Prompt 的 Chunk 做分数与 Top1 差距过滤，降低弱相关噪声。
 
 ## 版本关系
 
@@ -18,96 +18,101 @@
 
 ## V3 完成内容
 
-### 后端 debug 模块
+### 轻量级 Context 组装过滤（本次增强）
 
-包路径：`com.guan.rag.module.debug`
+| 组件 | 说明 |
+|------|------|
+| `ContextChunkFilter` | 按 score / Top1 差距 / maxChunks 过滤进入 Prompt 的 Chunk |
+| `ContextTextBuilder` | 仅拼接 contextChunks 为 Context 文本 |
+| `ContextFilterReason` | `SCORE_TOO_LOW` / `SCORE_GAP_TOO_LARGE` / `EXCEED_MAX_CONTEXT_CHUNKS` |
+
+**规则：**
+
+1. `retrievedChunks`：完整 TopK 召回，供 Debug 表格展示
+2. `contextChunks`：过滤后实际进入 Prompt 的片段
+3. 按 score 降序 → 过滤 `score < minScore` → 过滤 `top1Score - score > maxScoreGap` → 最多 `maxChunks` 个
+4. 若全部被过滤，保留 Top1，避免 Context 为空
+5. Prompt 与持久化 Context **仅**使用 `contextChunks`
+
+**默认配置（`application.yml`）：**
+
+```yaml
+rag:
+  context:
+    max-chunks: 2
+    min-score: 0.45
+    max-score-gap: 0.35
+```
+
+**示例（短信验证码排查）：**
+
+| 文档 | score | 进入 Prompt | 原因 |
+|------|-------|-------------|------|
+| 03-troubleshooting.md | 0.82 | 是 | — |
+| 02-api-spec.md | 0.62 | 是 | — |
+| 01-project-guideline.md | 0.27 | 否 | SCORE_TOO_LOW |
+
+### 后端 debug 模块
 
 | 类型 | 说明 |
 |------|------|
 | `DebugController` | Debug API |
-| `DebugService` | 检索 → Context → Prompt → 回答 → 落库 |
-| `DebugQueryLog` / `DebugRetrievalLog` | 实体 |
-| `DebugQueryLogMapper` / `DebugRetrievalLogMapper` | MyBatis-Plus |
+| `DebugService` | 检索 → Context 过滤 → Prompt → 回答 → 落库 |
+| `rag_query_log` / `rag_retrieval_log` | 查询与召回日志 |
 
-### 数据库表
+`rag_retrieval_log` 新增字段：
 
-| 表 | 说明 |
-|----|------|
-| `rag_query_log` | Debug 查询主记录（问题、Context、Prompt、回答、Provider、耗时） |
-| `rag_retrieval_log` | 单次查询的召回 Chunk 明细（分数、排名、内容） |
+- `used_in_prompt`：是否进入 Prompt
+- `filter_reason`：未进入时的过滤原因
 
 ### API
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/api/debug/query` | 执行 Debug 查询，返回完整过程 |
-| GET | `/api/debug/query-logs` | 最近 Debug 查询列表（可选 `kbId`） |
-| GET | `/api/debug/query-logs/{queryLogId}` | 单次 Debug 查询详情 |
+| POST | `/api/debug/query` | 执行 Debug 查询 |
+| GET | `/api/debug/query-logs` | 历史列表 |
+| GET | `/api/debug/query-logs/{queryLogId}` | 详情 |
 
-### Debug 查询返回内容
+**`POST /api/debug/query` 返回新增/增强：**
 
-1. 原始问题
-2. Embedding Provider / Model
-3. Chat Provider / Model
-4. 召回 Chunk（含相似度、排名）
-5. 注入 Prompt 的 Context
-6. 完整 Prompt
-7. 模型回答
-8. 检索 / 生成 / 总耗时
+- `retrievedChunks[]`：含 `usedInPrompt`、`filterReason`
+- `contextChunks[]`：进入 Prompt 的片段
+- `context` / `prompt`：仅基于 `contextChunks`
 
-### 前端
+### Prompt 模板（轻微优化）
+
+- 优先使用最相关片段
+- 多片段综合回答，不引入无关内容
+- 无依据时回答：「知识库中没有找到相关依据。」
+
+### 前端 Debug 页
 
 | 路由 | 说明 |
 |------|------|
-| `/debug` | Debug 查询页（执行查询、展示过程、历史列表） |
-| `/debug/:queryLogId` | 单次 Debug 查询详情 |
+| `/debug` | 召回表格：是否进入 Prompt、过滤原因；Context/Prompt 仅展示过滤后内容 |
+| `/debug/:queryLogId` | 历史详情同上 |
 
-- `frontend/src/api/debug.ts`
-- `frontend/src/types/debug.ts`
+- `frontend/src/utils/contextFilter.ts` — 过滤原因中文标签
 
-### 复用 V2 / V2.5 能力
+### 复用 V2 / V2.5
 
-- `VectorRetrievalService` 向量检索
-- `ChatRelevanceFilter` 相关性过滤（Context 与 Chat 一致）
-- `PromptBuilder` Prompt 构造
-- `ChatModelProvider` / `EmbeddingProviderRouter` 模型调用与 Provider 信息
+- `VectorRetrievalService`、`PromptBuilder`、`ChatModelProvider`、`EmbeddingProviderRouter`
 
-## V3 允许内容
-
-- Debug 查询接口
-- 召回 Chunk 展示
-- Context 展示
-- Prompt 展示
-- Answer 展示
-- Provider 信息展示
-- 耗时统计
-- Debug 查询历史
+> Debug 流程已改用 `ContextChunkFilter`（按分数过滤），不再使用 `ChatRelevanceFilter`（n-gram 过滤）。`/chat` 问答页仍使用 `ChatRelevanceFilter`。
 
 ## V3 明确不做
 
-- BM25
-- Elasticsearch
-- Hybrid Search
-- Reranker
-- Query Rewrite
-- Evaluation
-- 权限
-- 多轮对话
-- 新增真实模型 Provider（继续使用 V2.5 已有 Provider）
-
-**不要**为上述功能创建空类、空接口、空页面、空表。
+BM25、Elasticsearch、Hybrid Search、Reranker、Query Rewrite、Evaluation、权限、多轮对话
 
 ## V3 验收问题
 
-在 `/debug` 页面可测试：
-
-| # | 问题 |
-|---|------|
-| 1 | 短信验证码发不出去怎么排查？ |
-| 2 | SMS_429 是什么意思？ |
-| 3 | send-code 接口路径是什么？ |
-| 4 | 这个项目为什么后续会使用 PgVector？ |
-| 5 | 公司年终奖发几个月？ |
+| # | 问题 | Context 预期 |
+|---|------|----------------|
+| 1 | 短信验证码发不出去怎么排查？ | troubleshooting + api-spec（不含 guideline） |
+| 2 | SMS_429 是什么意思？ | api-spec 相关 |
+| 3 | send-code 接口路径是什么？ | api-spec 相关 |
+| 4 | 为什么后续会使用 PgVector？ | guideline 相关 |
+| 5 | 公司年终奖发几个月？ | 可能为空或 Top1（视召回分数） |
 
 ## 快速启动
 
@@ -117,20 +122,14 @@ cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
 cd frontend && npm run dev
 ```
 
-- Debug 页：http://localhost:5173/debug
-- 问答页：http://localhost:5173/chat
-- Swagger：http://localhost:8080/doc.html
-- Provider：`GET http://localhost:8080/api/model/providers`
+- Debug：http://localhost:5173/debug
+- 单元测试：`mvn test -Dtest=ContextChunkFilterTest`
 
-## V2.5 配置说明（保持不变）
+## V2.5 配置（Embedding / Chat）
 
-见 `application-dev.yml` 与 `.env.example`：
+见 `application-dev.yml`：`rag.embedding.provider`、`rag.chat.provider`  
+切换 Embedding 后须 `POST /api/kb/{kbId}/embedding/rebuild`
 
-- `DASHSCOPE_API_KEY` — Qwen Embedding
-- `DEEPSEEK_API_KEY` — DeepSeek Chat
+## 下一步（V4）
 
-切换 Embedding Provider / 模型后须对每个知识库执行 `POST /api/kb/{kbId}/embedding/rebuild`。
-
-## 下一步（V4，未开始）
-
-关键词检索版：Elasticsearch、BM25（本版本未引入）。
+关键词检索（Elasticsearch / BM25），本版本未引入。

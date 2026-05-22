@@ -48,3 +48,7 @@ rag:
     model: mock-chat
     api-key: ""
     base-url: https://api.deepseek.com
+  context:
+    max-chunks: 2
+    min-score: 0.45
+    max-score-gap: 0.35

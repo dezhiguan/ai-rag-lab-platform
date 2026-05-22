@@ -123,28 +123,43 @@
 
       <el-card shadow="never" class="panel">
         <template #header>
-          <span>召回 Chunk（{{ result.retrievedChunks.length }}）</span>
+          <span>召回 Chunk（{{ result.retrievedChunks.length }}，进入 Prompt {{ result.contextChunks.length }}）</span>
         </template>
-        <div
-          v-for="chunk in result.retrievedChunks"
-          :key="chunk.chunkId"
-          class="chunk-item"
-        >
-          <div class="chunk-meta">
-            <el-tag size="small">#{{ chunk.rankPosition }}</el-tag>
-            <span class="doc-name">{{ chunk.documentName }}</span>
-            <span>Chunk #{{ chunk.chunkIndex }}</span>
-            <el-tag size="small" type="success">相似度 {{ formatScore(chunk.score) }}</el-tag>
-          </div>
-          <div class="chunk-content">{{ chunk.content }}</div>
-        </div>
-        <el-empty v-if="!result.retrievedChunks.length" description="无召回结果" />
+        <el-table :data="result.retrievedChunks" stripe style="width: 100%" empty-text="无召回结果">
+          <el-table-column prop="rankPosition" label="#" width="50" />
+          <el-table-column prop="documentName" label="文档" min-width="160" show-overflow-tooltip />
+          <el-table-column prop="chunkIndex" label="Chunk" width="70" />
+          <el-table-column label="相似度" width="100">
+            <template #default="{ row }">{{ formatScore(row.score) }}</template>
+          </el-table-column>
+          <el-table-column label="进入 Prompt" width="130">
+            <template #default="{ row }">
+              <el-tag v-if="row.usedInPrompt" type="success" size="small">已进入</el-tag>
+              <el-tag v-else type="info" size="small">未进入</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="过滤原因" min-width="140">
+            <template #default="{ row }">
+              <span v-if="row.usedInPrompt">—</span>
+              <span v-else class="filter-reason">{{ filterReasonLabel(row.filterReason) }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-collapse class="chunk-collapse">
+          <el-collapse-item
+            v-for="chunk in result.retrievedChunks"
+            :key="chunk.chunkId"
+            :title="`#${chunk.rankPosition} ${chunk.documentName} · Chunk #${chunk.chunkIndex}`"
+          >
+            <div class="chunk-content">{{ chunk.content }}</div>
+          </el-collapse-item>
+        </el-collapse>
       </el-card>
 
       <el-card shadow="never" class="panel">
         <template #header>
           <div class="section-header">
-            <span>注入 Prompt 的 Context</span>
+            <span>注入 Prompt 的 Context（{{ result.contextChunks.length }} 个片段）</span>
             <el-button size="small" @click="copyText(result.context)">复制</el-button>
           </div>
         </template>
@@ -213,6 +228,7 @@ import { getModelProviders, type ModelProviders } from '@/api/model'
 import { executeDebugQuery, listDebugQueryLogs } from '@/api/debug'
 import type { EmbeddingStatus } from '@/types/embedding'
 import type { DebugQueryLogSummary, DebugQueryResult } from '@/types/debug'
+import { filterReasonLabel } from '@/utils/contextFilter'
 
 interface QuickTest {
   label: string
@@ -383,28 +399,13 @@ async function copyText(text: string) {
   font-size: 15px;
 }
 
-.chunk-item {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+.chunk-collapse {
+  margin-top: 12px;
 }
 
-.chunk-item:last-child {
-  border-bottom: none;
-}
-
-.chunk-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 13px;
+.filter-reason {
+  font-size: 12px;
   color: var(--el-text-color-secondary);
-}
-
-.doc-name {
-  font-weight: 600;
-  color: var(--el-text-color-primary);
 }
 
 .chunk-content {

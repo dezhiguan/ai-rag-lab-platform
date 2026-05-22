@@ -13,6 +13,7 @@ public class RagProperties {
     private Document document = new Document();
     private Embedding embedding = new Embedding();
     private Chat chat = new Chat();
+    private Context context = new Context();
 
     @Data
     public static class Storage {
@@ -40,5 +41,15 @@ public class RagProperties {
         private String model = "mock-chat";
         private String apiKey = "";
         private String baseUrl = "https://api.openai.com/v1";
+    }
+
+    @Data
+    public static class Context {
+        /** 进入 Prompt 的最大 Chunk 数 */
+        private int maxChunks = 2;
+        /** 低于该分数不进入 Prompt */
+        private double minScore = 0.45;
+        /** 与 Top1 分数差距超过该值不进入 Prompt */
+        private double maxScoreGap = 0.35;
     }
 }

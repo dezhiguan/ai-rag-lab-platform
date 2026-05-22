@@ -17,6 +17,7 @@ public class DebugQueryResponse {
     private String chatProvider;
     private String chatModel;
     private List<DebugRetrievedChunkResponse> retrievedChunks;
+    private List<DebugRetrievedChunkResponse> contextChunks;
     private String context;
     private String prompt;
     private String answer;

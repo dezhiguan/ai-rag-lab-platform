@@ -6,6 +6,8 @@ export interface DebugRetrievedChunk {
   score: number
   rankPosition: number
   content: string
+  usedInPrompt?: boolean
+  filterReason?: string | null
 }
 
 export interface DebugLatency {
@@ -29,6 +31,7 @@ export interface DebugQueryResult {
   chatProvider: string
   chatModel: string
   retrievedChunks: DebugRetrievedChunk[]
+  contextChunks: DebugRetrievedChunk[]
   context: string
   prompt: string
   answer: string

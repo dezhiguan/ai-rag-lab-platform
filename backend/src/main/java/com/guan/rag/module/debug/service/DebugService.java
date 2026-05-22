@@ -5,7 +5,9 @@ import com.guan.rag.common.exception.BusinessException;
 import com.guan.rag.module.chat.prompt.PromptBuilder;
 import com.guan.rag.module.chat.provider.ChatModelProvider;
 import com.guan.rag.module.chat.provider.ChatModelProviderRouter;
-import com.guan.rag.module.chat.support.ChatRelevanceFilter;
+import com.guan.rag.module.chat.support.ContextChunkFilter;
+import com.guan.rag.module.chat.support.ContextFilterResult;
+import com.guan.rag.module.chat.support.ContextTextBuilder;
 import com.guan.rag.module.debug.entity.DebugQueryLog;
 import com.guan.rag.module.debug.entity.DebugRetrievalLog;
 import com.guan.rag.module.debug.mapper.DebugQueryLogMapper;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +37,7 @@ public class DebugService {
 
     private final KnowledgeBaseService knowledgeBaseService;
     private final VectorRetrievalService vectorRetrievalService;
+    private final ContextChunkFilter contextChunkFilter;
     private final PromptBuilder promptBuilder;
     private final ChatModelProvider chatModelProvider;
     private final EmbeddingProviderRouter embeddingProviderRouter;
@@ -58,10 +62,12 @@ public class DebugService {
                 request.getKbId(), question, topK);
         long retrievalTimeMs = System.currentTimeMillis() - retrievalStart;
 
-        List<DebugRetrievedChunkResponse> retrievedChunks = toRetrievedChunks(retrieved);
+        ContextFilterResult filterResult = contextChunkFilter.filter(retrieved);
+        List<DebugRetrievedChunkResponse> retrievedChunks = toRetrievedChunks(retrieved, filterResult);
+        List<DebugRetrievedChunkResponse> contextChunks = toContextChunkResponses(
+                filterResult.getContextChunks(), filterResult);
 
-        List<RetrievedChunkResponse> relevant = ChatRelevanceFilter.filter(question, retrieved);
-        String context = buildContext(relevant);
+        String context = ContextTextBuilder.build(filterResult.getContextChunks());
         String prompt = promptBuilder.build(context, question);
 
         long generationStart = System.currentTimeMillis();
@@ -100,6 +106,7 @@ public class DebugService {
                 .chatProvider(chatProvider)
                 .chatModel(chatModel)
                 .retrievedChunks(retrievedChunks)
+                .contextChunks(contextChunks)
                 .context(context)
                 .prompt(prompt)
                 .answer(result.answer())
@@ -134,6 +141,10 @@ public class DebugService {
                         .orderByAsc(DebugRetrievalLog::getRankPosition)
         ).stream().map(this::toRetrievedChunk).toList();
 
+        List<DebugRetrievedChunkResponse> contextChunks = chunks.stream()
+                .filter(c -> Boolean.TRUE.equals(c.getUsedInPrompt()))
+                .toList();
+
         return DebugQueryResponse.builder()
                 .queryLogId(queryLog.getId())
                 .kbId(queryLog.getKbId())
@@ -143,6 +154,7 @@ public class DebugService {
                 .chatProvider(queryLog.getChatProvider())
                 .chatModel(queryLog.getChatModel())
                 .retrievedChunks(chunks)
+                .contextChunks(contextChunks)
                 .context(queryLog.getContext())
                 .prompt(queryLog.getPrompt())
                 .answer(queryLog.getAnswer())
@@ -166,14 +178,21 @@ public class DebugService {
             log.setScore(chunk.getScore());
             log.setContent(chunk.getContent());
             log.setRankPosition(chunk.getRankPosition());
+            log.setUsedInPrompt(Boolean.TRUE.equals(chunk.getUsedInPrompt()) ? 1 : 0);
+            log.setFilterReason(chunk.getFilterReason());
             debugRetrievalLogMapper.insert(log);
         }
     }
 
-    private List<DebugRetrievedChunkResponse> toRetrievedChunks(List<RetrievedChunkResponse> retrieved) {
+    private List<DebugRetrievedChunkResponse> toRetrievedChunks(
+            List<RetrievedChunkResponse> retrieved,
+            ContextFilterResult filterResult
+    ) {
+        Map<Long, ContextFilterResult.ChunkFilterDecision> decisions = filterResult.getDecisions();
         List<DebugRetrievedChunkResponse> result = new ArrayList<>();
         for (int i = 0; i < retrieved.size(); i++) {
             RetrievedChunkResponse item = retrieved.get(i);
+            ContextFilterResult.ChunkFilterDecision decision = decisions.get(item.getChunkId());
             result.add(DebugRetrievedChunkResponse.builder()
                     .documentId(item.getDocumentId())
                     .documentName(item.getDocumentName())
@@ -182,6 +201,30 @@ public class DebugService {
                     .score(item.getScore())
                     .rankPosition(i + 1)
                     .content(item.getContent())
+                    .usedInPrompt(decision != null && decision.isUsedInPrompt())
+                    .filterReason(decision != null ? decision.getFilterReason() : null)
+                    .build());
+        }
+        return result;
+    }
+
+    private List<DebugRetrievedChunkResponse> toContextChunkResponses(
+            List<RetrievedChunkResponse> contextChunks,
+            ContextFilterResult filterResult
+    ) {
+        List<DebugRetrievedChunkResponse> result = new ArrayList<>();
+        for (int i = 0; i < contextChunks.size(); i++) {
+            RetrievedChunkResponse item = contextChunks.get(i);
+            result.add(DebugRetrievedChunkResponse.builder()
+                    .documentId(item.getDocumentId())
+                    .documentName(item.getDocumentName())
+                    .chunkId(item.getChunkId())
+                    .chunkIndex(item.getChunkIndex())
+                    .score(item.getScore())
+                    .rankPosition(i + 1)
+                    .content(item.getContent())
+                    .usedInPrompt(true)
+                    .filterReason(null)
                     .build());
         }
         return result;
@@ -196,21 +239,9 @@ public class DebugService {
                 .score(log.getScore())
                 .rankPosition(log.getRankPosition())
                 .content(log.getContent())
+                .usedInPrompt(log.getUsedInPrompt() != null && log.getUsedInPrompt() == 1)
+                .filterReason(log.getFilterReason())
                 .build();
-    }
-
-    private String buildContext(List<RetrievedChunkResponse> retrieved) {
-        if (retrieved.isEmpty()) {
-            return "";
-        }
-        List<String> parts = new ArrayList<>();
-        for (int i = 0; i < retrieved.size(); i++) {
-            RetrievedChunkResponse item = retrieved.get(i);
-            parts.add("【片段" + (i + 1) + "】文档：" + item.getDocumentName()
-                    + "，Chunk #" + item.getChunkIndex()
-                    + "\n" + item.getContent());
-        }
-        return String.join("\n\n", parts);
     }
 
     private DebugQueryLog requireQueryLog(Long queryLogId) {
