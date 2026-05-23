@@ -13,6 +13,11 @@ const router = createRouter({
       component: BasicLayout,
       children: [
         {
+          path: 'project-overview',
+          name: 'ProjectOverview',
+          component: () => import('@/views/ProjectOverviewView.vue'),
+        },
+        {
           path: 'dashboard',
           name: 'Dashboard',
           component: () => import('@/views/DashboardView.vue'),

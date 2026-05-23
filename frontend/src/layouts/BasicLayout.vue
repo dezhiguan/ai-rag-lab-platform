@@ -8,6 +8,7 @@
         router
         class="menu"
       >
+        <el-menu-item index="/project-overview">项目总览</el-menu-item>
         <el-menu-item index="/dashboard">Dashboard</el-menu-item>
         <el-menu-item index="/system-status">系统状态</el-menu-item>
         <el-menu-item index="/rag-metrics">RAG 指标</el-menu-item>
