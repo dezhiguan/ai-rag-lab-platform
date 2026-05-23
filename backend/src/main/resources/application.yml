@@ -60,3 +60,5 @@ rag:
     username: ${ES_USERNAME:elastic}
     password: ${ES_PASSWORD:}
     index: rag_document_chunk
+  system-status:
+    health-check-timeout-ms: 3000

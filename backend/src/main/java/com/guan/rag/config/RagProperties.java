@@ -16,6 +16,7 @@ public class RagProperties {
     private Chat chat = new Chat();
     private Context context = new Context();
     private Elasticsearch elasticsearch = new Elasticsearch();
+    private SystemStatus systemStatus = new SystemStatus();
 
     @Data
     public static class App {
@@ -67,5 +68,11 @@ public class RagProperties {
         private String username = "";
         private String password = "";
         private String index = "rag_document_chunk";
+    }
+
+    @Data
+    public static class SystemStatus {
+        /** 依赖探活超时（毫秒），应小于前端 /api/system/status 请求超时 */
+        private int healthCheckTimeoutMs = 3000;
     }
 }
