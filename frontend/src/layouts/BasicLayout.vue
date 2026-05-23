@@ -11,6 +11,7 @@
         <el-menu-item index="/dashboard">Dashboard</el-menu-item>
         <el-menu-item index="/kb">知识库</el-menu-item>
         <el-menu-item index="/chat">问答</el-menu-item>
+        <el-menu-item index="/evaluation">评测中心</el-menu-item>
         <el-menu-item index="/debug">Debug</el-menu-item>
         <el-menu-item index="/about">About</el-menu-item>
       </el-menu>
@@ -28,6 +29,7 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const activeMenu = computed(() => {
   if (route.path.startsWith('/debug')) return '/debug'
+  if (route.path.startsWith('/evaluation')) return '/evaluation'
   return route.path
 })
 </script>

@@ -11,8 +11,8 @@
 | V3 | RAG Debug 可观察版 | ✅ 已完成 |
 | V4 | 关键词检索版 | ✅ 已完成 |
 | V5 | Hybrid Search | ✅ 已完成 |
-| V6 | Reranker | ✅ **已完成** |
-| V7 | Evaluation 评测中心 | 🔄 **下一阶段** |
+| V6 | Reranker | ✅ 已完成 |
+| V7 | Evaluation 评测中心 | 🔄 **当前** |
 | V8 | 工程化增强 | 未开始 |
 
 ---
@@ -69,15 +69,30 @@ python3 scripts/run-v4-bm25-smoke-test.py
 
 ---
 
-## 当前：V7 Evaluation（未开始）
+## 当前：V7 Evaluation 评测中心
 
 ### 目标
 
-评测数据集、Recall@K、MRR 等评测中心能力（详见 `01-requirements.md`）。
+页面可观察的批量检索评测：固定用例、VECTOR / BM25 / HYBRID、Top1 命中与通过率。
 
-### 禁止提前
+### V7 小任务
 
-- 不提前建评测表、评测 API、评测页面（除非明确开启 V7 任务）
+| 任务 ID | 内容 | 状态 |
+|---------|------|------|
+| **V7-01** | 评测中心最小闭环（`/evaluation` + `POST /api/evaluation/run`） | ✅ 已完成 |
+| V7-02+ | Recall@K、MRR、自定义数据集等 | 未开始 |
+
+### V7-01 范围
+
+- 前端 `/evaluation`「评测中心」菜单
+- 内置 5 条用例；批量评测结果表 + 整体通过率
+- 后端 `EvaluationService` 复用 Vector / BM25 / Hybrid 检索，不接 LLM、不落库
+
+### V7 禁止事项（V7-01）
+
+- 不新增评测 PostgreSQL 表
+- 不做 Reranker 参与评测（可后续任务）
+- 不做 Recall@K / MRR（V7-02+）
 
 ---
 

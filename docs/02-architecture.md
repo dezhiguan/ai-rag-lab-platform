@@ -158,7 +158,7 @@ query → SearchTermExtractor 抽取专有词
 | V4 | Elasticsearch 索引副本；BM25 检索；Debug `searchMode` VECTOR/BM25 | 已完成 |
 | V5 | Vector + BM25 应用层融合；Debug `searchMode` HYBRID | 已完成 |
 | V6 | Debug 轻量 Reranker（`RerankService`，`enableRerank`） | 已完成 |
-| **V7** | **Evaluation 评测中心** | **下一阶段** |
+| **V7** | **Evaluation 评测中心（`/api/evaluation/run`）** | **当前版本** |
 
 ---
 

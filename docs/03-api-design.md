@@ -253,6 +253,30 @@ VECTOR / BM25 模式下上述字段为 `null`。历史详情若从 DB 回放且�
 
 ---
 
+## Evaluation 接口（V7）
+
+### GET /api/evaluation/cases
+
+| 项 | 说明 |
+|----|------|
+| **用途** | 返回内置评测用例列表 |
+| **版本** | V7 |
+| **返回 data** | `caseId`、`question`、`expectedDocument` |
+
+### POST /api/evaluation/run
+
+| 项 | 说明 |
+|----|------|
+| **用途** | 按检索模式批量执行内置用例，校验 Top1 文档是否命中期望 |
+| **版本** | V7 |
+| **请求 Body** | `kbId`（必填）、`searchMode`（`VECTOR` 默认 / `BM25` / `HYBRID`）、`topK`（默认 5，仅取 Top1 判定） |
+| **返回 data** | `kbId`、`searchMode`、`totalCount`、`passedCount`、`failedCount`、`passRate`（0～1）、`totalLatencyMs`、`results[]` |
+| **results 单条** | `caseId`、`question`、`expectedDocument`、`actualTop1Document`、`passed`、`searchMode`、`latencyMs`、`message` |
+
+**通过规则：** `actualTop1Document` 包含 `expectedDocument` 子串（与 V4 冒烟脚本一致）。无召回时 `passed=false`。
+
+---
+
 ## V4 Search 接口
 
 ### POST /api/search/index/rebuild

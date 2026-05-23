@@ -2,30 +2,28 @@
 
 ## 当前版本
 
-**V7：Evaluation 评测中心（下一阶段，未开始）**
+**V7：Evaluation 评测中心**
 
-**上一完成版本：V6 Reranker** — Debug 轻量本地重排（`enableRerank` + `RerankService`），支持 VECTOR / BM25 / HYBRID。
+在 V6 Reranker 已完成的基础上，提供评测中心页面：选择检索模式、执行内置用例批量评测、展示 Top1 命中与整体通过率。
 
-## V6 已完成能力
+## V7-01 已完成
 
-- Debug「启用重排」开关
-- `originalRank` / `rerankRank` / `rerankScore` / 排名变化展示
-- Context / Prompt / Answer 使用重排后顺序
-- 历史详情回放（`rag_query_log` / `rag_retrieval_log` 增补字段）
+- 前端 `/evaluation`（菜单：评测中心）
+- `GET /api/evaluation/cases`、`POST /api/evaluation/run`
+- VECTOR / BM25 / HYBRID 批量 Top1 文档验收
 
 ## 当前阶段不做
 
-- Evaluation 评测中心（V7）
-- 外部 Reranker、LLM 重排
-- Query Rewrite、权限、多租户
+- 评测 PostgreSQL 表、历史持久化
+- Recall@K、MRR、自定义数据集（V7-02+）
+- 评测链路接入 Reranker
 
 ## 版本关系
 
 | 版本 | 状态 |
 |------|------|
-| V1～V5 | 已完成 |
-| **V6 Reranker** | **已完成** |
-| **V7 Evaluation** | **下一阶段** |
+| V1～V6 | 已完成 |
+| **V7 Evaluation** | **进行中（V7-01 已完成）** |
 | V8 工程化 | 未开始 |
 
 详见 `05-development-plan.md`、`07-change-log.md`。

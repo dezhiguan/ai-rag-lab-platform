@@ -152,13 +152,21 @@
 - 展示 `originalRank` / `rerankRank` / `rerankScore` / 排名变化
 - Context / Prompt / Answer 使用重排后顺序
 
+### V7-01：评测中心最小闭环
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `module/evaluation`（`EvaluationController`、`EvaluationService`、`EvaluationTestCatalog`）；`GET /api/evaluation/cases`、`POST /api/evaluation/run`；`EvaluationView.vue`、`/evaluation` 路由与菜单 |
+| **原因** | 进入 V7，页面可批量验收 VECTOR / BM25 / HYBRID Top1 命中率 |
+| **未改** | 评测表、ES mapping、Reranker、Recall@K / MRR |
+
 ---
 
 ## 后续版本（占位，未实现）
 
 | 版本 | 计划核心变更 |
 |------|----------------|
-| V7 | Evaluation 评测中心 |
+| V7-02+ | Recall@K、MRR、自定义评测集 |
 | V8 | 权限、多租户、工程化 |
 
 **禁止**在未达对应版本前写入「已完成」或提前建表/接口。
