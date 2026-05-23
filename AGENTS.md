@@ -26,7 +26,7 @@ ai-rag-lab-platform
 
 V4：关键词检索版
 
-详细允许/禁止与流水线见 `docs/CURRENT_VERSION.md` 与 `docs/AI_CONTEXT.md`。
+详细允许/禁止与流水线见 `docs/current-version.md` 与 `docs/ai-context.md`。
 
 ## 当前开发原则
 
@@ -36,7 +36,7 @@ V4：关键词检索版
 4. 不随意引入当前版本用不到的依赖。
 5. 不重写已经能正常运行的代码。
 6. 每次修改后，必须保证后端和前端都能正常启动。
-7. 每次开发完成后，更新 `docs/CURRENT_VERSION.md`。
+7. 每次开发完成后，更新 `docs/current-version.md`。
 
 ## 当前技术栈
 

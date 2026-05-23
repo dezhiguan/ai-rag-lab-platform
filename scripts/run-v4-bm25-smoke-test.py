@@ -24,9 +24,14 @@ BASE_URL = os.environ.get("RAG_API_BASE_URL", "http://localhost:8080").rstrip("/
 KB_ID = int(os.environ.get("RAG_TEST_KB_ID", "1"))
 
 BM25_QUERIES = [
-    ("SMS_429", "SMS_429 是什么意思？", "02-api-spec.md"),
-    ("send-code", "send-code 接口路径是什么？", "02-api-spec.md"),
-    ("send-code-path", "/api/sms/send-code 是什么接口？", "02-api-spec.md"),
+    ("SMS_429", "SMS_429 是什么意思？", "02-api-spec.md", ["SMS_429"]),
+    ("send-code", "send-code 接口路径是什么？", "02-api-spec.md", ["send-code"]),
+    (
+        "send-code-path",
+        "/api/sms/send-code 是什么接口？",
+        "02-api-spec.md",
+        ["/api/sms/send-code", "send-code"],
+    ),
 ]
 
 
@@ -57,18 +62,31 @@ def main() -> int:
         return 1
 
     passed = 0
-    for label, query, expected_doc in BM25_QUERIES:
+    for label, query, expected_doc, expected_terms in BM25_QUERIES:
         print(f"2. BM25 [{label}] query={query!r}")
         try:
             data = post("/api/search/bm25", {"kbId": KB_ID, "query": query, "topK": 5})
+            extracted = data.get("extractedTerms") or []
             results = data.get("results") or []
             if not results:
                 print("   FAIL: 无结果\n")
                 continue
             top = results[0]
             top_name = top.get("documentName", "")
-            ok = expected_doc in top_name
-            print(f"   Top1: {top_name} score={top.get('score')} {'PASS' if ok else 'FAIL (期望含 ' + expected_doc + ')'}\n")
+            matched = top.get("matchedTerms") or []
+            ok_doc = expected_doc in top_name
+            ok_terms = all(t in matched for t in expected_terms)
+            ok = ok_doc and ok_terms
+            status = "PASS" if ok else "FAIL"
+            detail = ""
+            if not ok_doc:
+                detail = f" (期望 Top1 含 {expected_doc})"
+            if not ok_terms:
+                detail += f" (期望 matchedTerms 含 {expected_terms}, 实际 {matched})"
+            print(
+                f"   extractedTerms={extracted}\n"
+                f"   Top1: {top_name} score={top.get('score')} matchedTerms={matched} {status}{detail}\n"
+            )
             if ok:
                 passed += 1
         except Exception as e:

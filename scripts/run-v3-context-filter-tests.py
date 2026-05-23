@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 V3 Context 过滤测试执行脚本。
-真实调用 POST /api/debug/query，将结果写入 docs/test-cases/V3_CONTEXT_FILTER_TEST_RESULT.md
+真实调用 POST /api/debug/query，将结果写入 docs/test-cases/v3-context-filter-test-result.md
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-RESULT_PATH = ROOT / "docs" / "test-cases" / "V3_CONTEXT_FILTER_TEST_RESULT.md"
+RESULT_PATH = ROOT / "docs" / "test-cases" / "v3-context-filter-test-result.md"
 
 sys.path.insert(0, str(ROOT / "scripts"))
 from lib.load_dotenv import load_dotenv  # noqa: E402

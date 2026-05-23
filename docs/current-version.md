@@ -1,4 +1,4 @@
-# CURRENT_VERSION.md
+# current-version.md
 
 ## 当前版本
 
@@ -35,7 +35,26 @@
 | `Bm25SearchService` | BM25 检索；Debug 模式下分数归一化后走 V3 Context 过滤 |
 | `SearchMode` | `VECTOR` / `BM25`（不含 HYBRID） |
 
-**索引字段：** `kbId`、`documentId`、`documentName`、`chunkId`、`chunkIndex`、`content`（text，standard analyzer）
+**索引字段：** `kbId`、`documentId`、`documentName`、`chunkId`、`chunkIndex`、`content`（text + `content.keyword`）、`terms`（keyword，索引时从 Chunk 抽取错误码 / API 路径 / API 短名）
+
+**专有词抽取（`SearchTermExtractor`）：**
+
+| 类型 | 规则 |
+|------|------|
+| 错误码 | `\b[A-Z]{2,}_[0-9]{3,}\b` |
+| API 路径 | `/api/[A-Za-z0-9/_-]+` |
+| API 短名 | 路径末段，如 `send-code`；查询额外匹配 `[a-z]+(-[a-z0-9]+)+` |
+
+**BM25 查询结构（bool should + filter kbId，`minimum_should_match=1`）：**
+
+| 子句 | boost |
+|------|-------|
+| `terms` 精确匹配 `terms` 字段 | 20 |
+| `content` match_phrase（每个抽取词） | 15 |
+| `content` match 全句，`operator=and` | 2 |
+| `content` match 全句，`minimum_should_match=70%` | 1 |
+
+当 `extractedTerms` 非空时，额外 **must** 命中 `terms` 字段（避免仅因中文泛词把无关文档排到专有词文档之前）。
 
 ### API
 
@@ -54,6 +73,8 @@
   "topK": 5
 }
 ```
+
+**`POST /api/search/bm25` 响应增强：** `extractedTerms`；每条 result 含 `matchedTerms`（Java 层按 content 是否包含抽取词计算）。
 
 **`POST /api/debug/query` 新增字段：**
 
@@ -99,7 +120,7 @@ Hybrid Search、RRF 融合、Reranker、Query Rewrite、Evaluation、权限、�
 
 ## 快速启动
 
-**方式 A：无 Docker（推荐旧机器）** — 配置见项目根 `.env`，说明见 [LOCAL_DEV_WITHOUT_DOCKER.md](LOCAL_DEV_WITHOUT_DOCKER.md)
+**方式 A：无 Docker（推荐旧机器）** — 配置见项目根 `.env`，说明见 [local-dev-without-docker.md](local-dev-without-docker.md)
 
 ```bash
 # PostgreSQL、ES 使用 .env 中的地址（可为远程 ES）

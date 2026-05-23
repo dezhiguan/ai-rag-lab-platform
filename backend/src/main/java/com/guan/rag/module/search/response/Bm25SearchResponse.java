@@ -10,5 +10,6 @@ import java.util.List;
 public class Bm25SearchResponse {
 
     private String query;
+    private List<String> extractedTerms;
     private List<SearchResultItemResponse> results;
 }

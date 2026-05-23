@@ -10,7 +10,7 @@
       当前为 <strong>V2 Naive RAG 问答版</strong>，在 V1 基础上支持 Chunk 向量化、PgVector 检索、Chat 问答与引用来源展示。
     </p>
     <p>
-      版本规划请查看 <code>docs/AI_CONTEXT.md</code> 与 <code>docs/CURRENT_VERSION.md</code>。
+      版本规划请查看 <code>docs/ai-context.md</code> 与 <code>docs/current-version.md</code>。
     </p>
   </el-card>
 </template>

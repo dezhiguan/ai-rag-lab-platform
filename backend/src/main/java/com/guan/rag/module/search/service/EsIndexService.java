@@ -1,9 +1,11 @@
 package com.guan.rag.module.search.service;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.mapping.KeywordProperty;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch._types.mapping.TextProperty;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import com.guan.rag.module.search.util.SearchTermExtractor;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.IndexOperation;
@@ -87,7 +89,10 @@ public class EsIndexService {
                         .properties("chunkIndex", Property.of(p -> p.integer(i -> i)))
                         .properties("content", Property.of(p -> p.text(TextProperty.of(t -> t
                                 .analyzer("standard")
+                                .fields("keyword", Property.of(fp -> fp.keyword(KeywordProperty.of(k -> k
+                                        .ignoreAbove(8192)))))
                         ))))
+                        .properties("terms", Property.of(p -> p.keyword(k -> k)))
                 ))
         );
         elasticsearchClient.indices().create(createRequest);
@@ -119,6 +124,7 @@ public class EsIndexService {
             doc.put("chunkId", chunk.getId());
             doc.put("chunkIndex", chunk.getChunkIndex());
             doc.put("content", chunk.getContent());
+            doc.put("terms", SearchTermExtractor.extractFromContent(chunk.getContent()));
 
             operations.add(BulkOperation.of(op -> op.index(IndexOperation.of(idx -> idx
                     .index(indexName)

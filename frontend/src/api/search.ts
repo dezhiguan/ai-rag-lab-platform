@@ -12,10 +12,12 @@ export interface Bm25SearchResultItem {
   chunkIndex: number
   score: number
   content: string
+  matchedTerms?: string[]
 }
 
 export interface Bm25SearchResult {
   query: string
+  extractedTerms?: string[]
   results: Bm25SearchResultItem[]
 }
 
