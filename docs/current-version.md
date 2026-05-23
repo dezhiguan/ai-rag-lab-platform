@@ -28,6 +28,11 @@
 - `/slow-query-analysis` 慢查询分析与优化建议
 - `GET /api/rag/query-logs/slow-analysis`：规则判定慢查询 + 原因/建议生成
 
+### V8-05 RAG 参数实验台
+
+- `/rag-experiment` 参数实验台：调整 topK / Context 过滤参数并观察 RAG 链路影响
+- `POST /api/experiment/rag-query`：`maxChunks`、`minScore`、`maxScoreGap` 仅对本次请求生效
+
 ## V7 已完成能力
 
 - `/evaluation` 评测中心：单模式评测 + 三模式对比（VECTOR / BM25 / HYBRID）
@@ -43,6 +48,6 @@
 | 版本 | 状态 |
 |------|------|
 | V1～V7 | 已完成 |
-| **V8 工程化** | **进行中（V8-01～V8-04 已完成）** |
+| **V8 工程化** | **进行中（V8-01～V8-05 已完成）** |
 
 详见 `05-development-plan.md`、`07-change-log.md`。

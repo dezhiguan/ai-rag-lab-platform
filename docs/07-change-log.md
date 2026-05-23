@@ -210,6 +210,14 @@
 | **原因** | V8 工程化：基于日志规则生成慢查询原因与优化建议，辅助排查 |
 | **未改** | 新增表、Debug / 查询日志中心分页接口 |
 
+### V8-05：RAG 参数实验台
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `RagQueryPipelineService`、`ContextFilterOptions`；`POST /api/experiment/rag-query`；`RagExperimentView.vue`、`/rag-experiment`；DebugService 委托 Pipeline |
+| **原因** | V8 工程化：页面调整 RAG 参数并观察召回 / Context / Prompt / Answer / 耗时 |
+| **未改** | 全局 `rag.context` 配置、其他 V8 页面 |
+
 ---
 
 ## 后续版本（占位，未实现）

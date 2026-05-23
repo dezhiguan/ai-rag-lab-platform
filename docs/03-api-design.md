@@ -76,6 +76,18 @@
 | **返回 data** | `totalCount`（符合慢查询规则的总数）、`records[]` |
 | **records 单条** | `queryLogId`、`question`、`searchMode`、`enableRerank`、各耗时、`retrievalChunkCount`（来自 `rag_retrieval_log`）、`slowReasons[]`、`suggestions[]`、`createdAt` |
 
+### POST /api/experiment/rag-query
+
+| 项 | 说明 |
+|----|------|
+| **用途** | RAG 参数实验：复用 Debug 查询链路，Context 参数仅对本次请求生效 |
+| **版本** | V8-05 |
+| **请求 Body** | `kbId`、`question`（必填）；`topK`（默认 5）、`searchMode`（VECTOR/BM25/HYBRID）、`enableRerank`（默认 false）、`maxChunks`（默认 2）、`minScore`（默认 0.45）、`maxScoreGap`（默认 0.35） |
+| **返回 data** | `queryLogId`、`answer`、`prompt`、`context`、`retrievedChunks[]`、`contextChunks[]`、`latency`、`usedParams`、`impact` |
+| **impact** | `retrievedCount`、`contextCount`、`filteredCount` |
+
+实验仍会写入 `rag_query_log` / `rag_retrieval_log`，便于日志中心与指标统计；**不修改** `application.yml` 全局 Context 配置。
+
 ---
 
 ## 知识库接口

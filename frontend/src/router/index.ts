@@ -38,6 +38,11 @@ const router = createRouter({
           component: () => import('@/views/SlowQueryAnalysisView.vue'),
         },
         {
+          path: 'rag-experiment',
+          name: 'RagExperiment',
+          component: () => import('@/views/RagExperimentView.vue'),
+        },
+        {
           path: 'kb',
           name: 'KnowledgeBaseList',
           component: () => import('@/views/KbListView.vue'),

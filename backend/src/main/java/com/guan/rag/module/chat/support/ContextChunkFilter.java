@@ -24,6 +24,10 @@ public class ContextChunkFilter {
     private final RagProperties ragProperties;
 
     public ContextFilterResult filter(List<RetrievedChunkResponse> retrieved) {
+        return filter(retrieved, null);
+    }
+
+    public ContextFilterResult filter(List<RetrievedChunkResponse> retrieved, ContextFilterOptions options) {
         if (retrieved == null || retrieved.isEmpty()) {
             return ContextFilterResult.builder()
                     .contextChunks(List.of())
@@ -32,9 +36,9 @@ public class ContextChunkFilter {
         }
 
         RagProperties.Context cfg = ragProperties.getContext();
-        int maxChunks = Math.max(cfg.getMaxChunks(), 1);
-        double minScore = cfg.getMinScore();
-        double maxScoreGap = cfg.getMaxScoreGap();
+        int maxChunks = Math.max(resolveMaxChunks(options, cfg), 1);
+        double minScore = resolveMinScore(options, cfg);
+        double maxScoreGap = resolveMaxScoreGap(options, cfg);
 
         List<RetrievedChunkResponse> sorted = retrieved.stream()
                 .sorted(Comparator.comparing(
@@ -122,5 +126,26 @@ public class ContextChunkFilter {
 
     private double scoreOf(RetrievedChunkResponse chunk) {
         return chunk.getScore() != null ? chunk.getScore() : 0.0;
+    }
+
+    private static int resolveMaxChunks(ContextFilterOptions options, RagProperties.Context cfg) {
+        if (options != null && options.getMaxChunks() != null) {
+            return options.getMaxChunks();
+        }
+        return cfg.getMaxChunks();
+    }
+
+    private static double resolveMinScore(ContextFilterOptions options, RagProperties.Context cfg) {
+        if (options != null && options.getMinScore() != null) {
+            return options.getMinScore();
+        }
+        return cfg.getMinScore();
+    }
+
+    private static double resolveMaxScoreGap(ContextFilterOptions options, RagProperties.Context cfg) {
+        if (options != null && options.getMaxScoreGap() != null) {
+            return options.getMaxScoreGap();
+        }
+        return cfg.getMaxScoreGap();
     }
 }

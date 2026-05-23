@@ -13,6 +13,7 @@
         <el-menu-item index="/rag-metrics">RAG 指标</el-menu-item>
         <el-menu-item index="/rag-query-logs">查询日志中心</el-menu-item>
         <el-menu-item index="/slow-query-analysis">慢查询分析</el-menu-item>
+        <el-menu-item index="/rag-experiment">参数实验台</el-menu-item>
         <el-menu-item index="/kb">知识库</el-menu-item>
         <el-menu-item index="/chat">问答</el-menu-item>
         <el-menu-item index="/evaluation">评测中心</el-menu-item>

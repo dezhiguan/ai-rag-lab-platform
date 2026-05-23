@@ -95,6 +95,7 @@ python3 scripts/run-v4-bm25-smoke-test.py
 | V8-02 | RAG 运行指标看板（`/rag-metrics`、`GET /api/rag/metrics`） | ✅ 已完成 |
 | V8-03 | RAG 查询日志中心（`/rag-query-logs`、`GET /api/rag/query-logs`） | ✅ 已完成 |
 | V8-04 | 慢查询分析与优化建议（`/slow-query-analysis`、`GET /api/rag/query-logs/slow-analysis`） | ✅ 已完成 |
+| V8-05 | RAG 参数实验台（`/rag-experiment`、`POST /api/experiment/rag-query`） | ✅ 已完成 |
 
 ---
 
