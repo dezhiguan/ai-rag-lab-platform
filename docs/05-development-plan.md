@@ -59,6 +59,7 @@ python3 scripts/run-v4-bm25-smoke-test.py
 | **V5-03** | `HybridSearchService` + Debug HYBRID + 前端 Debug 页 | ✅ 已完成 |
 | **V5-04** | （已并入 V5-03）Debug `searchMode=HYBRID` | ✅ 已完成 |
 | **V5-05** | （已并入 V5-03）前端 Debug HYBRID | ✅ 已完成 |
+| **V5-04** | Debug 页查询历史 Drawer + 前端分页（体验优化） | ✅ 已完成 |
 | **V5-06** | 补充 V5 回归测试与验收脚本 | 🔜 **下一步** |
 
 ### V5 禁止事项
@@ -104,6 +105,13 @@ python3 scripts/run-v4-bm25-smoke-test.py
 ### V4 BM25 冒烟
 
 - **脚本：** `python3 scripts/run-v4-bm25-smoke-test.py`
+
+### V5-04 Debug 页面体验优化
+
+- 主页面不再默认展开「查询历史」大表格。
+- 查询区增加 **查询历史** 按钮，点击后以 **Drawer** 展示历史列表。
+- 历史列表 **前端分页**（默认每页 10 条，可选 5/10/20），显示总条数；保留刷新与详情跳转。
+- 未改后端 `/api/debug/query-logs` 接口。
 
 ### V5-02 Hybrid 融合（后端单元测试）
 

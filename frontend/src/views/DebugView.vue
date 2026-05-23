@@ -121,14 +121,19 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button
-            type="primary"
-            :disabled="!selectedKbId || !question.trim()"
-            :loading="querying"
-            @click="handleDebugQuery"
-          >
-            执行 Debug 查询
-          </el-button>
+          <el-space wrap>
+            <el-button
+              type="primary"
+              :disabled="!selectedKbId || !question.trim()"
+              :loading="querying"
+              @click="handleDebugQuery"
+            >
+              执行 Debug 查询
+            </el-button>
+            <el-button :disabled="!selectedKbId" @click="openHistoryDrawer">
+              查询历史
+            </el-button>
+          </el-space>
         </el-form-item>
       </el-form>
     </el-card>
@@ -240,25 +245,49 @@
       </el-card>
     </template>
 
-    <el-card shadow="never" class="panel">
-      <template #header>
-        <div class="card-header">
-          <span>Debug 查询历史</span>
+    <el-drawer
+      v-model="historyDrawerVisible"
+      title="Debug 查询历史"
+      direction="rtl"
+      size="520px"
+      :destroy-on-close="false"
+    >
+      <div class="history-drawer">
+        <div class="history-toolbar">
+          <span class="history-total">共 {{ history.length }} 条</span>
           <el-button size="small" :loading="loadingHistory" @click="loadHistory">刷新</el-button>
         </div>
-      </template>
-      <el-table :data="history" stripe style="width: 100%" empty-text="暂无记录">
-        <el-table-column prop="queryLogId" label="ID" width="70" />
-        <el-table-column prop="question" label="问题" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="totalTimeMs" label="总耗时(ms)" width="110" />
-        <el-table-column prop="createdAt" label="时间" width="180" />
-        <el-table-column label="操作" width="100" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link @click="goDetail(row.queryLogId)">详情</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
+        <el-table
+          :data="paginatedHistory"
+          stripe
+          style="width: 100%"
+          v-loading="loadingHistory"
+          empty-text="暂无记录"
+        >
+          <el-table-column prop="queryLogId" label="ID" width="70" />
+          <el-table-column prop="question" label="问题" min-width="160" show-overflow-tooltip />
+          <el-table-column prop="totalTimeMs" label="总耗时(ms)" width="110" />
+          <el-table-column prop="createdAt" label="时间" width="170" />
+          <el-table-column label="操作" width="80" fixed="right">
+            <template #default="{ row }">
+              <el-button type="primary" link @click="goDetail(row.queryLogId)">详情</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-pagination
+          v-if="history.length > 0"
+          v-model:current-page="historyPage"
+          v-model:page-size="historyPageSize"
+          class="history-pagination"
+          :total="history.length"
+          :page-sizes="[5, 10, 20]"
+          layout="total, sizes, prev, pager, next"
+          background
+          @size-change="onHistoryPageSizeChange"
+        />
+        <el-empty v-else-if="!loadingHistory" description="暂无查询历史" />
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -294,6 +323,14 @@ const querying = ref(false)
 const result = ref<DebugQueryResult | null>(null)
 const history = ref<DebugQueryLogSummary[]>([])
 const loadingHistory = ref(false)
+const historyDrawerVisible = ref(false)
+const historyPage = ref(1)
+const historyPageSize = ref(10)
+
+const paginatedHistory = computed(() => {
+  const start = (historyPage.value - 1) * historyPageSize.value
+  return history.value.slice(start, start + historyPageSize.value)
+})
 
 const needsVectorEmbedding = computed(
   () => searchMode.value === 'VECTOR' || searchMode.value === 'HYBRID'
@@ -314,12 +351,12 @@ onMounted(async () => {
     knowledgeBases.value = res.data
     selectedKbId.value = res.data[0].id
     await loadEmbeddingStatus()
-    await loadHistory()
   }
 })
 
-watch(selectedKbId, async () => {
-  await loadHistory()
+watch(selectedKbId, () => {
+  history.value = []
+  historyPage.value = 1
 })
 
 async function loadModelProviders() {
@@ -343,8 +380,9 @@ async function loadEmbeddingStatus() {
 
 async function onKbChange() {
   result.value = null
+  history.value = []
+  historyPage.value = 1
   await loadEmbeddingStatus()
-  await loadHistory()
 }
 
 async function loadHistory() {
@@ -353,6 +391,10 @@ async function loadHistory() {
     const res = await listDebugQueryLogs(selectedKbId.value)
     if (res.code === 200) {
       history.value = res.data ?? []
+      const maxPage = Math.max(1, Math.ceil(history.value.length / historyPageSize.value))
+      if (historyPage.value > maxPage) {
+        historyPage.value = maxPage
+      }
     }
   } catch {
     ElMessage.error('加载历史失败')
@@ -413,7 +455,18 @@ async function handleDebugQuery() {
   }
 }
 
+async function openHistoryDrawer() {
+  historyDrawerVisible.value = true
+  historyPage.value = 1
+  await loadHistory()
+}
+
+function onHistoryPageSizeChange() {
+  historyPage.value = 1
+}
+
 function goDetail(queryLogId: number) {
+  historyDrawerVisible.value = false
   router.push(`/debug/${queryLogId}`)
 }
 
@@ -515,5 +568,28 @@ async function copyText(text: string) {
 
 .latency-block {
   margin-top: 0;
+}
+
+.history-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 200px;
+}
+
+.history-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-total {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.history-pagination {
+  margin-top: 8px;
+  justify-content: flex-end;
 }
 </style>

@@ -113,6 +113,14 @@
 | **流程** | Vector + BM25 → RRF 融合 → Context 过滤 → Prompt → Answer |
 | **页面验证** | `/debug` 选择 HYBRID，问题如「SMS_429 是什么意思？」，展示 retrievedChunks / context / prompt / answer |
 
+### V5-04：Debug 查询历史展示优化
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `frontend/src/views/DebugView.vue`：历史改为 Drawer；按钮「查询历史」；前端分页 |
+| **原因** | 历史默认展开占用主页面空间；记录多时页面过长 |
+| **未改** | 后端接口、Vector/BM25/Hybrid 查询逻辑 |
+
 ---
 
 ## 后续版本（占位，未实现）
