@@ -10,7 +10,7 @@
             AI RAG Lab Platform
           </el-descriptions-item>
           <el-descriptions-item label="当前版本">
-            V2 Naive RAG 问答版
+            V8 工程化增强版
           </el-descriptions-item>
           <el-descriptions-item label="后端连接状态">
             <el-tag v-if="healthLoading" type="info">检测中...</el-tag>
@@ -56,6 +56,7 @@
         <div class="actions">
           <el-button type="primary" @click="router.push('/kb')">进入知识库</el-button>
           <el-button @click="router.push('/chat')">进入问答</el-button>
+          <el-button @click="router.push('/system-status')">系统状态</el-button>
         </div>
       </el-card>
     </el-col>

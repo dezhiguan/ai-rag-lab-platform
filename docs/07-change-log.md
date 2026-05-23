@@ -176,10 +176,22 @@
 
 ---
 
+## V8：工程化增强
+
+### V8-01：系统运行状态看板
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `SystemStatusService`、`GET /api/system/status`；`rag.app.version`；`SystemStatusView.vue`、`/system-status` 路由与菜单；Dashboard 版本与入口更新 |
+| **原因** | V8 工程化：页面可观察后端、PostgreSQL、ES、Provider 与核心能力状态 |
+| **未改** | 权限、多租户、评测历史落库 |
+
+---
+
 ## 后续版本（占位，未实现）
 
 | 版本 | 计划核心变更 |
 |------|----------------|
-| V8 | 权限、多租户、工程化、Recall@K / MRR 等 |
+| V8+ | 权限、多租户、Recall@K / MRR 等 |
 
 **禁止**在未达对应版本前写入「已完成」或提前建表/接口。

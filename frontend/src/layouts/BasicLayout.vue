@@ -9,6 +9,7 @@
         class="menu"
       >
         <el-menu-item index="/dashboard">Dashboard</el-menu-item>
+        <el-menu-item index="/system-status">系统状态</el-menu-item>
         <el-menu-item index="/kb">知识库</el-menu-item>
         <el-menu-item index="/chat">问答</el-menu-item>
         <el-menu-item index="/evaluation">评测中心</el-menu-item>

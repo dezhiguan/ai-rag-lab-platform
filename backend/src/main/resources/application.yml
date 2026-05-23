@@ -31,6 +31,9 @@ springdoc:
     enabled: true
 
 rag:
+  app:
+    name: ai-rag-lab-platform
+    version: V8
   storage:
     path: ./data/uploads
   document:

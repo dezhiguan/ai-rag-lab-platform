@@ -159,7 +159,7 @@ query → SearchTermExtractor 抽取专有词
 | V5 | Vector + BM25 应用层融合；Debug `searchMode` HYBRID | 已完成 |
 | V6 | Debug 轻量 Reranker（`RerankService`，`enableRerank`） | 已完成 |
 | V7 | Evaluation 评测中心（run / compare） | 已完成 |
-| **V8** | **工程化增强** | **下一阶段** |
+| V8 | 系统运行状态看板（`/api/system/status`） | 进行中 |
 
 ---
 

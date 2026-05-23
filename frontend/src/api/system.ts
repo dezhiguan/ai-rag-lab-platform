@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { SystemStatus } from '@/types/system'
 
 export interface ApiResponse<T> {
   code: number
@@ -20,5 +21,10 @@ const http = axios.create({
 
 export async function getHealth(): Promise<ApiResponse<HealthData>> {
   const { data } = await http.get<ApiResponse<HealthData>>('/api/system/health')
+  return data
+}
+
+export async function getSystemStatus(): Promise<ApiResponse<SystemStatus>> {
+  const { data } = await http.get<ApiResponse<SystemStatus>>('/api/system/status')
   return data
 }

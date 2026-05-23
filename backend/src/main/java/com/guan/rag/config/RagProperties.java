@@ -9,12 +9,19 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "rag")
 public class RagProperties {
 
+    private App app = new App();
     private Storage storage = new Storage();
     private Document document = new Document();
     private Embedding embedding = new Embedding();
     private Chat chat = new Chat();
     private Context context = new Context();
     private Elasticsearch elasticsearch = new Elasticsearch();
+
+    @Data
+    public static class App {
+        private String name = "ai-rag-lab-platform";
+        private String version = "V8";
+    }
 
     @Data
     public static class Storage {

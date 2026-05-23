@@ -18,6 +18,11 @@ const router = createRouter({
           component: () => import('@/views/DashboardView.vue'),
         },
         {
+          path: 'system-status',
+          name: 'SystemStatus',
+          component: () => import('@/views/SystemStatusView.vue'),
+        },
+        {
           path: 'kb',
           name: 'KnowledgeBaseList',
           component: () => import('@/views/KbListView.vue'),

@@ -21,7 +21,23 @@
 | **用途** | 健康检查 |
 | **版本** | V0 |
 | **请求参数** | 无 |
-| **返回 data** | `status`（UP）、`appName`、`version`、`timestamp` |
+| **返回 data** | `status`（UP）、`appName`、`version`（来自 `rag.app.version`）、`timestamp` |
+
+### GET /api/system/status
+
+| 项 | 说明 |
+|----|------|
+| **用途** | 系统运行状态看板数据 |
+| **版本** | V8-01 |
+| **请求参数** | 无 |
+| **返回 data** | `backend`、`postgresql`、`elasticsearch`、`modelProvider`、`features[]` |
+| **backend** | `status`、`appName`、`version`、`serverTime`、`message` |
+| **postgresql** | `name`、`status`（UP/DOWN）、`message` |
+| **elasticsearch** | `status`、`indexName`、`message` |
+| **modelProvider** | `embeddingProvider`、`embeddingModel`、`chatProvider`、`chatModel` |
+| **features 单条** | `key`、`label`、`status`（SUPPORTED） |
+
+依赖检查失败时对应节点 `status=DOWN`，`message` 为异常摘要；接口仍返回 200，便于前端展示。
 
 ---
 
