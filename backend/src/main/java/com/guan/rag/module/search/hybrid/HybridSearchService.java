@@ -30,6 +30,10 @@ public class HybridSearchService {
         return toRetrievedChunks(search(kbId, question, topK), false);
     }
 
+    public List<RetrievedChunkResponse> fromHybridResults(List<HybridSearchResult> merged, boolean normalizeScore) {
+        return toRetrievedChunks(merged, normalizeScore);
+    }
+
     /**
      * RRF 分数量纲与向量 [0,1] 不同，按 Top1 归一化后再做 Context 过滤。
      */

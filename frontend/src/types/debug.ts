@@ -14,6 +14,9 @@ export interface DebugRetrievedChunk {
   vectorScore?: number | null
   bm25Score?: number | null
   hybridScore?: number | null
+  originalRank?: number | null
+  rerankRank?: number | null
+  rerankScore?: number | null
 }
 
 export interface DebugLatency {
@@ -29,6 +32,7 @@ export interface DebugQueryRequest {
   question: string
   topK?: number
   searchMode?: DebugSearchMode
+  enableRerank?: boolean
 }
 
 export interface DebugQueryResult {
@@ -36,6 +40,7 @@ export interface DebugQueryResult {
   kbId: number
   question: string
   searchMode?: string
+  enableRerank?: boolean
   embeddingProvider: string
   embeddingModel: string
   chatProvider: string

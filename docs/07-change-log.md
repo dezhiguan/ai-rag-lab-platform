@@ -129,6 +129,14 @@
 | **原因** | 页面难以观察 Vector/BM25 融合来源与各路人马分数 |
 | **未改** | 数据库、ES mapping；`/api/chat`；VECTOR/BM25 展示逻辑 |
 
+### V6-01：Debug 轻量 Reranker 重排闭环
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `RerankService`、`RerankResult`；Debug `enableRerank`；`DebugView` 重排开关与排名列 |
+| **原因** | 进入 V6，需在页面观察重排前后效果，暂不接外部模型 |
+| **未改** | 数据库、ES mapping；`/api/chat` |
+
 ---
 
 ## 后续版本（占位，未实现）

@@ -28,4 +28,11 @@ public class DebugRetrievedChunkResponse {
     private Double bm25Score;
     /** HYBRID 模式：RRF 融合分 */
     private Double hybridScore;
+
+    /** 启用 Reranker 时：检索原始排名 */
+    private Integer originalRank;
+    /** 启用 Reranker 时：重排后排名 */
+    private Integer rerankRank;
+    /** 启用 Reranker 时：重排分数 */
+    private Double rerankScore;
 }

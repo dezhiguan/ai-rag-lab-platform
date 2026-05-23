@@ -156,7 +156,8 @@ query → SearchTermExtractor 抽取专有词
 | V2.5 | Provider 抽象；Qwen / DeepSeek 真实 API | 已完成 |
 | V3 | Debug 可观察；双轨召回 vs Context；查询日志表 | 已完成 |
 | V4 | Elasticsearch 索引副本；BM25 检索；Debug `searchMode` VECTOR/BM25 | 已完成 |
-| **V5** | **Vector + BM25 应用层融合；Debug `searchMode` HYBRID** | **当前版本** |
+| V5 | Vector + BM25 应用层融合；Debug `searchMode` HYBRID | 已完成 |
+| **V6** | **Debug 轻量 Reranker（`RerankService`，`enableRerank`）** | **当前版本** |
 
 ---
 
@@ -184,16 +185,23 @@ Provider 路由：`EmbeddingProviderRouter`、`ChatModelProviderRouter`，配置
 
 ---
 
-## 当前版本：V5 Hybrid Search（架构要点）
+## 当前版本：V6 Reranker（架构要点）
+
+Debug 查询在检索（VECTOR / BM25 / HYBRID）之后、Context 过滤之前，可选经 `RerankService` 本地规则重排：
+
+```text
+检索召回 → [enableRerank: RerankService] → ContextChunkFilter → PromptBuilder → Chat
+```
 
 | 要点 | 说明 |
 |------|------|
-| 融合位置 | 应用层服务（如 `HybridFusionService` + `HybridSearchService` 编排），**非**独立存储引擎 |
-| 复用模块 | `module/retrieval`（向量）、`module/search`（BM25）、`module/debug`（可观察链路） |
-| 数据复用 | `document_chunk`、`chunk_embedding`、ES `rag_document_chunk`、`rag_query_log` / `rag_retrieval_log` |
-| 融合结果 | 查询链路内实时计算，**暂不落库** |
-| 不做 | Reranker、Evaluation、Query Rewrite、权限、多租户、多轮对话 |
+| 重排位置 | `module/rerank`，不接外部模型 |
+| 规则 | 专有词（`SearchTermExtractor`）+ 关键词命中 + 检索分弱权重 |
+| 可观察性 | `originalRank` / `rerankRank` / `rerankScore` 经 Debug API 返回 |
+| 不做 | 外部 Rerank API、LLM 重排、Evaluation |
 
-## 后续架构方向（V6+，未实现）
+V5 Hybrid 能力保留；`HybridSearchService` 与 `RerankService` 串联使用。
 
-- **V6+**：Reranker、评测、工程化等待对应版本再设计，**本文档不展开 V6 Reranker 详细架构**。
+## 后续架构方向（V7+，未实现）
+
+- **V7+**：评测、工程化等待对应版本再设计。

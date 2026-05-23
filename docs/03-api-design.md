@@ -200,8 +200,8 @@
 |----|------|
 | **用途** | 执行完整 Debug 查询（召回 → Context 过滤 → Prompt → 回答） |
 | **版本** | V3（`searchMode` 为 V4 扩展） |
-| **请求 Body** | `kbId`（必填）、`question`（必填）、`topK`（默认 5）、`searchMode`（`VECTOR` 默认 / `BM25` / `HYBRID`） |
-| **返回 data** | `queryLogId`、`kbId`、`question`、`searchMode`、`embeddingProvider`、`embeddingModel`、`chatProvider`、`chatModel`、`retrievedChunks[]`、`contextChunks[]`、`context`、`prompt`、`answer`、`latency`（`retrievalTimeMs`、`generationTimeMs`、`totalTimeMs`） |
+| **请求 Body** | `kbId`（必填）、`question`（必填）、`topK`（默认 5）、`searchMode`（`VECTOR` 默认 / `BM25` / `HYBRID`）、`enableRerank`（可选，默认 false，V6） |
+| **返回 data** | `queryLogId`、`kbId`、`question`、`searchMode`、`enableRerank`、`embeddingProvider`、`embeddingModel`、`chatProvider`、`chatModel`、`retrievedChunks[]`、`contextChunks[]`、`context`、`prompt`、`answer`、`latency`（`retrievalTimeMs`、`generationTimeMs`、`totalTimeMs`） |
 
 **retrievedChunks / contextChunks 单条字段：**
 
@@ -218,6 +218,16 @@
 | `hybridScore` | RRF 融合分；`score` 字段同 `hybridScore` |
 
 VECTOR / BM25 模式下上述字段为 `null`。历史详情若从 DB 回放且无持久化融合字段，详情页仅展示通用列。
+
+**启用 Reranker 时（`enableRerank=true`，V6）`retrievedChunks` 额外字段：**
+
+| 字段 | 说明 |
+|------|------|
+| `originalRank` | 检索原始排名（1-based） |
+| `rerankRank` | 重排后排名（1-based）；`rankPosition` 同此值 |
+| `rerankScore` | 本地规则重排分（关键词 + 专有词命中） |
+
+未启用重排时上述字段为 `null`。重排后 Context 过滤 / Prompt / Answer 基于重排顺序。
 
 ### GET /api/debug/query-logs
 

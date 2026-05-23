@@ -3,7 +3,7 @@
     <el-card shadow="never" class="panel">
       <template #header>
         <div class="card-header">
-          <span>RAG Debug（V5）</span>
+          <span>RAG Debug（V6）</span>
           <el-tag type="info" size="small">Vector / BM25 / Hybrid</el-tag>
         </div>
       </template>
@@ -98,6 +98,10 @@
           <el-input-number v-model="topK" :min="1" :max="20" />
         </el-form-item>
 
+        <el-form-item label="重排">
+          <el-switch v-model="enableRerank" active-text="启用重排" inactive-text="关闭" />
+        </el-form-item>
+
         <el-form-item label="V4 验收">
           <el-space wrap>
             <el-button
@@ -156,6 +160,11 @@
               {{ result.searchMode ?? 'VECTOR' }}
             </el-tag>
           </el-descriptions-item>
+          <el-descriptions-item label="Reranker">
+            <el-tag :type="result.enableRerank ? 'success' : 'info'" size="small">
+              {{ result.enableRerank ? '已启用' : '未启用' }}
+            </el-tag>
+          </el-descriptions-item>
         </el-descriptions>
         <el-descriptions :column="3" border size="small" class="latency-block">
           <el-descriptions-item label="检索耗时">
@@ -175,7 +184,30 @@
           <span>召回 Chunk（{{ result.retrievedChunks.length }}，进入 Prompt {{ result.contextChunks.length }}）</span>
         </template>
         <el-table :data="result.retrievedChunks" stripe style="width: 100%" empty-text="无召回结果">
-          <el-table-column prop="rankPosition" label="#" width="50" />
+          <el-table-column
+            prop="rankPosition"
+            :label="result.enableRerank ? '重排#' : '#'"
+            width="60"
+          />
+          <el-table-column
+            v-if="result.enableRerank"
+            prop="originalRank"
+            label="原排名"
+            width="70"
+          />
+          <el-table-column
+            v-if="result.enableRerank"
+            prop="rerankRank"
+            label="重排排名"
+            width="80"
+          />
+          <el-table-column
+            v-if="result.enableRerank"
+            label="重排分"
+            width="90"
+          >
+            <template #default="{ row }">{{ formatOptionalScore(row.rerankScore) }}</template>
+          </el-table-column>
           <el-table-column prop="documentName" label="文档" min-width="160" show-overflow-tooltip />
           <el-table-column prop="chunkIndex" label="Chunk" width="70" />
           <el-table-column
@@ -352,6 +384,7 @@ const embeddingStatus = ref<EmbeddingStatus | null>(null)
 const question = ref('')
 const topK = ref(5)
 const searchMode = ref<DebugSearchMode>('VECTOR')
+const enableRerank = ref(false)
 const rebuildingIndex = ref(false)
 const esIndexInfo = ref<EsIndexRebuildResult | null>(null)
 const querying = ref(false)
@@ -475,6 +508,7 @@ async function handleDebugQuery() {
       question: question.value.trim(),
       topK: topK.value,
       searchMode: searchMode.value,
+      enableRerank: enableRerank.value,
     })
     if (res.code === 200 && res.data) {
       result.value = res.data

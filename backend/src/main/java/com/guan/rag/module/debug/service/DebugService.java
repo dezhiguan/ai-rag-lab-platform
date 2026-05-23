@@ -22,6 +22,8 @@ import com.guan.rag.module.kb.service.KnowledgeBaseService;
 import com.guan.rag.module.retrieval.response.RetrievedChunkResponse;
 import com.guan.rag.module.retrieval.service.VectorRetrievalService;
 import com.guan.rag.module.search.SearchMode;
+import com.guan.rag.module.rerank.RerankResult;
+import com.guan.rag.module.rerank.RerankService;
 import com.guan.rag.module.search.hybrid.HybridSearchResult;
 import com.guan.rag.module.search.hybrid.HybridSearchService;
 import com.guan.rag.module.search.service.Bm25SearchService;
@@ -32,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +47,7 @@ public class DebugService {
     private final VectorRetrievalService vectorRetrievalService;
     private final Bm25SearchService bm25SearchService;
     private final HybridSearchService hybridSearchService;
+    private final RerankService rerankService;
     private final ContextChunkFilter contextChunkFilter;
     private final PromptBuilder promptBuilder;
     private final ChatModelProvider chatModelProvider;
@@ -58,6 +63,7 @@ public class DebugService {
         int topK = request.getTopK() == null ? 5 : request.getTopK();
         String question = request.getQuestion().trim();
         SearchMode searchMode = SearchMode.from(request.getSearchMode());
+        boolean enableRerank = Boolean.TRUE.equals(request.getEnableRerank());
 
         String embeddingProvider = embeddingProviderRouter.configuredProvider();
         String embeddingModel = embeddingProviderRouter.model();
@@ -65,25 +71,37 @@ public class DebugService {
         String chatModel = chatModelProviderRouter.model();
 
         long retrievalStart = System.currentTimeMillis();
-        List<RetrievedChunkResponse> retrieved;
         List<HybridSearchResult> hybridResults = null;
+        List<RetrievedChunkResponse> candidates;
         if (searchMode == SearchMode.HYBRID) {
             hybridResults = hybridSearchService.search(request.getKbId(), question, topK);
-            retrieved = List.of();
+            candidates = hybridSearchService.fromHybridResults(hybridResults, false);
         } else {
-            retrieved = retrieveChunks(searchMode, request.getKbId(), question, topK);
+            candidates = retrieveChunks(searchMode, request.getKbId(), question, topK);
         }
         long retrievalTimeMs = System.currentTimeMillis() - retrievalStart;
 
-        List<RetrievedChunkResponse> forFilter = switch (searchMode) {
-            case BM25 -> bm25SearchService.retrieveNormalizedForFilter(request.getKbId(), question, topK);
-            case HYBRID -> hybridSearchService.toRetrievedChunksForFilter(hybridResults);
-            default -> retrieved;
-        };
+        RerankResult rerankResult = null;
+        List<RetrievedChunkResponse> forFilter;
+        if (enableRerank) {
+            rerankResult = rerankService.rerank(question, candidates);
+            forFilter = rerankService.toNormalizedForFilter(rerankResult);
+        } else {
+            forFilter = switch (searchMode) {
+                case BM25 -> bm25SearchService.retrieveNormalizedForFilter(request.getKbId(), question, topK);
+                case HYBRID -> hybridSearchService.toRetrievedChunksForFilter(hybridResults);
+                default -> candidates;
+            };
+        }
         ContextFilterResult filterResult = contextChunkFilter.filter(forFilter);
-        List<DebugRetrievedChunkResponse> retrievedChunks = searchMode == SearchMode.HYBRID
-                ? toRetrievedChunksFromHybrid(hybridResults, filterResult)
-                : toRetrievedChunks(retrieved, filterResult);
+        List<DebugRetrievedChunkResponse> retrievedChunks;
+        if (enableRerank) {
+            retrievedChunks = toRetrievedChunksWithRerank(rerankResult, filterResult, hybridResults);
+        } else if (searchMode == SearchMode.HYBRID) {
+            retrievedChunks = toRetrievedChunksFromHybrid(hybridResults, filterResult);
+        } else {
+            retrievedChunks = toRetrievedChunks(candidates, filterResult);
+        }
         List<DebugRetrievedChunkResponse> contextChunks = toContextChunkResponses(
                 filterResult.getContextChunks(), filterResult);
 
@@ -123,6 +141,7 @@ public class DebugService {
                 .kbId(request.getKbId())
                 .question(question)
                 .searchMode(searchMode.name())
+                .enableRerank(enableRerank)
                 .embeddingProvider(embeddingProvider)
                 .embeddingModel(embeddingModel)
                 .chatProvider(chatProvider)
@@ -213,6 +232,47 @@ public class DebugService {
             log.setFilterReason(chunk.getFilterReason());
             debugRetrievalLogMapper.insert(log);
         }
+    }
+
+    private List<DebugRetrievedChunkResponse> toRetrievedChunksWithRerank(
+            RerankResult rerankResult,
+            ContextFilterResult filterResult,
+            List<HybridSearchResult> hybridResults
+    ) {
+        Map<Long, HybridSearchResult> hybridByChunkId = hybridResults == null
+                ? Map.of()
+                : hybridResults.stream()
+                .filter(h -> h.getChunkId() != null)
+                .collect(Collectors.toMap(HybridSearchResult::getChunkId, Function.identity(), (a, b) -> a));
+        Map<Long, ContextFilterResult.ChunkFilterDecision> decisions = filterResult.getDecisions();
+        List<DebugRetrievedChunkResponse> result = new ArrayList<>();
+        for (RerankResult.RerankedItem item : rerankResult.getItems()) {
+            RetrievedChunkResponse chunk = item.getChunk();
+            ContextFilterResult.ChunkFilterDecision decision = decisions.get(chunk.getChunkId());
+            DebugRetrievedChunkResponse.DebugRetrievedChunkResponseBuilder builder = DebugRetrievedChunkResponse.builder()
+                    .documentId(chunk.getDocumentId())
+                    .documentName(chunk.getDocumentName())
+                    .chunkId(chunk.getChunkId())
+                    .chunkIndex(chunk.getChunkIndex())
+                    .score(chunk.getScore())
+                    .rankPosition(item.getRerankRank())
+                    .content(chunk.getContent())
+                    .usedInPrompt(decision != null && decision.isUsedInPrompt())
+                    .filterReason(decision != null ? decision.getFilterReason() : null)
+                    .originalRank(item.getOriginalRank())
+                    .rerankRank(item.getRerankRank())
+                    .rerankScore(item.getRerankScore());
+            HybridSearchResult hybrid = hybridByChunkId.get(chunk.getChunkId());
+            if (hybrid != null) {
+                builder.matchedByVector(hybrid.getVectorRank() != null)
+                        .matchedByBm25(hybrid.getBm25Rank() != null)
+                        .vectorScore(hybrid.getVectorScore())
+                        .bm25Score(hybrid.getBm25Score())
+                        .hybridScore(hybrid.getHybridScore());
+            }
+            result.add(builder.build());
+        }
+        return result;
     }
 
     private List<DebugRetrievedChunkResponse> toRetrievedChunksFromHybrid(
