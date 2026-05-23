@@ -33,6 +33,10 @@
 - `/rag-experiment` 参数实验台：调整 topK / Context 过滤参数并观察 RAG 链路影响
 - `POST /api/experiment/rag-query`：`maxChunks`、`minScore`、`maxScoreGap` 仅对本次请求生效
 
+### V8-06 参数实验多组对比
+
+- `/rag-experiment` 实验对比区：最多保留 5 组结果，支持展开详情、清空对比（页面状态，不落库）
+
 ## V7 已完成能力
 
 - `/evaluation` 评测中心：单模式评测 + 三模式对比（VECTOR / BM25 / HYBRID）
@@ -48,6 +52,6 @@
 | 版本 | 状态 |
 |------|------|
 | V1～V7 | 已完成 |
-| **V8 工程化** | **进行中（V8-01～V8-05 已完成）** |
+| **V8 工程化** | **进行中（V8-01～V8-06 已完成）** |
 
 详见 `05-development-plan.md`、`07-change-log.md`。

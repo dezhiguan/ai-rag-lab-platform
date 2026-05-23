@@ -39,3 +39,11 @@ export interface ExperimentRagQueryResult {
   usedParams: ExperimentParams
   impact: ExperimentImpact
 }
+
+/** 页面内实验对比条目（不落库） */
+export interface ExperimentCompareEntry {
+  id: number
+  label: string
+  result: ExperimentRagQueryResult
+  addedAt: string
+}
