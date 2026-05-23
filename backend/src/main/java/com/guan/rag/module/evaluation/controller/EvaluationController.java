@@ -1,7 +1,9 @@
 package com.guan.rag.module.evaluation.controller;
 
 import com.guan.rag.common.ApiResponse;
+import com.guan.rag.module.evaluation.request.EvaluationCompareRequest;
 import com.guan.rag.module.evaluation.request.EvaluationRunRequest;
+import com.guan.rag.module.evaluation.response.EvaluationCompareResponse;
 import com.guan.rag.module.evaluation.response.EvaluationRunResponse;
 import com.guan.rag.module.evaluation.response.EvaluationTestCaseResponse;
 import com.guan.rag.module.evaluation.service.EvaluationService;
@@ -35,5 +37,11 @@ public class EvaluationController {
     @PostMapping("/run")
     public ApiResponse<EvaluationRunResponse> run(@Valid @RequestBody EvaluationRunRequest request) {
         return ApiResponse.success(evaluationService.run(request));
+    }
+
+    @Operation(summary = "多检索模式对比评测（VECTOR / BM25 / HYBRID）")
+    @PostMapping("/compare")
+    public ApiResponse<EvaluationCompareResponse> compare(@Valid @RequestBody EvaluationCompareRequest request) {
+        return ApiResponse.success(evaluationService.compare(request));
     }
 }

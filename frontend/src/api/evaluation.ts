@@ -1,5 +1,7 @@
 import { http, type ApiResponse } from './http'
 import type {
+  EvaluationCompareRequest,
+  EvaluationCompareResult,
   EvaluationRunRequest,
   EvaluationRunResult,
   EvaluationTestCase,
@@ -14,5 +16,15 @@ export async function runEvaluation(
   payload: EvaluationRunRequest
 ): Promise<ApiResponse<EvaluationRunResult>> {
   const { data } = await http.post<ApiResponse<EvaluationRunResult>>('/api/evaluation/run', payload)
+  return data
+}
+
+export async function compareEvaluation(
+  payload: EvaluationCompareRequest
+): Promise<ApiResponse<EvaluationCompareResult>> {
+  const { data } = await http.post<ApiResponse<EvaluationCompareResult>>(
+    '/api/evaluation/compare',
+    payload
+  )
   return data
 }

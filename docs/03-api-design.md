@@ -269,11 +269,24 @@ VECTOR / BM25 模式下上述字段为 `null`。历史详情若从 DB 回放且�
 |----|------|
 | **用途** | 按检索模式批量执行内置用例，校验 Top1 文档是否命中期望 |
 | **版本** | V7 |
-| **请求 Body** | `kbId`（必填）、`searchMode`（`VECTOR` 默认 / `BM25` / `HYBRID`）、`topK`（默认 5，仅取 Top1 判定） |
-| **返回 data** | `kbId`、`searchMode`、`totalCount`、`passedCount`、`failedCount`、`passRate`（0～1）、`totalLatencyMs`、`results[]` |
+| **请求 Body** | `kbId`（必填）、`searchMode`（`VECTOR` 默认 / `BM25` / `HYBRID`）、`topK`（默认 5）、`enableRerank`（可选，默认 false，V7-02） |
+| **返回 data** | `kbId`、`searchMode`、`enableRerank`、`totalCount`、`passedCount`、`failedCount`、`passRate`（0～1）、`totalLatencyMs`、`avgLatencyMs`、`results[]` |
 | **results 单条** | `caseId`、`question`、`expectedDocument`、`actualTop1Document`、`passed`、`searchMode`、`latencyMs`、`message` |
 
 **通过规则：** `actualTop1Document` 包含 `expectedDocument` 子串（与 V4 冒烟脚本一致）。无召回时 `passed=false`。
+
+**Reranker（V7-02）：** `enableRerank=true` 时先检索再经 `RerankService` 重排后取 Top1 判定。
+
+### POST /api/evaluation/compare
+
+| 项 | 说明 |
+|----|------|
+| **用途** | 一次性对 VECTOR / BM25 / HYBRID 执行内置用例评测并返回对比结果 |
+| **版本** | V7-02 |
+| **请求 Body** | `kbId`（必填）、`topK`（默认 5）、`enableRerank`（可选，默认 false） |
+| **返回 data** | `kbId`、`enableRerank`、`modeSummaries[]`、`cases[]` |
+| **modeSummaries 单条** | `searchMode`、`totalCount`、`passedCount`、`failedCount`、`passRate`、`totalLatencyMs`、`avgLatencyMs` |
+| **cases 单条** | `caseId`、`question`、`expectedDocument`、`vector` / `bm25` / `hybrid`（各含 `actualTop1Document`、`passed`、`latencyMs`） |
 
 ---
 

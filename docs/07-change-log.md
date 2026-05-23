@@ -158,7 +158,21 @@
 |----|------|
 | **变更** | `module/evaluation`（`EvaluationController`、`EvaluationService`、`EvaluationTestCatalog`）；`GET /api/evaluation/cases`、`POST /api/evaluation/run`；`EvaluationView.vue`、`/evaluation` 路由与菜单 |
 | **原因** | 进入 V7，页面可批量验收 VECTOR / BM25 / HYBRID Top1 命中率 |
-| **未改** | 评测表、ES mapping、Reranker、Recall@K / MRR |
+| **未改** | 评测表、ES mapping |
+
+### V7-02：多模式对比与 Reranker 评测
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `POST /api/evaluation/compare`；`enableRerank` 于 run/compare；`EvaluationView` 单模式/多模式对比、对比统计与分模式明细；`RerankService` 接入评测 Top1 |
+| **原因** | 完成 V7：页面直观对比 Hybrid / Reranker 是否提升通过率 |
+| **未改** | 评测表、Recall@K / MRR |
+
+### V7 版本完成摘要
+
+- 评测中心单模式 + 三模式对比
+- 可选轻量 Reranker 参与 Top1 判定
+- 通过率、失败数、平均耗时可观察
 
 ---
 
@@ -166,7 +180,6 @@
 
 | 版本 | 计划核心变更 |
 |------|----------------|
-| V7-02+ | Recall@K、MRR、自定义评测集 |
-| V8 | 权限、多租户、工程化 |
+| V8 | 权限、多租户、工程化、Recall@K / MRR 等 |
 
 **禁止**在未达对应版本前写入「已完成」或提前建表/接口。

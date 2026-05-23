@@ -2,28 +2,27 @@
 
 ## 当前版本
 
-**V7：Evaluation 评测中心**
+**V8：工程化增强（下一阶段，未开始）**
 
-在 V6 Reranker 已完成的基础上，提供评测中心页面：选择检索模式、执行内置用例批量评测、展示 Top1 命中与整体通过率。
+**上一完成版本：V7 Evaluation 评测中心**
 
-## V7-01 已完成
+## V7 已完成能力
 
-- 前端 `/evaluation`（菜单：评测中心）
-- `GET /api/evaluation/cases`、`POST /api/evaluation/run`
-- VECTOR / BM25 / HYBRID 批量 Top1 文档验收
+- `/evaluation` 评测中心：单模式评测 + 三模式对比（VECTOR / BM25 / HYBRID）
+- `enableRerank`：评测 Top1 基于轻量 Reranker 重排后结果
+- `POST /api/evaluation/run`、`POST /api/evaluation/compare`
+- 通过率、失败数、平均耗时、分用例分模式明细
 
 ## 当前阶段不做
 
-- 评测 PostgreSQL 表、历史持久化
-- Recall@K、MRR、自定义数据集（V7-02+）
-- 评测链路接入 Reranker
+- Recall@K、MRR、自定义评测集持久化
+- 权限、多租户（V8）
 
 ## 版本关系
 
 | 版本 | 状态 |
 |------|------|
-| V1～V6 | 已完成 |
-| **V7 Evaluation** | **进行中（V7-01 已完成）** |
-| V8 工程化 | 未开始 |
+| V1～V7 | 已完成 |
+| **V8 工程化** | **下一阶段** |
 
 详见 `05-development-plan.md`、`07-change-log.md`。

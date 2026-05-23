@@ -12,8 +12,8 @@
 | V4 | 关键词检索版 | ✅ 已完成 |
 | V5 | Hybrid Search | ✅ 已完成 |
 | V6 | Reranker | ✅ 已完成 |
-| V7 | Evaluation 评测中心 | 🔄 **当前** |
-| V8 | 工程化增强 | 未开始 |
+| V7 | Evaluation 评测中心 | ✅ **已完成** |
+| V8 | 工程化增强 | 🔄 **下一阶段** |
 
 ---
 
@@ -69,30 +69,25 @@ python3 scripts/run-v4-bm25-smoke-test.py
 
 ---
 
-## 当前：V7 Evaluation 评测中心
+## V7：Evaluation 评测中心（已完成）
 
-### 目标
-
-页面可观察的批量检索评测：固定用例、VECTOR / BM25 / HYBRID、Top1 命中与通过率。
-
-### V7 小任务
+| 能力 | 说明 |
+|------|------|
+| 单模式评测 | `POST /api/evaluation/run`，VECTOR / BM25 / HYBRID |
+| 多模式对比 | `POST /api/evaluation/compare`，三种模式一次返回 |
+| Reranker | `enableRerank` 开关，评测 Top1 基于重排后顺序 |
+| 页面 | `/evaluation` 对比统计 + 分模式明细表 |
 
 | 任务 ID | 内容 | 状态 |
 |---------|------|------|
-| **V7-01** | 评测中心最小闭环（`/evaluation` + `POST /api/evaluation/run`） | ✅ 已完成 |
-| V7-02+ | Recall@K、MRR、自定义数据集等 | 未开始 |
+| V7-01 | 评测中心最小闭环 | ✅ 已完成 |
+| **V7-02** | 多模式对比 + Reranker 评测 + V7 文档收尾 | ✅ 已完成 |
 
-### V7-01 范围
+**未纳入 V7：** Recall@K、MRR、自定义数据集、评测历史落库（可 V8+ 规划）。
 
-- 前端 `/evaluation`「评测中心」菜单
-- 内置 5 条用例；批量评测结果表 + 整体通过率
-- 后端 `EvaluationService` 复用 Vector / BM25 / Hybrid 检索，不接 LLM、不落库
+---
 
-### V7 禁止事项（V7-01）
-
-- 不新增评测 PostgreSQL 表
-- 不做 Reranker 参与评测（可后续任务）
-- 不做 Recall@K / MRR（V7-02+）
+## 当前：V8 工程化增强（未开始）
 
 ---
 
