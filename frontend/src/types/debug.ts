@@ -8,6 +8,12 @@ export interface DebugRetrievedChunk {
   content: string
   usedInPrompt?: boolean
   filterReason?: string | null
+  /** HYBRID 模式观测字段 */
+  matchedByVector?: boolean | null
+  matchedByBm25?: boolean | null
+  vectorScore?: number | null
+  bm25Score?: number | null
+  hybridScore?: number | null
 }
 
 export interface DebugLatency {

@@ -34,7 +34,11 @@ public class HybridSearchService {
      * RRF 分数量纲与向量 [0,1] 不同，按 Top1 归一化后再做 Context 过滤。
      */
     public List<RetrievedChunkResponse> retrieveNormalizedForFilter(Long kbId, String question, int topK) {
-        return toRetrievedChunks(search(kbId, question, topK), true);
+        return toRetrievedChunksForFilter(search(kbId, question, topK));
+    }
+
+    public List<RetrievedChunkResponse> toRetrievedChunksForFilter(List<HybridSearchResult> merged) {
+        return toRetrievedChunks(merged, true);
     }
 
     private List<HybridSearchMergeItem> toMergeItems(List<RetrievedChunkResponse> chunks) {

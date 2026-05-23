@@ -121,6 +121,14 @@
 | **原因** | 历史默认展开占用主页面空间；记录多时页面过长 |
 | **未改** | 后端接口、Vector/BM25/Hybrid 查询逻辑 |
 
+### V5-05：Hybrid 检索结果可观察性
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `DebugRetrievedChunkResponse` 增 HYBRID 观测字段；`DebugService.toRetrievedChunksFromHybrid`；`DebugView` / `DebugDetailView` 表格列；`utils/hybridDebug.ts` |
+| **原因** | 页面难以观察 Vector/BM25 融合来源与各路人马分数 |
+| **未改** | 数据库、ES mapping；`/api/chat`；VECTOR/BM25 展示逻辑 |
+
 ---
 
 ## 后续版本（占位，未实现）

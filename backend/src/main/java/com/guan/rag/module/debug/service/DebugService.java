@@ -22,6 +22,7 @@ import com.guan.rag.module.kb.service.KnowledgeBaseService;
 import com.guan.rag.module.retrieval.response.RetrievedChunkResponse;
 import com.guan.rag.module.retrieval.service.VectorRetrievalService;
 import com.guan.rag.module.search.SearchMode;
+import com.guan.rag.module.search.hybrid.HybridSearchResult;
 import com.guan.rag.module.search.hybrid.HybridSearchService;
 import com.guan.rag.module.search.service.Bm25SearchService;
 import lombok.RequiredArgsConstructor;
@@ -64,16 +65,25 @@ public class DebugService {
         String chatModel = chatModelProviderRouter.model();
 
         long retrievalStart = System.currentTimeMillis();
-        List<RetrievedChunkResponse> retrieved = retrieveChunks(searchMode, request.getKbId(), question, topK);
+        List<RetrievedChunkResponse> retrieved;
+        List<HybridSearchResult> hybridResults = null;
+        if (searchMode == SearchMode.HYBRID) {
+            hybridResults = hybridSearchService.search(request.getKbId(), question, topK);
+            retrieved = List.of();
+        } else {
+            retrieved = retrieveChunks(searchMode, request.getKbId(), question, topK);
+        }
         long retrievalTimeMs = System.currentTimeMillis() - retrievalStart;
 
         List<RetrievedChunkResponse> forFilter = switch (searchMode) {
             case BM25 -> bm25SearchService.retrieveNormalizedForFilter(request.getKbId(), question, topK);
-            case HYBRID -> hybridSearchService.retrieveNormalizedForFilter(request.getKbId(), question, topK);
+            case HYBRID -> hybridSearchService.toRetrievedChunksForFilter(hybridResults);
             default -> retrieved;
         };
         ContextFilterResult filterResult = contextChunkFilter.filter(forFilter);
-        List<DebugRetrievedChunkResponse> retrievedChunks = toRetrievedChunks(retrieved, filterResult);
+        List<DebugRetrievedChunkResponse> retrievedChunks = searchMode == SearchMode.HYBRID
+                ? toRetrievedChunksFromHybrid(hybridResults, filterResult)
+                : toRetrievedChunks(retrieved, filterResult);
         List<DebugRetrievedChunkResponse> contextChunks = toContextChunkResponses(
                 filterResult.getContextChunks(), filterResult);
 
@@ -203,6 +213,37 @@ public class DebugService {
             log.setFilterReason(chunk.getFilterReason());
             debugRetrievalLogMapper.insert(log);
         }
+    }
+
+    private List<DebugRetrievedChunkResponse> toRetrievedChunksFromHybrid(
+            List<HybridSearchResult> hybridResults,
+            ContextFilterResult filterResult
+    ) {
+        Map<Long, ContextFilterResult.ChunkFilterDecision> decisions = filterResult.getDecisions();
+        List<DebugRetrievedChunkResponse> result = new ArrayList<>();
+        for (int i = 0; i < hybridResults.size(); i++) {
+            HybridSearchResult item = hybridResults.get(i);
+            ContextFilterResult.ChunkFilterDecision decision = decisions.get(item.getChunkId());
+            boolean matchedVector = item.getVectorRank() != null;
+            boolean matchedBm25 = item.getBm25Rank() != null;
+            result.add(DebugRetrievedChunkResponse.builder()
+                    .documentId(item.getDocumentId())
+                    .documentName(item.getDocumentName())
+                    .chunkId(item.getChunkId())
+                    .chunkIndex(item.getChunkIndex())
+                    .score(item.getHybridScore())
+                    .rankPosition(i + 1)
+                    .content(item.getContent())
+                    .usedInPrompt(decision != null && decision.isUsedInPrompt())
+                    .filterReason(decision != null ? decision.getFilterReason() : null)
+                    .matchedByVector(matchedVector)
+                    .matchedByBm25(matchedBm25)
+                    .vectorScore(item.getVectorScore())
+                    .bm25Score(item.getBm25Score())
+                    .hybridScore(item.getHybridScore())
+                    .build());
+        }
+        return result;
     }
 
     private List<DebugRetrievedChunkResponse> toRetrievedChunks(

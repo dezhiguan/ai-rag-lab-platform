@@ -200,12 +200,24 @@
 |----|------|
 | **用途** | 执行完整 Debug 查询（召回 → Context 过滤 → Prompt → 回答） |
 | **版本** | V3（`searchMode` 为 V4 扩展） |
-| **请求 Body** | `kbId`（必填）、`question`（必填）、`topK`（默认 5）、`searchMode`（`VECTOR` 默认 / `BM25`） |
+| **请求 Body** | `kbId`（必填）、`question`（必填）、`topK`（默认 5）、`searchMode`（`VECTOR` 默认 / `BM25` / `HYBRID`） |
 | **返回 data** | `queryLogId`、`kbId`、`question`、`searchMode`、`embeddingProvider`、`embeddingModel`、`chatProvider`、`chatModel`、`retrievedChunks[]`、`contextChunks[]`、`context`、`prompt`、`answer`、`latency`（`retrievalTimeMs`、`generationTimeMs`、`totalTimeMs`） |
 
 **retrievedChunks / contextChunks 单条字段：**
 
 `documentId`、`documentName`、`chunkId`、`chunkIndex`、`score`、`rankPosition`、`content`、`usedInPrompt`、`filterReason`（`SCORE_TOO_LOW` / `SCORE_GAP_TOO_LARGE` / `EXCEED_MAX_CONTEXT_CHUNKS`）
+
+**HYBRID 模式下 `retrievedChunks` 额外字段（V5，用于融合可观察性）：**
+
+| 字段 | 说明 |
+|------|------|
+| `matchedByVector` | 是否出现在向量召回路 |
+| `matchedByBm25` | 是否出现在 BM25 召回路 |
+| `vectorScore` | 向量原始相似度 |
+| `bm25Score` | BM25 分数（融合前已按 Top1 归一化到 [0,1]） |
+| `hybridScore` | RRF 融合分；`score` 字段同 `hybridScore` |
+
+VECTOR / BM25 模式下上述字段为 `null`。历史详情若从 DB 回放且无持久化融合字段，详情页仅展示通用列。
 
 ### GET /api/debug/query-logs
 

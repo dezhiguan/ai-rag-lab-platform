@@ -60,7 +60,41 @@
           <el-table-column prop="rankPosition" label="#" width="50" />
           <el-table-column prop="documentName" label="文档" min-width="160" show-overflow-tooltip />
           <el-table-column prop="chunkIndex" label="Chunk" width="70" />
-          <el-table-column :label="scoreColumnLabel(detail.searchMode)" width="100">
+          <el-table-column
+            v-if="detail.searchMode === 'HYBRID' && hasHybridDetailFields"
+            label="来源"
+            width="120"
+          >
+            <template #default="{ row }">
+              <el-tag size="small" type="info">{{ hybridSourceLabel(row) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+            v-if="detail.searchMode === 'HYBRID' && hasHybridDetailFields"
+            label="Vector 分"
+            width="90"
+          >
+            <template #default="{ row }">{{ formatOptionalScore(row.vectorScore) }}</template>
+          </el-table-column>
+          <el-table-column
+            v-if="detail.searchMode === 'HYBRID' && hasHybridDetailFields"
+            label="BM25 分"
+            width="90"
+          >
+            <template #default="{ row }">{{ formatOptionalScore(row.bm25Score) }}</template>
+          </el-table-column>
+          <el-table-column
+            v-if="detail.searchMode === 'HYBRID' && hasHybridDetailFields"
+            label="Hybrid 分"
+            width="95"
+          >
+            <template #default="{ row }">{{ formatOptionalScore(row.hybridScore ?? row.score) }}</template>
+          </el-table-column>
+          <el-table-column
+            v-else
+            :label="scoreColumnLabel(detail.searchMode)"
+            width="100"
+          >
             <template #default="{ row }">{{ formatScore(row.score) }}</template>
           </el-table-column>
           <el-table-column label="进入 Prompt" width="130">
@@ -118,18 +152,26 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getDebugQueryLog } from '@/api/debug'
 import type { DebugQueryResult } from '@/types/debug'
 import { filterReasonLabel } from '@/utils/contextFilter'
+import { formatOptionalScore, hasHybridObservability, hybridSourceLabel } from '@/utils/hybridDebug'
 
 const route = useRoute()
 const router = useRouter()
 const queryLogId = Number(route.params.queryLogId)
 const loading = ref(true)
 const detail = ref<DebugQueryResult | null>(null)
+
+const hasHybridDetailFields = computed(() => {
+  if (detail.value?.searchMode !== 'HYBRID') return false
+  return (detail.value.retrievedChunks ?? []).some((c) =>
+    hasHybridObservability('HYBRID', c)
+  )
+})
 
 onMounted(async () => {
   if (!queryLogId || Number.isNaN(queryLogId)) {

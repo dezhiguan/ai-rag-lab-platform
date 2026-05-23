@@ -60,6 +60,7 @@ python3 scripts/run-v4-bm25-smoke-test.py
 | **V5-04** | （已并入 V5-03）Debug `searchMode=HYBRID` | ✅ 已完成 |
 | **V5-05** | （已并入 V5-03）前端 Debug HYBRID | ✅ 已完成 |
 | **V5-04** | Debug 页查询历史 Drawer + 前端分页（体验优化） | ✅ 已完成 |
+| **V5-05** | Hybrid 召回结果可观察性（来源标签 + 三路分数） | ✅ 已完成 |
 | **V5-06** | 补充 V5 回归测试与验收脚本 | 🔜 **下一步** |
 
 ### V5 禁止事项
@@ -105,6 +106,12 @@ python3 scripts/run-v4-bm25-smoke-test.py
 ### V4 BM25 冒烟
 
 - **脚本：** `python3 scripts/run-v4-bm25-smoke-test.py`
+
+### V5-05 Hybrid 结果可观察性
+
+- Debug `retrievedChunks` 在 HYBRID 模式返回：`matchedByVector`、`matchedByBm25`、`vectorScore`、`bm25Score`、`hybridScore`。
+- `DebugView` / `DebugDetailView`（有字段时）展示来源标签与三路分数列。
+- HYBRID 查询只调用一次 `HybridSearchService.search`，避免双路重复检索。
 
 ### V5-04 Debug 页面体验优化
 

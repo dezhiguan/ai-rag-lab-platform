@@ -17,4 +17,15 @@ public class DebugRetrievedChunkResponse {
     private Boolean usedInPrompt;
     /** 未进入 Prompt 时的原因：SCORE_TOO_LOW / SCORE_GAP_TOO_LARGE / EXCEED_MAX_CONTEXT_CHUNKS */
     private String filterReason;
+
+    /** HYBRID 模式：是否出现在向量召回路 */
+    private Boolean matchedByVector;
+    /** HYBRID 模式：是否出现在 BM25 召回路 */
+    private Boolean matchedByBm25;
+    /** HYBRID 模式：向量原始相似度 */
+    private Double vectorScore;
+    /** HYBRID 模式：BM25 分数（已按 Top1 归一化到 [0,1]） */
+    private Double bm25Score;
+    /** HYBRID 模式：RRF 融合分 */
+    private Double hybridScore;
 }
