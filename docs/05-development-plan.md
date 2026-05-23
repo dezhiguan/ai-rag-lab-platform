@@ -54,12 +54,12 @@ python3 scripts/run-v4-bm25-smoke-test.py
 
 | 任务 ID | 内容 | 状态 |
 |---------|------|------|
-| **V5-01** | 版本切换与 V5 范围锁定（文档：需求/架构/库表/计划/变更记录） | ✅ 本次 |
-| **V5-02** | 实现 Hybrid 融合排序核心逻辑（如 RRF，纯 Java 单元可测） | 待做 |
-| **V5-03** | 实现 `HybridSearchService` 编排 Vector + BM25 | 待做 |
-| **V5-04** | Debug 查询支持 `searchMode=HYBRID` | 待做 |
-| **V5-05** | 前端 Debug 页支持 HYBRID 模式展示 | 待做 |
-| **V5-06** | 补充 V5 回归测试与验收脚本 | 待做 |
+| **V5-01** | 版本切换与 V5 范围锁定（文档：需求/架构/库表/计划/变更记录） | ✅ 已完成 |
+| **V5-02** | Hybrid 融合排序核心逻辑（RRF + BM25 Top1 归一化 + 单元测试） | ✅ 已完成 |
+| **V5-03** | `HybridSearchService` + Debug HYBRID + 前端 Debug 页 | ✅ 已完成 |
+| **V5-04** | （已并入 V5-03）Debug `searchMode=HYBRID` | ✅ 已完成 |
+| **V5-05** | （已并入 V5-03）前端 Debug HYBRID | ✅ 已完成 |
+| **V5-06** | 补充 V5 回归测试与验收脚本 | 🔜 **下一步** |
 
 ### V5 禁止事项
 
@@ -105,7 +105,14 @@ python3 scripts/run-v4-bm25-smoke-test.py
 
 - **脚本：** `python3 scripts/run-v4-bm25-smoke-test.py`
 
-### V5 Hybrid（待 V5-06）
+### V5-02 Hybrid 融合（后端单元测试）
+
+- **类：** `HybridSearchMerger`、`HybridSearchMergeItem`、`HybridSearchResult`
+- **命令：** `cd backend && mvn test -Dtest=HybridSearchMergerTest`
+- **覆盖：** chunkId 合并、BM25 按 Top1 归一化、hybridScore 排序、topK 截断、空输入与 topK≤0
+- **说明：** 无页面测试、无 HYBRID searchMode、无接口变更
+
+### V5 Hybrid 端到端（待 V5-06）
 
 - 验收脚本待 `V5-06` 补充
 

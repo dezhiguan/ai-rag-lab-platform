@@ -3,12 +3,13 @@ package com.guan.rag.module.search;
 import com.guan.rag.common.exception.BusinessException;
 
 /**
- * V4 Debug 检索模式（不含 HYBRID）。
+ * Debug 检索模式（V5 起支持 HYBRID）。
  */
 public enum SearchMode {
 
     VECTOR,
-    BM25;
+    BM25,
+    HYBRID;
 
     public static SearchMode from(String value) {
         if (value == null || value.isBlank()) {
@@ -17,7 +18,7 @@ public enum SearchMode {
         try {
             return SearchMode.valueOf(value.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new BusinessException("不支持的 searchMode: " + value + "，仅支持 VECTOR、BM25");
+            throw new BusinessException("不支持的 searchMode: " + value + "，仅支持 VECTOR、BM25、HYBRID");
         }
     }
 }

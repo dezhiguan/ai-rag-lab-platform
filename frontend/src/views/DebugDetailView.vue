@@ -13,7 +13,7 @@
         <template #header><span>检索与 Provider</span></template>
         <el-descriptions :column="2" border size="small">
           <el-descriptions-item label="检索模式">
-            <el-tag :type="detail.searchMode === 'BM25' ? 'warning' : 'primary'" size="small">
+            <el-tag :type="searchModeTagType(detail.searchMode)" size="small">
               {{ detail.searchMode ?? 'VECTOR' }}
             </el-tag>
           </el-descriptions-item>
@@ -60,7 +60,7 @@
           <el-table-column prop="rankPosition" label="#" width="50" />
           <el-table-column prop="documentName" label="文档" min-width="160" show-overflow-tooltip />
           <el-table-column prop="chunkIndex" label="Chunk" width="70" />
-          <el-table-column label="相似度" width="100">
+          <el-table-column :label="scoreColumnLabel(detail.searchMode)" width="100">
             <template #default="{ row }">{{ formatScore(row.score) }}</template>
           </el-table-column>
           <el-table-column label="进入 Prompt" width="130">
@@ -156,6 +156,18 @@ function goBack() {
 
 function formatScore(score: number) {
   return score.toFixed(4)
+}
+
+function searchModeTagType(mode?: string) {
+  if (mode === 'BM25') return 'warning'
+  if (mode === 'HYBRID') return 'success'
+  return 'primary'
+}
+
+function scoreColumnLabel(mode?: string) {
+  if (mode === 'BM25') return 'BM25 分'
+  if (mode === 'HYBRID') return 'Hybrid 分'
+  return '相似度'
 }
 
 async function copyText(text: string) {

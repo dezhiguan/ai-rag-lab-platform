@@ -22,6 +22,7 @@ import com.guan.rag.module.kb.service.KnowledgeBaseService;
 import com.guan.rag.module.retrieval.response.RetrievedChunkResponse;
 import com.guan.rag.module.retrieval.service.VectorRetrievalService;
 import com.guan.rag.module.search.SearchMode;
+import com.guan.rag.module.search.hybrid.HybridSearchService;
 import com.guan.rag.module.search.service.Bm25SearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ public class DebugService {
     private final KnowledgeBaseService knowledgeBaseService;
     private final VectorRetrievalService vectorRetrievalService;
     private final Bm25SearchService bm25SearchService;
+    private final HybridSearchService hybridSearchService;
     private final ContextChunkFilter contextChunkFilter;
     private final PromptBuilder promptBuilder;
     private final ChatModelProvider chatModelProvider;
@@ -65,9 +67,11 @@ public class DebugService {
         List<RetrievedChunkResponse> retrieved = retrieveChunks(searchMode, request.getKbId(), question, topK);
         long retrievalTimeMs = System.currentTimeMillis() - retrievalStart;
 
-        List<RetrievedChunkResponse> forFilter = searchMode == SearchMode.BM25
-                ? bm25SearchService.retrieveNormalizedForFilter(request.getKbId(), question, topK)
-                : retrieved;
+        List<RetrievedChunkResponse> forFilter = switch (searchMode) {
+            case BM25 -> bm25SearchService.retrieveNormalizedForFilter(request.getKbId(), question, topK);
+            case HYBRID -> hybridSearchService.retrieveNormalizedForFilter(request.getKbId(), question, topK);
+            default -> retrieved;
+        };
         ContextFilterResult filterResult = contextChunkFilter.filter(forFilter);
         List<DebugRetrievedChunkResponse> retrievedChunks = toRetrievedChunks(retrieved, filterResult);
         List<DebugRetrievedChunkResponse> contextChunks = toContextChunkResponses(
@@ -176,10 +180,11 @@ public class DebugService {
     }
 
     private List<RetrievedChunkResponse> retrieveChunks(SearchMode searchMode, Long kbId, String question, int topK) {
-        if (searchMode == SearchMode.BM25) {
-            return bm25SearchService.retrieve(kbId, question, topK);
-        }
-        return vectorRetrievalService.retrieve(kbId, question, topK);
+        return switch (searchMode) {
+            case BM25 -> bm25SearchService.retrieve(kbId, question, topK);
+            case HYBRID -> hybridSearchService.retrieve(kbId, question, topK);
+            default -> vectorRetrievalService.retrieve(kbId, question, topK);
+        };
     }
 
     private void saveRetrievalLogs(Long queryLogId, Long kbId, List<DebugRetrievedChunkResponse> chunks) {

@@ -16,7 +16,7 @@ export interface DebugLatency {
   totalTimeMs: number
 }
 
-export type DebugSearchMode = 'VECTOR' | 'BM25'
+export type DebugSearchMode = 'VECTOR' | 'BM25' | 'HYBRID'
 
 export interface DebugQueryRequest {
   kbId: number

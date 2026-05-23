@@ -93,7 +93,25 @@
 | **规划接口** | Debug `HYBRID`（及可选独立 Hybrid API，待 V5-03/04 定稿） |
 | **规划页面** | Debug 页 HYBRID 模式（V5-05） |
 | **新增表/索引** | **无**（复用 V4 ES 与既有 PG 表） |
-| **备注** | **本次（V5-01）仅文档切换**：V4 BM25 已修复，正式进入 V5 阶段；**未**实现 Hybrid 代码 |
+| **备注** | V5-01 文档切换；V5-02 见下 |
+
+### V5-02：融合排序核心逻辑（2026-05）
+
+| 项 | 内容 |
+|----|------|
+| **变更** | 新增 `module/search/hybrid/`：`HybridSearchMerger`（RRF）、`HybridSearchMergeItem`、`HybridSearchResult` |
+| **逻辑** | 按 chunkId 合并 Vector/BM25；BM25 分数按 Top1 归一化到 [0,1] 写入 `bm25Score`；RRF 计算 `hybridScore` 并 topK 截断 |
+| **测试** | `HybridSearchMergerTest`：合并、归一化、排序、截断、空输入；`mvn test -Dtest=HybridSearchMergerTest` |
+| **未做** | 前端、Controller、HYBRID searchMode、DB、ES mapping |
+| **原因** | 验证 V5 Hybrid 融合排序核心逻辑，为 V5-03 双路召回编排做准备 |
+
+### V5-03：Debug HYBRID 闭环
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `HybridSearchService`；`SearchMode.HYBRID`；`DebugService` HYBRID 分支；`DebugView` / `DebugDetailView` 增加 Hybrid 选项 |
+| **流程** | Vector + BM25 → RRF 融合 → Context 过滤 → Prompt → Answer |
+| **页面验证** | `/debug` 选择 HYBRID，问题如「SMS_429 是什么意思？」，展示 retrievedChunks / context / prompt / answer |
 
 ---
 

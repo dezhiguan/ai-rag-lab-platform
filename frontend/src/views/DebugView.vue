@@ -3,8 +3,8 @@
     <el-card shadow="never" class="panel">
       <template #header>
         <div class="card-header">
-          <span>RAG Debug（V4）</span>
-          <el-tag type="info" size="small">Vector / BM25</el-tag>
+          <span>RAG Debug（V5）</span>
+          <el-tag type="info" size="small">Vector / BM25 / Hybrid</el-tag>
         </div>
       </template>
 
@@ -49,11 +49,11 @@
         </el-form-item>
 
         <el-alert
-          v-if="searchMode === 'VECTOR' && selectedKbId && (embeddingStatus?.notEmbeddedChunks ?? 0) > 0"
+          v-if="needsVectorEmbedding && selectedKbId && (embeddingStatus?.notEmbeddedChunks ?? 0) > 0"
           type="warning"
           :closable="false"
           show-icon
-          title="Vector 模式：存在未向量化的 Chunk，请先前往问答页重建向量。"
+          title="Vector / Hybrid 模式：存在未向量化的 Chunk，请先前往问答页重建向量。"
           class="embed-alert"
         />
 
@@ -61,10 +61,11 @@
           <el-radio-group v-model="searchMode">
             <el-radio-button value="VECTOR">Vector</el-radio-button>
             <el-radio-button value="BM25">BM25</el-radio-button>
+            <el-radio-button value="HYBRID">Hybrid</el-radio-button>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item v-if="searchMode === 'BM25'" label="ES 索引">
+        <el-form-item v-if="searchMode === 'BM25' || searchMode === 'HYBRID'" label="ES 索引">
           <el-space wrap>
             <el-button size="small" :loading="rebuildingIndex" @click="handleRebuildEsIndex">
               重建 ES 索引
@@ -81,6 +82,15 @@
           :closable="false"
           show-icon
           title="BM25 模式不依赖向量；请先重建 ES 索引后再查询。"
+          class="embed-alert"
+        />
+
+        <el-alert
+          v-if="searchMode === 'HYBRID'"
+          type="info"
+          :closable="false"
+          show-icon
+          title="Hybrid 模式同时使用向量与 BM25，请确保已完成向量重建并重建 ES 索引。"
           class="embed-alert"
         />
 
@@ -137,7 +147,7 @@
         </template>
         <el-descriptions :column="2" border size="small" class="mode-block">
           <el-descriptions-item label="检索模式">
-            <el-tag :type="result.searchMode === 'BM25' ? 'warning' : 'primary'" size="small">
+            <el-tag :type="searchModeTagType(result.searchMode)" size="small">
               {{ result.searchMode ?? 'VECTOR' }}
             </el-tag>
           </el-descriptions-item>
@@ -163,7 +173,7 @@
           <el-table-column prop="rankPosition" label="#" width="50" />
           <el-table-column prop="documentName" label="文档" min-width="160" show-overflow-tooltip />
           <el-table-column prop="chunkIndex" label="Chunk" width="70" />
-          <el-table-column :label="result.searchMode === 'BM25' ? 'BM25 分' : '相似度'" width="100">
+          <el-table-column :label="scoreColumnLabel(result.searchMode)" width="100">
             <template #default="{ row }">{{ formatScore(row.score) }}</template>
           </el-table-column>
           <el-table-column label="进入 Prompt" width="130">
@@ -253,7 +263,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { listKnowledgeBases, type KnowledgeBase } from '@/api/knowledgeBase'
@@ -284,6 +294,10 @@ const querying = ref(false)
 const result = ref<DebugQueryResult | null>(null)
 const history = ref<DebugQueryLogSummary[]>([])
 const loadingHistory = ref(false)
+
+const needsVectorEmbedding = computed(
+  () => searchMode.value === 'VECTOR' || searchMode.value === 'HYBRID'
+)
 
 const quickTests: QuickTest[] = [
   { label: 'SMS_429', question: 'SMS_429 是什么意思？' },
@@ -371,10 +385,10 @@ async function handleRebuildEsIndex() {
 async function handleDebugQuery() {
   if (!selectedKbId.value || !question.value.trim()) return
   if (
-    searchMode.value === 'VECTOR' &&
+    needsVectorEmbedding.value &&
     (embeddingStatus.value?.notEmbeddedChunks ?? 0) > 0
   ) {
-    ElMessage.warning('Vector 模式请先完成向量重建后再执行 Debug 查询')
+    ElMessage.warning('请先完成向量重建后再执行 Debug 查询')
     return
   }
   querying.value = true
@@ -405,6 +419,18 @@ function goDetail(queryLogId: number) {
 
 function formatScore(score: number) {
   return score.toFixed(4)
+}
+
+function searchModeTagType(mode?: string) {
+  if (mode === 'BM25') return 'warning'
+  if (mode === 'HYBRID') return 'success'
+  return 'primary'
+}
+
+function scoreColumnLabel(mode?: string) {
+  if (mode === 'BM25') return 'BM25 分'
+  if (mode === 'HYBRID') return 'Hybrid 分'
+  return '相似度'
 }
 
 async function copyText(text: string) {
