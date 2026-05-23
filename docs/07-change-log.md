@@ -69,16 +69,31 @@
 
 ---
 
-## V4：关键词检索版（进行中）
+## V4：关键词检索版
 
 | 项 | 内容 |
 |----|------|
-| **完成时间** | （进行中） |
-| **核心变更** | Elasticsearch 集成；索引 `rag_document_chunk`；BM25 检索；`terms` 专有词字段与加权查询；Debug `searchMode` VECTOR/BM25 |
+| **状态** | ✅ 已完成 |
+| **完成时间** | （待填） |
+| **核心变更** | Elasticsearch 集成；索引 `rag_document_chunk`；`terms` 专有词字段；BM25 加权查询；Debug `searchMode` 支持 VECTOR / BM25；BM25「SMS_429 是什么意思？」Top1 排序问题已修复 |
 | **新增接口** | `POST /api/search/index/rebuild`、`POST /api/search/bm25`；Debug 请求/响应增 `searchMode` |
 | **新增页面** | Debug 页增强（模式切换、重建索引、快捷问题） |
 | **新增表/索引** | **无** 新 PG 表；**ES 索引** `rag_document_chunk`；`rag_query_log.search_mode` |
-| **备注** | BM25 Top1 排序问题见 `06-debug-log.md`；`/api/chat` 仍为纯向量检索 |
+| **备注** | `/api/chat` 仍为纯向量检索；V4 验收通过后项目进入 V5 |
+
+---
+
+## V5：Hybrid Search 混合检索版
+
+| 项 | 内容 |
+|----|------|
+| **状态** | 🔄 当前 / 启动中 |
+| **完成时间** | （未开始） |
+| **规划核心变更** | Vector + BM25 应用层融合（如 RRF）；`HybridSearchService` 编排；Debug `searchMode=HYBRID`；融合结果不落库 |
+| **规划接口** | Debug `HYBRID`（及可选独立 Hybrid API，待 V5-03/04 定稿） |
+| **规划页面** | Debug 页 HYBRID 模式（V5-05） |
+| **新增表/索引** | **无**（复用 V4 ES 与既有 PG 表） |
+| **备注** | **本次（V5-01）仅文档切换**：V4 BM25 已修复，正式进入 V5 阶段；**未**实现 Hybrid 代码 |
 
 ---
 
@@ -86,7 +101,6 @@
 
 | 版本 | 计划核心变更 |
 |------|----------------|
-| V5 | Hybrid Search、RRF |
 | V6 | Reranker |
 | V7 | Evaluation 评测中心 |
 | V8 | 权限、多租户、工程化 |

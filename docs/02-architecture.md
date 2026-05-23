@@ -46,7 +46,7 @@ com.guan.rag
     ├── retrieval          # VectorRetrievalService
     ├── chat               # 问答、Prompt、Context 过滤（Chat 路径）
     ├── debug              # Debug 全链路可观察
-    ├── search             # EsIndexService、Bm25SearchService（V4）
+    ├── search             # EsIndexService、Bm25SearchService（V4）；V5 Hybrid 融合与编排（规划）
     └── sample             # 样例数据初始化
 ```
 
@@ -65,7 +65,7 @@ frontend/src
 │   ├── DocumentListView   # 文档列表
 │   ├── ChunkListView      # Chunk 列表
 │   ├── ChatView           # V2 问答
-│   ├── DebugView          # V3/V4 Debug（含 searchMode）
+│   ├── DebugView          # V3/V4/V5 Debug（含 searchMode：VECTOR / BM25 / HYBRID）
 │   ├── DebugDetailView    # 历史详情
 │   └── AboutView          # 版本说明
 └── stores/                # Pinia（如有）
@@ -80,7 +80,7 @@ frontend/src
 | `/kb/:kbId/documents` | 文档列表 | V1 |
 | `/documents/:documentId/chunks` | Chunk 列表 | V1 |
 | `/chat` | 问答 | V2 |
-| `/debug` | RAG Debug | V3/V4 |
+| `/debug` | RAG Debug | V3/V4/V5 |
 | `/debug/:queryLogId` | Debug 历史详情 | V3 |
 | `/about` | 关于 | - |
 
@@ -97,6 +97,8 @@ frontend/src
 
 ### Debug 查询（`/api/debug/query`）
 
+**V4 已实现：**
+
 ```text
 用户问题 → [VECTOR: 向量检索 | BM25: ES 检索 + 分数归一化]
          → retrievedChunks（全量展示）
@@ -104,6 +106,23 @@ frontend/src
          → PromptBuilder → ChatModelProvider → answer
          → 写入 rag_query_log / rag_retrieval_log
 ```
+
+**V5 目标（当前版本，待实现）：**
+
+```text
+用户问题
+  → VectorRetrievalService（向量召回）
+  → Bm25SearchService（关键词召回）
+  → Hybrid 融合服务（应用层融合排序，如 RRF；不新增独立存储）
+  → retrievedChunks（全量展示，含融合后 score）
+  → ContextChunkFilter
+  → PromptBuilder
+  → ChatModelProvider
+  → answer
+  → Debug 展示（searchMode=HYBRID）
+```
+
+V5 **复用**现有 `retrieval`、`search`、`debug` 模块；融合逻辑为**应用层服务**，不新增 PostgreSQL 表、不新增 ES 索引。
 
 **Context 过滤配置（`application.yml`）：**
 
@@ -127,16 +146,17 @@ query → SearchTermExtractor 抽取专有词
 
 ---
 
-## V0 到 V4 架构演进
+## V0 到 V5 架构演进
 
-| 版本 | 架构增量 |
-|------|----------|
-| V0 | 前后端骨架、健康检查、Dashboard 占位 |
-| V1 | PostgreSQL 业务表；文档解析分块流水线 |
-| V2 | PgVector + Embedding + Chat 闭环 |
-| V2.5 | Provider 抽象；Qwen / DeepSeek 真实 API |
-| V3 | Debug 可观察；双轨召回 vs Context；查询日志表 |
-| V4 | Elasticsearch 索引副本；BM25 检索；Debug `searchMode` |
+| 版本 | 架构增量 | 状态 |
+|------|----------|------|
+| V0 | 前后端骨架、健康检查、Dashboard 占位 | 已完成 |
+| V1 | PostgreSQL 业务表；文档解析分块流水线 | 已完成 |
+| V2 | PgVector + Embedding + Chat 闭环 | 已完成 |
+| V2.5 | Provider 抽象；Qwen / DeepSeek 真实 API | 已完成 |
+| V3 | Debug 可观察；双轨召回 vs Context；查询日志表 | 已完成 |
+| V4 | Elasticsearch 索引副本；BM25 检索；Debug `searchMode` VECTOR/BM25 | 已完成 |
+| **V5** | **Vector + BM25 应用层融合；Debug `searchMode` HYBRID** | **当前版本** |
 
 ---
 
@@ -164,9 +184,16 @@ Provider 路由：`EmbeddingProviderRouter`、`ChatModelProviderRouter`，配置
 
 ---
 
-## 后续架构方向（未实现）
+## 当前版本：V5 Hybrid Search（架构要点）
 
-- **V5**：检索层增加 Hybrid 融合服务，不提前建空模块。
-- **V6**：Reranker 作为检索后处理步骤。
-- **V7**：评测数据集与指标流水线。
-- **V8**：鉴权、多租户、可观测性中间件等。
+| 要点 | 说明 |
+|------|------|
+| 融合位置 | 应用层服务（如 `HybridFusionService` + `HybridSearchService` 编排），**非**独立存储引擎 |
+| 复用模块 | `module/retrieval`（向量）、`module/search`（BM25）、`module/debug`（可观察链路） |
+| 数据复用 | `document_chunk`、`chunk_embedding`、ES `rag_document_chunk`、`rag_query_log` / `rag_retrieval_log` |
+| 融合结果 | 查询链路内实时计算，**暂不落库** |
+| 不做 | Reranker、Evaluation、Query Rewrite、权限、多租户、多轮对话 |
+
+## 后续架构方向（V6+，未实现）
+
+- **V6+**：Reranker、评测、工程化等待对应版本再设计，**本文档不展开 V6 Reranker 详细架构**。

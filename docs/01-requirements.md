@@ -9,7 +9,8 @@
 3. 真实模型接入（Embedding / Chat）
 4. RAG 链路可观察与 Debug
 5. 关键词检索（BM25）
-6. （规划）混合检索、重排、评测、工程化
+6. 混合检索（Hybrid Search，当前）
+7. （规划）重排、评测、工程化
 
 每个版本须可独立运行、可测试、可演示，用于学习与面试展示。
 
@@ -98,11 +99,9 @@
 
 ---
 
-## 当前正在开发版本
-
 ### V4：关键词检索版
 
-**状态：** 进行中
+**状态：** 已完成
 
 **目标：**
 
@@ -110,6 +109,7 @@
 - 解决错误码、接口路径、专有名词等场景下纯向量检索不稳定的问题
 - Debug 页支持 `VECTOR` / `BM25` 检索模式切换
 - BM25 模式下仍走 V3 Context 过滤 → Prompt → 回答
+- `terms` 专有词字段与 BM25 加权查询；「SMS_429 是什么意思？」Top1 排序问题已修复
 
 **允许：**
 
@@ -119,25 +119,45 @@
 - 索引 `rag_document_chunk`，字段含 `terms` 专有词
 - Debug `searchMode`：`VECTOR` / `BM25`
 
-**禁止：**
+**禁止（V4 边界，V5 另行规划）：**
 
-- Hybrid Search、RRF、Reranker、Query Rewrite、Evaluation
+- Hybrid Search、Reranker、Query Rewrite、Evaluation
 - 权限、多轮对话
-- V5+ 空类、空接口、空页面、空表
 
-**已知验收问题：**
+---
 
-查询「SMS_429 是什么意思？」时，BM25 曾将 `01-project-guideline.md` 排第一，期望 Top1 为 `02-api-spec.md`（见 `05-development-plan.md`、`06-debug-log.md`）。
+## 当前正在开发版本
+
+### V5：Hybrid Search（混合检索版）
+
+**状态：** 当前 / 启动中
+
+**目标：**
+
+- 融合 **Vector + BM25** 两路召回结果（应用层融合排序，如 RRF）
+- 改善单一检索方式在部分问句上不稳定的问题
+- 复用现有 **Debug** 链路，展示 Hybrid 检索过程（`searchMode=HYBRID`）
+- 融合后仍经 `ContextChunkFilter` → `PromptBuilder` → Chat
+
+**允许：**
+
+- 复用 `VectorRetrievalService`、`Bm25SearchService`
+- 新增应用层 Hybrid 融合服务与编排（不落库）
+- Debug / 可选独立 API 支持 HYBRID 模式（具体接口在 V5 任务中定义）
+
+**不做：**
+
+- Reranker
+- Evaluation
+- Query Rewrite
+- 权限
+- 多租户
+- 多轮对话
+- V6+ 空类、空接口、空页面、空表
 
 ---
 
 ## 后续版本规划
-
-### V5：Hybrid Search（混合检索）
-
-- 融合 Vector + BM25
-- RRF 等融合策略
-- **未开始**
 
 ### V6：Reranker（重排）
 
@@ -167,8 +187,8 @@
 | V2 | Naive RAG 问答版 | 已完成 |
 | V2.5 | 真实模型接入版 | 已完成 |
 | V3 | RAG Debug 可观察版 | 已完成 |
-| V4 | 关键词检索版 | **当前** |
-| V5 | Hybrid Search | 未开始 |
+| V4 | 关键词检索版 | 已完成 |
+| V5 | Hybrid Search | **当前 / 启动中** |
 | V6 | Reranker | 未开始 |
 | V7 | 评测中心 | 未开始 |
 | V8 | 工程化增强 | 未开始 |

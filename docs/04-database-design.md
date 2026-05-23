@@ -122,7 +122,7 @@ Schema 定义见：`backend/src/main/resources/db/schema.sql`
 | embedding_provider / embedding_model | VARCHAR | |
 | chat_provider / chat_model | VARCHAR | |
 | retrieval_time_ms / generation_time_ms / total_time_ms | BIGINT | 耗时 |
-| search_mode | VARCHAR(20) | V4 增加：`VECTOR` / `BM25` |
+| search_mode | VARCHAR(20) | V4：`VECTOR` / `BM25`；V5 规划：`HYBRID`（沿用字段，不强制改表） |
 | created_at | TIMESTAMP | |
 | deleted | SMALLINT | |
 
@@ -192,12 +192,32 @@ Schema 定义见：`backend/src/main/resources/db/schema.sql`
 | V2 | + chunk_embedding, chat_session, chat_message | - |
 | V3 | + rag_query_log, rag_retrieval_log | - |
 | V4 | 无新增表；query_log 增 search_mode | rag_document_chunk |
+| V5 | **无新增表、无新增索引** | 复用上述全部存储 |
 
 ---
 
-## 未来版本存储原则（未建）
+## V5：Hybrid Search 存储设计（当前版本）
 
-- **V5 Hybrid**：优先复用现有向量表 + ES 索引，融合逻辑在应用层；不提前建融合结果表。
+V5 **不新增** PostgreSQL 表，**不新增** Elasticsearch 索引。融合与排序在应用层完成，结果仅在单次查询链路中存在。
+
+### 复用对象
+
+| 类型 | 对象 | 用途 |
+|------|------|------|
+| PostgreSQL | `document_chunk` | Chunk 元数据与正文 |
+| PostgreSQL | `chunk_embedding` | 向量召回 |
+| PostgreSQL | `rag_query_log` | Debug 查询快照（含 `search_mode`） |
+| PostgreSQL | `rag_retrieval_log` | 召回明细（融合后 score 写入日志，非独立融合表） |
+| Elasticsearch | `rag_document_chunk` | BM25 关键词召回 |
+
+### 明确不做
+
+- 不建 `hybrid_fusion_result` 等融合结果表
+- 不建第二套 ES 索引
+- Hybrid 融合中间结果**不落库**（仅 Debug 链路内展示与可选日志字段）
+
+### V6+ 存储原则（未建）
+
 - **V6 Reranker**：不提前建 rerank 分数表。
 - **V7 Evaluation**：评测数据集可放文件或后续专用表，**当前不建**。
 - **V8**：权限、租户等表待 V8 需求明确后再设计。
