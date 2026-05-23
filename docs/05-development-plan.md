@@ -92,6 +92,7 @@ python3 scripts/run-v4-bm25-smoke-test.py
 | 任务 ID | 内容 | 状态 |
 |---------|------|------|
 | V8-01 | 系统运行状态看板（`/system-status`、`GET /api/system/status`） | ✅ 已完成 |
+| V8-02 | RAG 运行指标看板（`/rag-metrics`、`GET /api/rag/metrics`） | ✅ 已完成 |
 
 ---
 

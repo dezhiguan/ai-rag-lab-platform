@@ -39,6 +39,20 @@
 
 依赖检查失败时对应节点 `status=DOWN`，`message` 为异常摘要；接口仍返回 200，便于前端展示。
 
+### GET /api/rag/metrics
+
+| 项 | 说明 |
+|----|------|
+| **用途** | RAG 运行指标看板（基于 `rag_query_log` 聚合，无新表） |
+| **版本** | V8-02 |
+| **请求参数** | 无 |
+| **返回 data** | `totalQueryCount`、`todayQueryCount`、`avgTotalTimeMs`、`avgRetrievalTimeMs`、`avgGenerationTimeMs`、`searchModeStats`、`rerankStats`、`slowQueries[]` |
+| **searchModeStats** | `vectorCount`、`bm25Count`、`hybridCount` |
+| **rerankStats** | `enabledCount`、`disabledCount` |
+| **slowQueries 单条** | `queryLogId`、`question`、`searchMode`、`enableRerank`、`totalTimeMs`、`createdAt` |
+
+慢查询按 `total_time_ms` 降序取 Top 10；详情页跳转已有 `/debug/{queryLogId}`。
+
 ---
 
 ## 知识库接口

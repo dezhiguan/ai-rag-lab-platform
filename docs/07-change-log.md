@@ -186,6 +186,14 @@
 | **原因** | V8 工程化：页面可观察后端、PostgreSQL、ES、Provider 与核心能力状态 |
 | **未改** | 权限、多租户、评测历史落库 |
 
+### V8-02：RAG 运行指标看板
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `module/metrics`（`RagMetricsController`、`RagMetricsService`、`RagMetricsMapper`）；`GET /api/rag/metrics`；`RagMetricsView.vue`、`/rag-metrics` 路由与菜单 |
+| **原因** | V8 工程化：复用 `rag_query_log` 展示查询次数、耗时、检索模式、Reranker 与慢查询 Top 10 |
+| **未改** | 新增表、Chat 写日志、Debug / Evaluation 逻辑 |
+
 ---
 
 ## 后续版本（占位，未实现）

@@ -57,6 +57,7 @@
           <el-button type="primary" @click="router.push('/kb')">进入知识库</el-button>
           <el-button @click="router.push('/chat')">进入问答</el-button>
           <el-button @click="router.push('/system-status')">系统状态</el-button>
+          <el-button @click="router.push('/rag-metrics')">RAG 指标</el-button>
         </div>
       </el-card>
     </el-col>

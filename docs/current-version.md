@@ -6,16 +6,22 @@
 
 **上一完成版本：V7 Evaluation 评测中心**
 
-## V8 已完成能力（V8-01）
+## V8 已完成能力
+
+### V8-01 系统运行状态看板
 
 - `/system-status` 系统运行状态看板
 - `GET /api/system/status`：后端 / PostgreSQL / ES / Provider / 核心能力状态
-- 「刷新状态」按钮；依赖异常时页面展示错误而非白屏
+
+### V8-02 RAG 运行指标看板
+
+- `/rag-metrics` RAG 运行指标看板
+- `GET /api/rag/metrics`：基于 `rag_query_log` 聚合查询次数、耗时、检索模式、Reranker、慢查询 Top 10
+- 慢查询「查看详情」跳转 `/debug/{queryLogId}`
 
 ## V7 已完成能力
 
 - `/evaluation` 评测中心：单模式评测 + 三模式对比（VECTOR / BM25 / HYBRID）
-- `enableRerank`：评测 Top1 基于轻量 Reranker 重排后结果
 - `POST /api/evaluation/run`、`POST /api/evaluation/compare`
 
 ## 当前阶段不做
@@ -28,6 +34,6 @@
 | 版本 | 状态 |
 |------|------|
 | V1～V7 | 已完成 |
-| **V8 工程化** | **进行中（V8-01 系统状态看板）** |
+| **V8 工程化** | **进行中（V8-01 / V8-02 已完成）** |
 
 详见 `05-development-plan.md`、`07-change-log.md`。

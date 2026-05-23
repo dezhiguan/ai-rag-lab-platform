@@ -23,6 +23,11 @@ const router = createRouter({
           component: () => import('@/views/SystemStatusView.vue'),
         },
         {
+          path: 'rag-metrics',
+          name: 'RagMetrics',
+          component: () => import('@/views/RagMetricsView.vue'),
+        },
+        {
           path: 'kb',
           name: 'KnowledgeBaseList',
           component: () => import('@/views/KbListView.vue'),
