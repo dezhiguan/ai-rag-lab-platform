@@ -23,6 +23,11 @@
 - `/rag-query-logs` 查询日志中心：分页、筛选、跳转 Debug 详情
 - `GET /api/rag/query-logs`：关键词 / 检索模式 / 重排 / 慢查询筛选
 
+### V8-04 慢查询分析
+
+- `/slow-query-analysis` 慢查询分析与优化建议
+- `GET /api/rag/query-logs/slow-analysis`：规则判定慢查询 + 原因/建议生成
+
 ## V7 已完成能力
 
 - `/evaluation` 评测中心：单模式评测 + 三模式对比（VECTOR / BM25 / HYBRID）
@@ -38,6 +43,6 @@
 | 版本 | 状态 |
 |------|------|
 | V1～V7 | 已完成 |
-| **V8 工程化** | **进行中（V8-01～V8-03 已完成）** |
+| **V8 工程化** | **进行中（V8-01～V8-04 已完成）** |
 
 详见 `05-development-plan.md`、`07-change-log.md`。

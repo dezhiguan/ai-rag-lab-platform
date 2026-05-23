@@ -33,6 +33,11 @@ const router = createRouter({
           component: () => import('@/views/RagQueryLogsView.vue'),
         },
         {
+          path: 'slow-query-analysis',
+          name: 'SlowQueryAnalysis',
+          component: () => import('@/views/SlowQueryAnalysisView.vue'),
+        },
+        {
           path: 'kb',
           name: 'KnowledgeBaseList',
           component: () => import('@/views/KbListView.vue'),

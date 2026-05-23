@@ -202,6 +202,14 @@
 | **原因** | V8 工程化：分页 + 筛选浏览 `rag_query_log`，详情复用 Debug 详情页 |
 | **未改** | `rag_query_log` 表结构、Debug 写入与列表接口 |
 
+### V8-04：慢查询分析与优化建议
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `SlowQueryAnalyzer`、`RagSlowQueryService`；`GET /api/rag/query-logs/slow-analysis`；`SlowQueryAnalysisView.vue`、`/slow-query-analysis` 路由与菜单 |
+| **原因** | V8 工程化：基于日志规则生成慢查询原因与优化建议，辅助排查 |
+| **未改** | 新增表、Debug / 查询日志中心分页接口 |
+
 ---
 
 ## 后续版本（占位，未实现）

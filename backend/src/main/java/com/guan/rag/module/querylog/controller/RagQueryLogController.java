@@ -2,7 +2,9 @@ package com.guan.rag.module.querylog.controller;
 
 import com.guan.rag.common.ApiResponse;
 import com.guan.rag.module.querylog.response.RagQueryLogPageResponse;
+import com.guan.rag.module.querylog.response.RagSlowQueryAnalysisResponse;
 import com.guan.rag.module.querylog.service.RagQueryLogService;
+import com.guan.rag.module.querylog.service.RagSlowQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RagQueryLogController {
 
     private final RagQueryLogService ragQueryLogService;
+    private final RagSlowQueryService ragSlowQueryService;
 
     @Operation(summary = "分页查询 RAG 查询日志（基于 rag_query_log）")
     @GetMapping
@@ -37,5 +40,13 @@ public class RagQueryLogController {
                 enableRerank,
                 slowOnly
         ));
+    }
+
+    @Operation(summary = "慢查询分析与优化建议（基于 rag_query_log / rag_retrieval_log）")
+    @GetMapping("/slow-analysis")
+    public ApiResponse<RagSlowQueryAnalysisResponse> slowAnalysis(
+            @RequestParam(required = false) Integer limit
+    ) {
+        return ApiResponse.success(ragSlowQueryService.analyzeSlowQueries(limit));
     }
 }

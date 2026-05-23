@@ -65,6 +65,17 @@
 
 详情跳转已有 `GET /api/debug/query-logs/{queryLogId}` 与 `/debug/{queryLogId}` 页面。
 
+### GET /api/rag/query-logs/slow-analysis
+
+| 项 | 说明 |
+|----|------|
+| **用途** | 慢查询分析与规则化优化建议 |
+| **版本** | V8-04 |
+| **请求参数** | `limit`（可选，默认 50，最大 100） |
+| **慢查询判定** | `totalTimeMs >= 3000` 或 `retrievalTimeMs >= 1000` 或 `generationTimeMs >= 2000` |
+| **返回 data** | `totalCount`（符合慢查询规则的总数）、`records[]` |
+| **records 单条** | `queryLogId`、`question`、`searchMode`、`enableRerank`、各耗时、`retrievalChunkCount`（来自 `rag_retrieval_log`）、`slowReasons[]`、`suggestions[]`、`createdAt` |
+
 ---
 
 ## 知识库接口

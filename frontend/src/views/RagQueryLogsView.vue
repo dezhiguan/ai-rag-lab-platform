@@ -4,9 +4,12 @@
       <template #header>
         <div class="card-header">
           <span>查询日志中心（V8）</span>
-          <el-button type="primary" :loading="loading" @click="loadLogs">
-            刷新
-          </el-button>
+          <el-space wrap>
+            <el-button @click="router.push('/slow-query-analysis')">慢查询分析</el-button>
+            <el-button type="primary" :loading="loading" @click="loadLogs">
+              刷新
+            </el-button>
+          </el-space>
         </div>
       </template>
 
