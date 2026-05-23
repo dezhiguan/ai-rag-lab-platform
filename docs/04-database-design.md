@@ -122,7 +122,8 @@ Schema 定义见：`backend/src/main/resources/db/schema.sql`
 | embedding_provider / embedding_model | VARCHAR | |
 | chat_provider / chat_model | VARCHAR | |
 | retrieval_time_ms / generation_time_ms / total_time_ms | BIGINT | 耗时 |
-| search_mode | VARCHAR(20) | V4：`VECTOR` / `BM25`；V5 规划：`HYBRID`（沿用字段，不强制改表） |
+| search_mode | VARCHAR(20) | V4：`VECTOR` / `BM25`；V5：`HYBRID` |
+| enable_rerank | SMALLINT | V6：是否启用轻量 Reranker（0/1） |
 | created_at | TIMESTAMP | |
 | deleted | SMALLINT | |
 
@@ -144,6 +145,9 @@ Schema 定义见：`backend/src/main/resources/db/schema.sql`
 | rank_position | INT | |
 | used_in_prompt | SMALLINT | V3：是否进入 Prompt |
 | filter_reason | VARCHAR(50) | V3：过滤原因 |
+| original_rank | INT | V6：检索原始排名（可空） |
+| rerank_rank | INT | V6：重排后排名（可空） |
+| rerank_score | DOUBLE PRECISION | V6：重排分（可空） |
 | created_at | TIMESTAMP | |
 
 索引：`idx_rag_retrieval_log_query_log_id`

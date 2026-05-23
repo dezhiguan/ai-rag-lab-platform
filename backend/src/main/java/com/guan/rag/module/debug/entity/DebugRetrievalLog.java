@@ -38,6 +38,12 @@ public class DebugRetrievalLog {
 
     private String filterReason;
 
+    private Integer originalRank;
+
+    private Integer rerankRank;
+
+    private Double rerankScore;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 }

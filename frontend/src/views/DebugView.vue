@@ -183,26 +183,42 @@
         <template #header>
           <span>召回 Chunk（{{ result.retrievedChunks.length }}，进入 Prompt {{ result.contextChunks.length }}）</span>
         </template>
-        <el-table :data="result.retrievedChunks" stripe style="width: 100%" empty-text="无召回结果">
+        <el-alert
+          v-if="showRerankColumns"
+          type="success"
+          :closable="false"
+          show-icon
+          class="rerank-summary"
+          :title="`重排摘要：${rerankSummaryText}`"
+          description="表格按重排后排名（rerankRank）展示；Context / Prompt 已使用重排后顺序。"
+        />
+        <el-table :data="displayRetrievedChunks" stripe style="width: 100%" empty-text="无召回结果">
           <el-table-column
             prop="rankPosition"
-            :label="result.enableRerank ? '重排#' : '#'"
+            :label="showRerankColumns ? '重排#' : '#'"
             width="60"
           />
           <el-table-column
-            v-if="result.enableRerank"
+            v-if="showRerankColumns"
             prop="originalRank"
             label="原排名"
             width="70"
           />
           <el-table-column
-            v-if="result.enableRerank"
+            v-if="showRerankColumns"
             prop="rerankRank"
             label="重排排名"
             width="80"
           />
+          <el-table-column v-if="showRerankColumns" label="排名变化" width="100">
+            <template #default="{ row }">
+              <el-tag :type="rerankChangeTagType(rerankChangeKind(row))" size="small">
+                {{ rerankChangeLabel(row) }}
+              </el-tag>
+            </template>
+          </el-table-column>
           <el-table-column
-            v-if="result.enableRerank"
+            v-if="showRerankColumns"
             label="重排分"
             width="90"
           >
@@ -262,9 +278,9 @@
         </el-table>
         <el-collapse class="chunk-collapse">
           <el-collapse-item
-            v-for="chunk in result.retrievedChunks"
+            v-for="chunk in displayRetrievedChunks"
             :key="chunk.chunkId"
-            :title="`#${chunk.rankPosition} ${chunk.documentName} · Chunk #${chunk.chunkIndex}`"
+            :title="chunkCollapseTitle(chunk)"
           >
             <div class="chunk-content">{{ chunk.content }}</div>
           </el-collapse-item>
@@ -278,6 +294,25 @@
             <el-button size="small" @click="copyText(result.context)">复制</el-button>
           </div>
         </template>
+        <p v-if="showRerankColumns" class="context-order-hint">
+          以下片段顺序与重排后进入 Context 的顺序一致。
+        </p>
+        <el-table
+          v-if="showRerankColumns && result.contextChunks.length"
+          :data="result.contextChunks"
+          stripe
+          size="small"
+          class="context-chunk-table"
+        >
+          <el-table-column prop="rankPosition" label="重排#" width="70" />
+          <el-table-column prop="documentName" label="文档" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="chunkIndex" label="Chunk" width="70" />
+          <el-table-column label="重排分" width="90">
+            <template #default="{ row }">
+              {{ formatOptionalScore(findRetrievedChunk(row.chunkId)?.rerankScore) }}
+            </template>
+          </el-table-column>
+        </el-table>
         <el-input
           v-model="result.context"
           type="textarea"
@@ -367,9 +402,22 @@ import { getModelProviders, type ModelProviders } from '@/api/model'
 import { executeDebugQuery, listDebugQueryLogs } from '@/api/debug'
 import { rebuildSearchIndex, type EsIndexRebuildResult } from '@/api/search'
 import type { EmbeddingStatus } from '@/types/embedding'
-import type { DebugQueryLogSummary, DebugQueryResult, DebugSearchMode } from '@/types/debug'
+import type {
+  DebugQueryLogSummary,
+  DebugQueryResult,
+  DebugRetrievedChunk,
+  DebugSearchMode,
+} from '@/types/debug'
 import { filterReasonLabel } from '@/utils/contextFilter'
 import { formatOptionalScore, hybridSourceLabel } from '@/utils/hybridDebug'
+import {
+  hasRerankObservability,
+  rerankChangeKind,
+  rerankChangeLabel,
+  rerankChangeTagType,
+  sortChunksForDisplay,
+  summarizeRerankChanges,
+} from '@/utils/rerankDebug'
 
 interface QuickTest {
   label: string
@@ -398,6 +446,20 @@ const historyPageSize = ref(10)
 const paginatedHistory = computed(() => {
   const start = (historyPage.value - 1) * historyPageSize.value
   return history.value.slice(start, start + historyPageSize.value)
+})
+
+const showRerankColumns = computed(() =>
+  result.value ? hasRerankObservability(result.value.enableRerank, result.value.retrievedChunks) : false
+)
+
+const displayRetrievedChunks = computed(() => {
+  if (!result.value) return []
+  return sortChunksForDisplay(result.value.retrievedChunks, result.value.enableRerank)
+})
+
+const rerankSummaryText = computed(() => {
+  if (!result.value || !showRerankColumns.value) return ''
+  return summarizeRerankChanges(result.value.retrievedChunks)
 })
 
 const needsVectorEmbedding = computed(
@@ -555,6 +617,18 @@ function scoreColumnLabel(mode?: string) {
   return '相似度'
 }
 
+function findRetrievedChunk(chunkId: number): DebugRetrievedChunk | undefined {
+  return result.value?.retrievedChunks.find((c) => c.chunkId === chunkId)
+}
+
+function chunkCollapseTitle(chunk: DebugRetrievedChunk): string {
+  const rank = chunk.rerankRank ?? chunk.rankPosition
+  if (showRerankColumns.value && chunk.originalRank != null) {
+    return `#${rank}（原 #${chunk.originalRank}，${rerankChangeLabel(chunk)}） ${chunk.documentName} · Chunk #${chunk.chunkIndex}`
+  }
+  return `#${rank} ${chunk.documentName} · Chunk #${chunk.chunkIndex}`
+}
+
 async function copyText(text: string) {
   try {
     await navigator.clipboard.writeText(text ?? '')
@@ -660,5 +734,19 @@ async function copyText(text: string) {
 .history-pagination {
   margin-top: 8px;
   justify-content: flex-end;
+}
+
+.rerank-summary {
+  margin-bottom: 12px;
+}
+
+.context-order-hint {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.context-chunk-table {
+  margin-bottom: 12px;
 }
 </style>

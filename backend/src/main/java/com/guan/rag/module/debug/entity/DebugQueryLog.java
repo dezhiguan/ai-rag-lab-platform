@@ -31,6 +31,9 @@ public class DebugQueryLog {
 
     private String searchMode;
 
+    /** 1=启用轻量 Reranker，0=未启用 */
+    private Integer enableRerank;
+
     private String embeddingProvider;
 
     private String embeddingModel;

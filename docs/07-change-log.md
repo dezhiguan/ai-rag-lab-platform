@@ -135,7 +135,22 @@
 |----|------|
 | **变更** | `RerankService`、`RerankResult`；Debug `enableRerank`；`DebugView` 重排开关与排名列 |
 | **原因** | 进入 V6，需在页面观察重排前后效果，暂不接外部模型 |
-| **未改** | 数据库、ES mapping；`/api/chat` |
+| **未改** | ES mapping；`/api/chat` |
+
+### V6-02：Reranker 可观察性增强与 V6 收尾
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `utils/rerankDebug.ts`；`DebugView` / `DebugDetailView` 排名变化 Tag、重排摘要、Context 顺序提示；`rag_query_log.enable_rerank`、`rag_retrieval_log` 增补 `original_rank` / `rerank_rank` / `rerank_score`；`DebugService` 持久化与详情回放 |
+| **原因** | 完成 V6：页面直观看重排升降、详情页与历史一致；标记 V6 完成、V7 为下一阶段 |
+| **未改** | 新增业务表、ES mapping；Evaluation；外部 Reranker |
+
+### V6 版本完成摘要
+
+- Debug「启用重排」+ 轻量 `RerankService`
+- VECTOR / BM25 / HYBRID + Reranker
+- 展示 `originalRank` / `rerankRank` / `rerankScore` / 排名变化
+- Context / Prompt / Answer 使用重排后顺序
 
 ---
 
@@ -143,7 +158,6 @@
 
 | 版本 | 计划核心变更 |
 |------|----------------|
-| V6 | Reranker |
 | V7 | Evaluation 评测中心 |
 | V8 | 权限、多租户、工程化 |
 

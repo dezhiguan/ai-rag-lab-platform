@@ -229,6 +229,10 @@ VECTOR / BM25 模式下上述字段为 `null`。历史详情若从 DB 回放且�
 
 未启用重排时上述字段为 `null`。重排后 Context 过滤 / Prompt / Answer 基于重排顺序。
 
+**排名变化（V6-02，前端计算）：** `originalRank - rerankRank`，正数为上升（如 `+2`），负数为下降，0 为不变。
+
+**历史回放（V6-02）：** `enableRerank` 写入 `rag_query_log.enable_rerank`；各条 `original_rank` / `rerank_rank` / `rerank_score` 写入 `rag_retrieval_log`。V6-02 之前的历史无上述字段，详情接口仍返回 200，前端隐藏重排列。
+
 ### GET /api/debug/query-logs
 
 | 项 | 说明 |

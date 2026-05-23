@@ -157,7 +157,8 @@ query → SearchTermExtractor 抽取专有词
 | V3 | Debug 可观察；双轨召回 vs Context；查询日志表 | 已完成 |
 | V4 | Elasticsearch 索引副本；BM25 检索；Debug `searchMode` VECTOR/BM25 | 已完成 |
 | V5 | Vector + BM25 应用层融合；Debug `searchMode` HYBRID | 已完成 |
-| **V6** | **Debug 轻量 Reranker（`RerankService`，`enableRerank`）** | **当前版本** |
+| V6 | Debug 轻量 Reranker（`RerankService`，`enableRerank`） | 已完成 |
+| **V7** | **Evaluation 评测中心** | **下一阶段** |
 
 ---
 
@@ -185,7 +186,7 @@ Provider 路由：`EmbeddingProviderRouter`、`ChatModelProviderRouter`，配置
 
 ---
 
-## 当前版本：V6 Reranker（架构要点）
+## V6 Reranker（架构要点，已完成）
 
 Debug 查询在检索（VECTOR / BM25 / HYBRID）之后、Context 过滤之前，可选经 `RerankService` 本地规则重排：
 

@@ -11,8 +11,8 @@
 | V3 | RAG Debug 可观察版 | ✅ 已完成 |
 | V4 | 关键词检索版 | ✅ 已完成 |
 | V5 | Hybrid Search | ✅ 已完成 |
-| V6 | Reranker | 🔄 **当前** |
-| V7 | Evaluation 评测中心 | 未开始 |
+| V6 | Reranker | ✅ **已完成** |
+| V7 | Evaluation 评测中心 | 🔄 **下一阶段** |
 | V8 | 工程化增强 | 未开始 |
 
 ---
@@ -42,48 +42,46 @@ curl -X POST http://localhost:8080/api/search/index/rebuild
 python3 scripts/run-v4-bm25-smoke-test.py
 ```
 
----
+### V5：Hybrid Search（已完成）
 
-## 当前：V6 Reranker 重排版
+- 应用层 RRF 融合（`HybridSearchMerger`）
+- Debug `searchMode=HYBRID` 闭环
+- 融合来源与三路分数可观察（V5-05）
+- 查询历史 Drawer + 前端分页（V5-04）
 
-### 目标
+### V6：Reranker（已完成）
 
-在 V5 Hybrid 基础上，Debug 支持轻量本地 Reranker：关键词与专有词命中规则重排，页面可观察重排前后排名。
-
-### V6 小任务
+| 能力 | 说明 |
+|------|------|
+| 轻量 Reranker | `RerankService` 本地规则（关键词 + 专有词），不接外部模型 |
+| Debug 开关 | `enableRerank`，默认关闭 |
+| 可观察性 | `originalRank`、`rerankRank`、`rerankScore`、排名变化（上升/下降/不变） |
+| 检索模式 | VECTOR / BM25 / HYBRID 均支持 + Reranker |
+| 下游 | Context / Prompt / Answer 使用重排后顺序 |
+| 历史详情 | `rag_query_log.enable_rerank` + `rag_retrieval_log` 重排字段回放（V6-02） |
 
 | 任务 ID | 内容 | 状态 |
 |---------|------|------|
-| **V6-01** | Debug 轻量 Reranker 闭环（`enableRerank` + 页面展示） | ✅ 已完成 |
-| **V6-02+** | 后续增强（待规划） | 未开始 |
+| V6-01 | Debug 轻量 Reranker 闭环（`enableRerank` + 页面展示） | ✅ 已完成 |
+| V6-02 | 重排可观察性增强 + 详情页同步 + V6 文档收尾 | ✅ 已完成 |
 
-### V6 禁止事项（V6-01）
+**V6 禁止事项（已遵守）：** 不接外部 Reranker、不用 LLM 重排、不做 Evaluation / Query Rewrite、不新增业务表（仅在既有日志表增补可空列）。
 
-- 不接外部 Reranker 模型
-- 不用 LLM 做重排
-- 不做 Evaluation
-- 不做 Query Rewrite
-- 不做权限、多租户、多轮对话
-- 不新增 PostgreSQL 表、不新增 ES 索引（V5-01～06 均遵守，除非架构师另开任务）
-- 不提前创建 V6+ 空类、空接口、空页面、空表
+---
 
-### V5 验收方向（规划，V5-06 细化）
+## 当前：V7 Evaluation（未开始）
 
-- Debug `HYBRID` 下专有词问句（如 SMS_429）融合结果优于单路 Vector 或单路 BM25 的不稳定情况
-- 融合后仍经 Context 过滤与 Prompt 生成
-- 现有 V4 BM25、V3 Context 回归不被破坏
+### 目标
+
+评测数据集、Recall@K、MRR 等评测中心能力（详见 `01-requirements.md`）。
+
+### 禁止提前
+
+- 不提前建评测表、评测 API、评测页面（除非明确开启 V7 任务）
 
 ---
 
 ## 后续版本
-
-### V6：Reranker
-
-- 粗召回后精排
-
-### V7：Evaluation
-
-- 评测数据集、Recall@K、MRR 等
 
 ### V8：工程化增强
 
@@ -102,12 +100,12 @@ python3 scripts/run-v4-bm25-smoke-test.py
 
 - **脚本：** `python3 scripts/run-v4-bm25-smoke-test.py`
 
-### V6-01 Debug 轻量 Reranker
+### V6 Debug 轻量 Reranker
 
 - 请求：`enableRerank`（默认 false）
 - 规则：`RerankService` 本地关键词 + 专有词（`SearchTermExtractor`）加分
 - 返回：`originalRank`、`rerankRank`、`rerankScore`；Context/Prompt/Answer 使用重排后顺序
-- 前端：Debug 页「启用重排」开关 + 表格列展示
+- 前端：Debug 页「启用重排」、排名变化 Tag、Context 顺序提示；详情页同步
 - 支持 VECTOR / BM25 / HYBRID + enableRerank
 
 ### V5-05 Hybrid 结果可观察性
@@ -129,10 +127,6 @@ python3 scripts/run-v4-bm25-smoke-test.py
 - **命令：** `cd backend && mvn test -Dtest=HybridSearchMergerTest`
 - **覆盖：** chunkId 合并、BM25 按 Top1 归一化、hybridScore 排序、topK 截断、空输入与 topK≤0
 - **说明：** 无页面测试、无 HYBRID searchMode、无接口变更
-
-### V5 Hybrid 端到端（待 V5-06）
-
-- 验收脚本待 `V5-06` 补充
 
 ### 环境探测
 

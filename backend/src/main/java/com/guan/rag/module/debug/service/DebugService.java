@@ -125,6 +125,7 @@ public class DebugService {
         queryLog.setAnswer(result.answer());
         queryLog.setTopK(topK);
         queryLog.setSearchMode(searchMode.name());
+        queryLog.setEnableRerank(enableRerank ? 1 : 0);
         queryLog.setEmbeddingProvider(embeddingProvider);
         queryLog.setEmbeddingModel(embeddingModel);
         queryLog.setChatProvider(chatProvider);
@@ -186,11 +187,13 @@ public class DebugService {
                 .filter(c -> Boolean.TRUE.equals(c.getUsedInPrompt()))
                 .toList();
 
+        boolean enableRerank = queryLog.getEnableRerank() != null && queryLog.getEnableRerank() == 1;
         return DebugQueryResponse.builder()
                 .queryLogId(queryLog.getId())
                 .kbId(queryLog.getKbId())
                 .question(queryLog.getQuestion())
                 .searchMode(queryLog.getSearchMode() != null ? queryLog.getSearchMode() : SearchMode.VECTOR.name())
+                .enableRerank(enableRerank)
                 .embeddingProvider(queryLog.getEmbeddingProvider())
                 .embeddingModel(queryLog.getEmbeddingModel())
                 .chatProvider(queryLog.getChatProvider())
@@ -230,6 +233,9 @@ public class DebugService {
             log.setRankPosition(chunk.getRankPosition());
             log.setUsedInPrompt(Boolean.TRUE.equals(chunk.getUsedInPrompt()) ? 1 : 0);
             log.setFilterReason(chunk.getFilterReason());
+            log.setOriginalRank(chunk.getOriginalRank());
+            log.setRerankRank(chunk.getRerankRank());
+            log.setRerankScore(chunk.getRerankScore());
             debugRetrievalLogMapper.insert(log);
         }
     }
@@ -363,6 +369,9 @@ public class DebugService {
                 .content(log.getContent())
                 .usedInPrompt(log.getUsedInPrompt() != null && log.getUsedInPrompt() == 1)
                 .filterReason(log.getFilterReason())
+                .originalRank(log.getOriginalRank())
+                .rerankRank(log.getRerankRank())
+                .rerankScore(log.getRerankScore())
                 .build();
     }
 
