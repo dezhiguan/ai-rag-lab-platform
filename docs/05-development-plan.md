@@ -93,6 +93,7 @@ python3 scripts/run-v4-bm25-smoke-test.py
 |---------|------|------|
 | V8-01 | 系统运行状态看板（`/system-status`、`GET /api/system/status`） | ✅ 已完成 |
 | V8-02 | RAG 运行指标看板（`/rag-metrics`、`GET /api/rag/metrics`） | ✅ 已完成 |
+| V8-03 | RAG 查询日志中心（`/rag-query-logs`、`GET /api/rag/query-logs`） | ✅ 已完成 |
 
 ---
 

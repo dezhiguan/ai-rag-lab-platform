@@ -17,7 +17,11 @@
 
 - `/rag-metrics` RAG 运行指标看板
 - `GET /api/rag/metrics`：基于 `rag_query_log` 聚合查询次数、耗时、检索模式、Reranker、慢查询 Top 10
-- 慢查询「查看详情」跳转 `/debug/{queryLogId}`
+
+### V8-03 RAG 查询日志中心
+
+- `/rag-query-logs` 查询日志中心：分页、筛选、跳转 Debug 详情
+- `GET /api/rag/query-logs`：关键词 / 检索模式 / 重排 / 慢查询筛选
 
 ## V7 已完成能力
 
@@ -34,6 +38,6 @@
 | 版本 | 状态 |
 |------|------|
 | V1～V7 | 已完成 |
-| **V8 工程化** | **进行中（V8-01 / V8-02 已完成）** |
+| **V8 工程化** | **进行中（V8-01～V8-03 已完成）** |
 
 详见 `05-development-plan.md`、`07-change-log.md`。

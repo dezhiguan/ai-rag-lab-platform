@@ -53,6 +53,18 @@
 
 慢查询按 `total_time_ms` 降序取 Top 10；详情页跳转已有 `/debug/{queryLogId}`。
 
+### GET /api/rag/query-logs
+
+| 项 | 说明 |
+|----|------|
+| **用途** | RAG 查询日志中心分页列表（基于 `rag_query_log`） |
+| **版本** | V8-03 |
+| **请求参数** | `page`（默认 1）、`pageSize`（默认 10）、`keyword`（问题模糊搜索）、`searchMode`（VECTOR/BM25/HYBRID）、`enableRerank`（true/false）、`slowOnly`（true 时 `total_time_ms > 3000`） |
+| **返回 data** | `total`、`page`、`pageSize`、`records[]` |
+| **records 单条** | `queryLogId`、`question`、`searchMode`、`enableRerank`、`totalTimeMs`、`retrievalTimeMs`、`generationTimeMs`、`createdAt` |
+
+详情跳转已有 `GET /api/debug/query-logs/{queryLogId}` 与 `/debug/{queryLogId}` 页面。
+
 ---
 
 ## 知识库接口

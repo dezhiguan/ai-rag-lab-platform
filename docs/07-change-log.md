@@ -194,6 +194,14 @@
 | **原因** | V8 工程化：复用 `rag_query_log` 展示查询次数、耗时、检索模式、Reranker 与慢查询 Top 10 |
 | **未改** | 新增表、Chat 写日志、Debug / Evaluation 逻辑 |
 
+### V8-03：RAG 查询日志中心
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `module/querylog`（`RagQueryLogController`、`RagQueryLogService`）；`GET /api/rag/query-logs`；`RagQueryLogsView.vue`、`/rag-query-logs` 路由与菜单 |
+| **原因** | V8 工程化：分页 + 筛选浏览 `rag_query_log`，详情复用 Debug 详情页 |
+| **未改** | `rag_query_log` 表结构、Debug 写入与列表接口 |
+
 ---
 
 ## 后续版本（占位，未实现）

@@ -161,6 +161,7 @@ query → SearchTermExtractor 抽取专有词
 | V7 | Evaluation 评测中心（run / compare） | 已完成 |
 | V8 | 系统运行状态看板（`/api/system/status`） | 进行中 |
 | V8 | RAG 运行指标看板（`/api/rag/metrics`） | 进行中 |
+| V8 | RAG 查询日志中心（`/api/rag/query-logs`） | 进行中 |
 
 ---
 
