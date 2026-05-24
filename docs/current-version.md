@@ -22,12 +22,18 @@
 
 ### V9-02 阿里云 ECS 部署环境准备
 
-- `docs/10-aliyun-ecs-setup.md` ECS 规格、安全组、初始化步骤、目录规划
-- `scripts/check-ecs-env.sh` 服务器环境检查脚本
-- 同机 AI 求职 Agent 部署隔离说明（预留，本项目不实现 Agent）
-- `docs/09-production-deployment.md` 补充 ECS 前置步骤与文档引用
+- `docs/10-aliyun-ecs-setup.md` ECS 规格、安全组、初始化与环境检查
+- `scripts/check-ecs-env.sh` 应用层环境检查脚本
 
-**本次不做：** 实际创建 ECS 实例、SSH 连接、域名解析
+### V9-03 双服务器部署配置落地
+
+- 部署拓扑：轻量服务器（应用入口）+ ECS（数据检索）
+- `docs/09-production-deployment.md`、`docs/10-aliyun-ecs-setup.md` 统一为双服务器方案
+- `.env.prod.example`：`POSTGRES_HOST` / `ES_HOSTS` / `REDIS_HOST` 使用 `<ECS_PRIVATE_IP>`
+- `deploy/nginx.conf.example`：仅反代本机 Java，不暴露 PG/ES/Redis
+- 项目总览「线上部署准备」展示双服务器架构与备案策略
+
+**说明：** Redis 仅 env 与文档预留，RAG 业务尚未接入；公开文档不含真实公网/内网 IP。
 
 ## V8 已完成能力
 

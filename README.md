@@ -109,13 +109,15 @@ npm run dev
 
 ## 生产环境部署
 
-> 详细说明见 [docs/09-production-deployment.md](docs/09-production-deployment.md)（部署前请先完成 [docs/10-aliyun-ecs-setup.md](docs/10-aliyun-ecs-setup.md)）
+> **双服务器方案**：应用入口层（轻量 2C4G，Nginx + 前端 + Java 后端）+ 数据检索层（ECS 4C8G，PostgreSQL / Elasticsearch / Redis 内网）。  
+> 详见 [docs/09-production-deployment.md](docs/09-production-deployment.md)、[docs/10-aliyun-ecs-setup.md](docs/10-aliyun-ecs-setup.md)。公开文档使用 `<ECS_PRIVATE_IP>` 等占位符，真实 IP 仅写在本地 `.env.prod`。
 
 ### 准备生产环境变量
 
 ```bash
 cp .env.prod.example .env.prod
-# 编辑 POSTGRES_*、ES_*、DASHSCOPE_API_KEY、DEEPSEEK_API_KEY 等
+# 在轻量服务器编辑：POSTGRES_HOST、ES_HOSTS、REDIS_HOST 填 ECS 内网 IP
+# 勿将 .env.prod 提交到 Git
 ```
 
 后端使用 `prod` profile，配置见 `backend/src/main/resources/application-prod.yml`。
@@ -147,7 +149,7 @@ npm install
 npm run build
 ```
 
-构建产物在 `frontend/dist/`，将目录内文件部署到 Nginx 静态根路径。
+构建产物在 `frontend/dist/`，部署到**轻量服务器** Nginx 静态目录（如 `/var/www/rag-lab/frontend/`）。
 
 | 变量 | 说明 |
 |------|------|

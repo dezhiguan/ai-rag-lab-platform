@@ -1,180 +1,188 @@
-# 10 - 阿里云 ECS 环境准备
+# 10 - 双服务器环境准备
 
-> V9-02 · 阿里云 ECS 部署环境准备  
-> 本文说明 ECS 规格建议、安全组、初始化步骤与环境检查；**不在本次任务中实际创建或连接云资源**。
+> V9 · 阿里云双服务器部署  
+> **应用入口层**（轻量 2C4G）+ **数据检索层**（ECS 4C8G）。公开文档仅使用占位符；真实 IP 写入本地 `.env.prod`，勿提交仓库。
 
-部署 RAG 服务前，请先完成本文步骤，再按 [09-production-deployment.md](09-production-deployment.md) 执行后端部署、前端部署与 Nginx 配置。
+部署流程：先准备 **数据检索层 ECS**，再准备 **应用入口层轻量服务器**，最后按 [09-production-deployment.md](09-production-deployment.md) 部署应用。
 
 ---
 
-## 1. 服务器推荐配置
+## 1. 部署拓扑总览
 
-| 项 | 说明 |
+```text
+┌─ 应用入口层（轻量服务器 2C4G）────────────────────────┐
+│ 公网：<LIGHT_SERVER_PUBLIC_IP>                        │
+│ 内网：<LIGHT_SERVER_PRIVATE_IP>                        │
+│ · Nginx（80 / 443 对外）                              │
+│ · 前端 dist                                           │
+│ · RAG Java 后端（8080 仅本机，由 Nginx 反代 /api）     │
+│ · 预留 AI 求职 Agent 前端 / 后端                      │
+└───────────────────────┬───────────────────────────────┘
+                        │ VPC 内网（已验证互通）
+┌─ 数据检索层（ECS 4C8G）───────────────────────────────┐
+│ 内网：<ECS_PRIVATE_IP>（无 PG/ES/Redis 公网暴露）      │
+│ · PostgreSQL + PgVector  :5432                        │
+│ · Elasticsearch          :9200                        │
+│ · Redis                    :6379                        │
+└───────────────────────────────────────────────────────┘
+```
+
+| 占位符 | 含义 |
+|--------|------|
+| `<LIGHT_SERVER_PUBLIC_IP>` | 轻量服务器公网 IP（浏览器访问入口） |
+| `<LIGHT_SERVER_PRIVATE_IP>` | 轻量服务器 VPC 内网 IP |
+| `<ECS_PRIVATE_IP>` | 数据层 ECS 内网 IP（写入 `.env.prod`） |
+
+**当前在线体验策略：** 暂不备案，通过 `<LIGHT_SERVER_PUBLIC_IP>` 访问；后续可绑定域名并配置 HTTPS。
+
+---
+
+## 2. 数据检索层（ECS 4C8G）
+
+### 2.1 规格与系统
+
+| 项 | 建议 |
 |----|------|
-| **最低规格** | 2 核 CPU、4 GiB 内存 |
-| **推荐规格** | 4 核 CPU、8 GiB 内存（含 Elasticsearch 客户端连接、构建前端时更从容） |
-| **操作系统** | Ubuntu 22.04 LTS **或** Alibaba Cloud Linux 3 |
-| **系统盘** | 建议 ≥ 40 GiB（日志、构建缓存、上传文件预留空间） |
+| 规格 | 4 核 8 GiB |
+| 系统 | Ubuntu 22.04 LTS 或 Alibaba Cloud Linux 3 |
+| 系统盘 | ≥ 80 GiB（ES 与 PG 数据占用） |
 
-### 安全组与端口
+### 2.2 安全组（数据层）
 
-| 端口 | 方向 | 用途 | 是否公网开放 |
+| 端口 | 服务 | 公网 | 内网访问来源 |
 |------|------|------|--------------|
-| **22** | 入站 | SSH 运维 | ✅ 建议限制来源 IP |
-| **80** | 入站 | HTTP（Nginx） | ✅ |
-| **443** | 入站 | HTTPS（Nginx） | ✅ |
-| **8080** | — | Spring Boot 后端 | ❌ **仅本机或内网**，由 Nginx 反代 `/api` |
-| **5432** | — | PostgreSQL | ❌ **不要公网暴露**（使用 RDS 内网或 VPC 内自建） |
-| **9200** | — | Elasticsearch | ❌ **不要公网暴露**（使用内网 ES 或云服务内网地址） |
+| 22 | SSH | 建议限制来源 IP | — |
+| 5432 | PostgreSQL | ❌ 不开放 | 仅 `<LIGHT_SERVER_PRIVATE_IP>` / VPC |
+| 9200 | Elasticsearch | ❌ 不开放 | 仅应用入口层内网 IP |
+| 6379 | Redis | ❌ 不开放 | 仅应用入口层内网 IP |
 
-原则：**对外只暴露 Nginx（80/443）**；数据库与 ES 通过 VPC 内网或安全组白名单访问。
+**原则：** 数据层 **不对 0.0.0.0/0 开放** 5432、9200、6379。
 
----
+### 2.3 数据层组件安装（概要）
 
-## 2. 目录规划（RAG 服务）
+在 ECS 上安装并配置（具体命令按所选发行版调整）：
 
-| 路径 | 用途 | 属主建议 |
-|------|------|----------|
-| `/opt/rag-lab` | 项目代码、jar、`.env.prod`、构建产物 | 部署用户 `raglab` |
-| `/var/www/rag-lab/frontend` | Nginx 静态资源（`dist` 部署目录） | `www-data` 或 Nginx 用户，部署用户可写 |
-| `/var/lib/rag-lab/uploads` | 文档上传存储（对应 `RAG_STORAGE_PATH`） | 运行后端的用户 |
+1. **PostgreSQL 16 + PgVector 扩展**  
+2. **Elasticsearch 8.x**（单节点，生产注意 `vm.max_map_count`）  
+3. **Redis**（供后续 Agent / 缓存场景预留；RAG 当前业务未接入）
 
----
-
-## 3. ECS 初始化步骤
-
-以下命令以 **Ubuntu 22.04** 为例；Alibaba Cloud Linux 3 可将 `apt` 换为 `yum` / `dnf`，包名略有差异。
-
-### 3.1 创建部署用户
+创建数据库与用户示例：
 
 ```bash
+# 在 ECS 上执行（示例）
+sudo -u postgres psql -c "CREATE USER rag_user WITH PASSWORD '***';"
+sudo -u postgres psql -c "CREATE DATABASE rag_lab OWNER rag_user;"
+# 安装 pgvector 扩展后：
+psql -d rag_lab -c "CREATE EXTENSION IF NOT EXISTS vector;"
+```
+
+### 2.4 内网连通验证（在轻量服务器执行）
+
+将 `<ECS_PRIVATE_IP>` 替换为实际内网地址（仅写在本地，勿写入公开文档提交）：
+
+```bash
+# PostgreSQL
+psql -h <ECS_PRIVATE_IP> -U rag_user -d rag_lab -c "SELECT 1"
+
+# Elasticsearch
+curl -s "http://<ECS_PRIVATE_IP>:9200"
+
+# Redis（可选）
+redis-cli -h <ECS_PRIVATE_IP> ping
+```
+
+---
+
+## 3. 应用入口层（轻量服务器 2C4G）
+
+### 3.1 规格与安全组
+
+| 项 | 建议 |
+|----|------|
+| 规格 | 2 核 4 GiB |
+| 公网开放 | 22（SSH）、80（HTTP）、443（HTTPS 预留） |
+| 8080 | ❌ **不对公网开放**；仅本机监听，由 Nginx 反代 `/api` |
+
+### 3.2 目录规划
+
+| 路径 | 用途 |
+|------|------|
+| `/opt/rag-lab/app` | 代码、jar、`.env.prod` |
+| `/var/www/rag-lab/frontend` | Nginx 静态资源（`dist`） |
+| `/var/lib/rag-lab/uploads` | 文档上传（`RAG_STORAGE_PATH`） |
+| `/opt/agent-job`（预留） | 未来 AI 求职 Agent，与 RAG 目录隔离 |
+
+### 3.3 初始化步骤（轻量服务器）
+
+```bash
+# 部署用户
 sudo adduser raglab
-sudo usermod -aG sudo raglab   # 如需 sudo；生产可改为最小权限
 sudo su - raglab
-```
 
-后续部署与构建建议在该用户下执行，避免长期使用 root。
-
-### 3.2 安装基础工具
-
-```bash
+# 基础工具 + JDK 17 + Node 18+ + Nginx + PostgreSQL 客户端
 sudo apt update
-sudo apt install -y curl git unzip rsync ca-certificates gnupg
-```
+sudo apt install -y curl git unzip rsync ca-certificates openjdk-17-jdk nginx postgresql-client
 
-### 3.3 安装 JDK 17
-
-```bash
-sudo apt install -y openjdk-17-jdk
-java -version   # 应显示 17.x
-```
-
-### 3.4 安装 Node.js 18+
-
-推荐使用 NodeSource（Ubuntu 22.04）：
-
-```bash
+# Node.js（示例：NodeSource 20.x）
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
-node -v && npm -v
-```
 
-### 3.5 安装 Nginx
-
-```bash
-sudo apt install -y nginx
-sudo systemctl enable nginx
-sudo systemctl start nginx
-```
-
-### 3.6 安装 PostgreSQL 客户端
-
-用于首次执行 `schema.sql`、运维排查（数据库本身建议 RDS 内网）：
-
-```bash
-sudo apt install -y postgresql-client
-psql --version
-```
-
-### 3.7 创建部署目录与上传目录
-
-```bash
-sudo mkdir -p /opt/rag-lab
-sudo mkdir -p /var/www/rag-lab/frontend
-sudo mkdir -p /var/lib/rag-lab/uploads
-
-sudo chown -R raglab:raglab /opt/rag-lab
-sudo chown -R raglab:raglab /var/lib/rag-lab/uploads
-# 静态目录：部署用户可写，Nginx 可读（按实际 Nginx 用户调整）
+# 目录
+sudo mkdir -p /opt/rag-lab/app /var/www/rag-lab/frontend /var/lib/rag-lab/uploads
+sudo chown -R raglab:raglab /opt/rag-lab /var/lib/rag-lab/uploads
 sudo chown -R raglab:www-data /var/www/rag-lab/frontend
 sudo chmod -R 775 /var/www/rag-lab/frontend
-sudo chmod -R 750 /var/lib/rag-lab/uploads
 ```
 
-### 3.8 克隆项目（示例）
+### 3.4 环境检查
 
-```bash
-cd /opt/rag-lab
-git clone <your-repo-url> app
-cd app
-```
-
-### 3.9 运行环境检查
+在轻量服务器项目目录执行：
 
 ```bash
 chmod +x scripts/check-ecs-env.sh
 ./scripts/check-ecs-env.sh
 ```
 
-全部 **PASS** 或仅剩 **WARN**（如 80/443 尚未配置站点）后，继续 [09-production-deployment.md](09-production-deployment.md) 中的部署流程。
-
----
-
-## 4. 环境检查脚本
-
-| 文件 | 说明 |
-|------|------|
-| [scripts/check-ecs-env.sh](../scripts/check-ecs-env.sh) | 检查 Java、Node、Nginx、curl、目录、写权限、80/443 端口 |
-
-可覆盖默认路径：
+### 3.5 配置 `.env.prod`
 
 ```bash
-DEPLOY_ROOT=/opt/rag-lab/app \
-UPLOAD_DIR=/var/lib/rag-lab/uploads \
-FRONTEND_DIR=/var/www/rag-lab/frontend \
-./scripts/check-ecs-env.sh
+cp .env.prod.example .env.prod
+# 编辑：POSTGRES_HOST、ES_HOSTS、REDIS_HOST 使用 <ECS_PRIVATE_IP>
 ```
 
----
-
-## 5. 与同机其他服务的部署隔离（预留）
-
-未来 **AI 求职 Agent** 可与 **RAG Lab** 部署在同一台 ECS，但须严格隔离，避免端口冲突、配置混用与相互影响：
-
-| 隔离维度 | RAG Lab（本项目） | AI 求职 Agent（未来，非本仓库范围） |
-|----------|-------------------|-------------------------------------|
-| **服务** | Spring Boot RAG API | Agent 独立进程 / 独立应用 |
-| **端口** | 8080（本机） | 独立端口，如 8081、3000 等 |
-| **目录** | `/opt/rag-lab`、`/var/lib/rag-lab` | 独立目录，如 `/opt/agent-job` |
-| **配置** | `.env.prod`、`application-prod.yml` | 独立 env 与配置文件 |
-| **域名 / 路径** | `rag.example.com` 或 `/` | 子域名 `agent.example.com` 或路径前缀 `/agent` |
-| **Nginx** | 独立 `server` 或 `location` 块 | 与 RAG 分开反代，不共用 jar 与静态目录 |
-
-**本项目 V9 范围：** 仅完成 RAG 服务的 ECS 环境准备与部署说明，**不实现** AI 求职 Agent 的功能、代码或部署脚本。
+详见 [.env.prod.example](../.env.prod.example)。
 
 ---
 
-## 6. 下一步
+## 4. 服务隔离（同机多项目预留）
 
-1. 在阿里云控制台创建 ECS、配置安全组（22 / 80 / 443）  
-2. 按本文完成初始化与环境检查  
-3. 按 [09-production-deployment.md](09-production-deployment.md) 部署后端 jar、前端 `dist`、Nginx  
-4. 配置 RDS / ES 内网连接，填写 `.env.prod`  
+RAG 与 **AI 求职 Agent** 可共用 **应用入口层轻量服务器**，须隔离：
+
+| 维度 | RAG Lab | AI 求职 Agent（未来） |
+|------|---------|------------------------|
+| 端口 | 8080 | 独立端口（如 8081） |
+| 目录 | `/opt/rag-lab` | `/opt/agent-job` |
+| Nginx | `/`、`/api` | 独立 `location` 或子域名 |
+| 配置 | `.env.prod` | 独立 env 文件 |
+
+数据层 Redis 可先部署在 ECS，供 Agent 与后续 RAG 缓存共用，通过 **不同 DB index** 或 key 前缀隔离（实施时再定）。
+
+**本项目 V9-03 范围：** 仅文档与配置体现双服务器 RAG 部署，**不实现** Agent 功能代码。
+
+---
+
+## 5. 下一步
+
+1. 确认两台机器 **VPC 内网互通**  
+2. 完成数据层 PG / ES / Redis 安装与安全组  
+3. 完成应用层初始化与 `check-ecs-env.sh`  
+4. 按 [09-production-deployment.md](09-production-deployment.md) 部署 jar、dist、Nginx  
+5. 通过 `<LIGHT_SERVER_PUBLIC_IP>` 验证在线体验  
 
 ---
 
 ## 相关文档
 
-- [09-production-deployment.md](09-production-deployment.md) — 生产环境部署（打包、构建、Nginx）
-- [deploy/nginx.conf.example](../deploy/nginx.conf.example) — Nginx 模板
-- [.env.prod.example](../.env.prod.example) — 生产环境变量模板
+- [09-production-deployment.md](09-production-deployment.md) — 打包、构建、Nginx、检查清单  
+- [deploy/nginx.conf.example](../deploy/nginx.conf.example) — 应用入口层 Nginx  
+- [.env.prod.example](../.env.prod.example) — 环境变量模板  

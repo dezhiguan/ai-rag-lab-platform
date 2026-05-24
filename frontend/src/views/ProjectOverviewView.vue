@@ -94,10 +94,29 @@
       <template #header>
         <el-space>
           <span>线上部署准备</span>
-          <el-tag type="warning" size="small">V9 云部署与在线体验</el-tag>
+          <el-tag type="warning" size="small">V9 双服务器方案</el-tag>
         </el-space>
       </template>
-      <el-table :data="deploymentReadiness" stripe style="width: 100%">
+
+      <el-descriptions title="当前部署架构" :column="1" border class="dual-server-desc">
+        <el-descriptions-item label="应用入口层">
+          轻量服务器 2C4G — Nginx、前端 dist、RAG Java 后端；预留 AI 求职 Agent
+        </el-descriptions-item>
+        <el-descriptions-item label="数据检索层">
+          ECS 4C8G — PostgreSQL + PgVector、Elasticsearch、Redis（仅内网）
+        </el-descriptions-item>
+        <el-descriptions-item label="内网通信">
+          <el-tag type="success" size="small">已验证</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="对外访问">
+          Nginx 统一暴露前端与 /api；PG / ES / Redis 不公网暴露
+        </el-descriptions-item>
+        <el-descriptions-item label="当前备案策略">
+          暂不备案，先使用公网 IP 提供在线体验
+        </el-descriptions-item>
+      </el-descriptions>
+
+      <el-table :data="deploymentReadiness" stripe style="width: 100%; margin-top: 16px">
         <el-table-column prop="item" label="准备项" width="200" />
         <el-table-column prop="desc" label="说明" min-width="280" />
         <el-table-column prop="path" label="文件 / 文档" min-width="240">
@@ -118,7 +137,7 @@
         :closable="false"
         show-icon
         class="usage-tip"
-        title="V9-01 配置与文档已就绪；V9-02 ECS 环境准备已规划，待实机执行。步骤见 docs/10-aliyun-ecs-setup.md → docs/09-production-deployment.md。"
+        title="双服务器配置已落地（V9-03）。应用层部署见 docs/09-production-deployment.md，环境准备见 docs/10-aliyun-ecs-setup.md。真实 IP 仅配置在本地 .env.prod，勿提交仓库。"
       />
     </el-card>
 
@@ -329,36 +348,38 @@ interface DeploymentReadinessItem {
 
 const deploymentReadiness: DeploymentReadinessItem[] = [
   {
+    item: '双服务器部署拓扑',
+    desc: '应用入口层（轻量 2C4G）+ 数据检索层（ECS 4C8G），内网互联',
+    path: 'docs/09-production-deployment.md',
+    status: '已配置',
+    statusType: 'success',
+  },
+  {
     item: '后端生产配置',
-    desc: 'prod profile：关闭 SQL 日志与 schema 自动初始化，环境变量驱动',
+    desc: 'jar 运行在轻量服务器；通过内网连接 ECS 上的 PG / ES',
     path: 'backend/src/main/resources/application-prod.yml',
   },
   {
     item: '前端构建配置',
-    desc: 'VITE_API_BASE_URL；同域 Nginx 反代 /api 时留空',
+    desc: '同域访问 /api，VITE_API_BASE_URL 留空',
     path: 'frontend/.env.production.example',
   },
   {
     item: 'Nginx 配置模板',
-    desc: '静态资源 + /api 反代，含 HTTPS 预留说明',
+    desc: '轻量服务器：静态资源 + /api → 本机 8080；不暴露数据层端口',
     path: 'deploy/nginx.conf.example',
   },
   {
     item: '生产环境变量模板',
-    desc: 'PostgreSQL、ES、模型 Key、存储路径等',
+    desc: 'POSTGRES / ES / REDIS 使用 <ECS_PRIVATE_IP> 占位符',
     path: '.env.prod.example',
   },
   {
-    item: '部署说明',
-    desc: '打包、启动 jar、构建 dist、检查清单',
-    path: 'docs/09-production-deployment.md',
-  },
-  {
-    item: '阿里云 ECS 环境准备',
-    desc: '服务器规格、初始化步骤、环境检查脚本；实机创建 ECS 后执行',
+    item: '双服务器环境准备',
+    desc: '数据层 ECS 与应用层轻量服务器初始化说明',
     path: 'docs/10-aliyun-ecs-setup.md',
-    status: '已规划 / 待实机执行',
-    statusType: 'warning',
+    status: '已规划',
+    statusType: 'info',
   },
 ]
 
@@ -597,5 +618,9 @@ async function handleInitSample() {
   font-size: 12px;
   color: #409eff;
   word-break: break-all;
+}
+
+.dual-server-desc {
+  margin-bottom: 0;
 }
 </style>
