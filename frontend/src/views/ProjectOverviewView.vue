@@ -10,6 +10,21 @@
       </div>
     </el-card>
 
+    <!-- 当前访问身份 -->
+    <el-card shadow="never" class="section-card">
+      <template #header>
+        <el-space>
+          <span>当前访问身份</span>
+          <el-tag type="success" size="small">V10 访问保护</el-tag>
+        </el-space>
+      </template>
+      <el-descriptions :column="1" border>
+        <el-descriptions-item label="当前用户">{{ authStore.username }}</el-descriptions-item>
+        <el-descriptions-item label="当前角色">{{ authStore.roleLabel }}</el-descriptions-item>
+        <el-descriptions-item label="当前模式">{{ authStore.modeLabel }}</el-descriptions-item>
+      </el-descriptions>
+    </el-card>
+
     <!-- 快速开始 -->
     <el-card shadow="never" class="section-card">
       <template #header><span>快速开始</span></template>
@@ -243,8 +258,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { initSampleData } from '@/api/sample'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const initSampleLoading = ref(false)
 
 interface RoadmapItem {

@@ -4,6 +4,20 @@
 
 ---
 
+## V10：访问保护与只读体验模式
+
+### V10-01：新增登录入口与体验账号访问保护 ✅
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `/login` 登录页；`POST /api/auth/login`、`GET /api/auth/me`、`POST /api/auth/logout`；Token 鉴权拦截器；内置 admin / guest 账号；项目总览展示访问身份 |
+| **前端** | Pinia auth store、路由守卫、Axios Bearer token、布局栏用户与退出 |
+| **配置** | `rag.auth.*`；`AUTH_ADMIN_PASSWORD` / `AUTH_GUEST_PASSWORD` 环境变量 |
+| **放行** | `GET /api/system/health` 无需登录 |
+| **未改** | guest 危险操作限制留待后续 V10 任务 |
+
+---
+
 ## V0：项目骨架版
 
 | 项 | 内容 |

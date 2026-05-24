@@ -12,6 +12,37 @@
 
 ---
 
+## 认证接口（V10-01）
+
+> 除 `GET /api/system/health` 外，业务 API 需在 Header 携带 `Authorization: Bearer <token>`。
+
+### POST /api/auth/login
+
+| 项 | 说明 |
+|----|------|
+| **用途** | 登录，获取访问 Token |
+| **鉴权** | 无需 |
+| **请求 body** | `username`、`password` |
+| **返回 data** | `token`、`username`、`role`（ADMIN/GUEST）、`roleLabel`、`mode`（管理员/体验用户） |
+| **内置账号** | `admin`（管理员）、`guest`（体验用户）；密码见 `rag.auth.accounts` 或环境变量 |
+
+### GET /api/auth/me
+
+| 项 | 说明 |
+|----|------|
+| **用途** | 当前登录用户信息 |
+| **鉴权** | Bearer Token |
+| **返回 data** | `username`、`role`、`roleLabel`、`mode` |
+
+### POST /api/auth/logout
+
+| 项 | 说明 |
+|----|------|
+| **用途** | 退出登录，服务端作废 Token |
+| **鉴权** | Bearer Token |
+
+---
+
 ## 系统接口
 
 ### GET /api/system/health

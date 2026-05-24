@@ -17,11 +17,12 @@ public class RagProperties {
     private Context context = new Context();
     private Elasticsearch elasticsearch = new Elasticsearch();
     private SystemStatus systemStatus = new SystemStatus();
+    private Auth auth = new Auth();
 
     @Data
     public static class App {
         private String name = "ai-rag-lab-platform";
-        private String version = "V8";
+        private String version = "V10";
     }
 
     @Data
@@ -74,5 +75,18 @@ public class RagProperties {
     public static class SystemStatus {
         /** 依赖探活超时（毫秒），应小于前端 /api/system/status 请求超时 */
         private int healthCheckTimeoutMs = 3000;
+    }
+
+    @Data
+    public static class Auth {
+        private boolean enabled = true;
+        private int tokenTtlHours = 24;
+        private java.util.Map<String, AuthAccount> accounts = new java.util.HashMap<>();
+    }
+
+    @Data
+    public static class AuthAccount {
+        private String password = "";
+        private String role = "GUEST";
     }
 }

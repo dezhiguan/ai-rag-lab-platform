@@ -33,7 +33,7 @@ springdoc:
 rag:
   app:
     name: ai-rag-lab-platform
-    version: V8
+    version: V10
   storage:
     path: ./data/uploads
   document:
@@ -62,3 +62,13 @@ rag:
     index: rag_document_chunk
   system-status:
     health-check-timeout-ms: 3000
+  auth:
+    enabled: true
+    token-ttl-hours: 24
+    accounts:
+      admin:
+        password: ${AUTH_ADMIN_PASSWORD:admin123}
+        role: ADMIN
+      guest:
+        password: ${AUTH_GUEST_PASSWORD:guest123}
+        role: GUEST
