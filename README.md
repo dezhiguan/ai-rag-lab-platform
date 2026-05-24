@@ -2,7 +2,9 @@
 
 企业级 RAG 知识库实验平台。按版本逐步构建完整 RAG 能力：从文档导入、向量与关键词检索、混合检索与重排，到评测中心与工程化可观测，适合个人学习、长期实验与开源参考。
 
-**当前版本：V8 工程化增强版**（V0～V8 能力均已落地）
+**当前版本：V9 云部署与在线体验环境**（第二阶段 · V9-01 生产部署准备）
+
+> V0～V8 已完成；V9 起进入第二阶段核心强化。
 
 ## 项目定位
 
@@ -105,6 +107,60 @@ npm run dev
 
 前端通过 Vite 代理将 `/api` 转发到 `http://localhost:8080`。请使用 `npm run dev` 启动，不要直接用 Node 运行 `src/main.ts`。
 
+## 生产环境部署
+
+> 详细说明见 [docs/08-production-deployment.md](docs/08-production-deployment.md)
+
+### 准备生产环境变量
+
+```bash
+cp .env.prod.example .env.prod
+# 编辑 POSTGRES_*、ES_*、DASHSCOPE_API_KEY、DEEPSEEK_API_KEY 等
+```
+
+后端使用 `prod` profile，配置见 `backend/src/main/resources/application-prod.yml`。
+
+### 后端打包与启动
+
+```bash
+cd backend
+mvn -DskipTests clean package
+
+# 加载 .env.prod 并启动（项目根目录）
+chmod +x scripts/run-backend-prod.sh
+./scripts/run-backend-prod.sh
+```
+
+或手动加载环境变量：
+
+```bash
+set -a && source .env.prod && set +a
+java -jar backend/target/backend-0.0.1-SNAPSHOT.jar
+```
+
+### 前端生产构建
+
+```bash
+cd frontend
+cp .env.production.example .env.production   # 同域 Nginx 反代时 VITE_API_BASE_URL 留空
+npm install
+npm run build
+```
+
+构建产物在 `frontend/dist/`，将目录内文件部署到 Nginx 静态根路径。
+
+| 变量 | 说明 |
+|------|------|
+| `VITE_API_BASE_URL` | 前后端**同域**（Nginx 反代 `/api`）时留空；**分域**时填 API 根地址 |
+
+### Nginx 反向代理
+
+模板：[deploy/nginx.conf.example](deploy/nginx.conf.example)
+
+- `/` → 前端 `dist` 静态资源（支持 Vue Router history）
+- `/api/` → 后端 `127.0.0.1:8080`
+- 文件内含 HTTPS 证书配置说明（预留）
+
 ## 样例数据初始化
 
 **方式一（推荐）：页面操作**
@@ -181,6 +237,7 @@ curl -X POST http://localhost:8080/api/search/index/rebuild
 - [docs/02-architecture.md](docs/02-architecture.md) — 架构说明
 - [docs/03-api-design.md](docs/03-api-design.md) — 接口设计
 - [docs/05-development-plan.md](docs/05-development-plan.md) — 开发计划
+- [docs/08-production-deployment.md](docs/08-production-deployment.md) — 生产环境部署
 
 ## 目录结构
 
@@ -189,6 +246,11 @@ ai-rag-lab-platform/
 ├── README.md
 ├── docker-compose.yml
 ├── .env.example
+├── .env.prod.example      # 生产环境变量模板
+├── deploy/
+│   └── nginx.conf.example # Nginx 反代模板
+├── scripts/
+│   └── run-backend-prod.sh
 ├── docs/
 ├── backend/          # Spring Boot
 └── frontend/         # Vue 3 + Vite

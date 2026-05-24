@@ -1,0 +1,98 @@
+# Nginx 反向代理配置示例
+# 适用场景：单台 ECS 部署前端静态资源 + 后端 API 反代
+#
+# 使用前请替换：
+#   - your_domain.com → 实际域名
+#   - /var/www/rag-lab/frontend → 前端 dist 部署目录
+#   - 127.0.0.1:8080 → 后端实际监听地址
+#
+# 安装参考（Ubuntu / Debian）：
+#   sudo apt install nginx
+#   sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/rag-lab
+#   sudo ln -s /etc/nginx/sites-available/rag-lab /etc/nginx/sites-enabled/
+#   sudo nginx -t && sudo systemctl reload nginx
+
+upstream rag_lab_backend {
+    server 127.0.0.1:8080;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name your_domain.com;
+
+    # HTTPS 升级后可将 HTTP 301 到 HTTPS（见下方 HTTPS server 块）
+    # return 301 https://$host$request_uri;
+
+    root /var/www/rag-lab/frontend;
+    index index.html;
+
+    client_max_body_size 25m;
+
+    # 前端静态资源（Vue Router history 模式）
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 后端 API 反代
+    location /api/ {
+        proxy_pass http://rag_lab_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
+    }
+
+    # 可选：Knife4j / Swagger（生产默认关闭，仅在 SPRINGDOC_ENABLED=true 时启用）
+    # location /doc.html {
+    #     proxy_pass http://rag_lab_backend;
+    #     proxy_set_header Host $host;
+    #     proxy_set_header X-Real-IP $remote_addr;
+    #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    #     proxy_set_header X-Forwarded-Proto $scheme;
+    # }
+
+    access_log /var/log/nginx/rag-lab.access.log;
+    error_log /var/log/nginx/rag-lab.error.log;
+}
+
+# HTTPS 配置说明（预留，需有效证书）
+#
+# 1. 阿里云证书：在 SSL 证书服务申请或上传，下载 Nginx 格式证书
+# 2. 将 cert.pem / cert.key 放到 /etc/nginx/ssl/your_domain.com/
+# 3. 取消注释下方 server 块并替换证书路径
+#
+# server {
+#     listen 443 ssl http2;
+#     server_name your_domain.com;
+#
+#     ssl_certificate     /etc/nginx/ssl/your_domain.com/cert.pem;
+#     ssl_certificate_key /etc/nginx/ssl/your_domain.com/cert.key;
+#     ssl_protocols       TLSv1.2 TLSv1.3;
+#     ssl_ciphers         HIGH:!aNULL:!MD5;
+#
+#     root /var/www/rag-lab/frontend;
+#     index index.html;
+#
+#     client_max_body_size 25m;
+#
+#     location / {
+#         try_files $uri $uri/ /index.html;
+#     }
+#
+#     location /api/ {
+#         proxy_pass http://rag_lab_backend;
+#         proxy_http_version 1.1;
+#         proxy_set_header Host $host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#         proxy_connect_timeout 60s;
+#         proxy_send_timeout 120s;
+#         proxy_read_timeout 120s;
+#     }
+# }

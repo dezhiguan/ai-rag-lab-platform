@@ -2,9 +2,25 @@
 
 ## 当前版本
 
-**V8：工程化增强版（已完成）**
+**V9：云部署与在线体验环境（进行中）**
 
-**上一完成版本：V7 Evaluation 评测中心**
+**上一完成版本：V8 工程化增强版**
+
+**阶段定位：第二阶段核心强化版**
+
+## V9 进行中能力
+
+### V9-01 生产环境部署准备
+
+- `application-prod.yml` 后端生产 profile
+- `.env.prod.example` 生产环境变量模板
+- `frontend/.env.production.example` 前端生产 API 配置
+- `deploy/nginx.conf.example` Nginx 反代模板（含 HTTPS 预留说明）
+- `scripts/run-backend-prod.sh` 加载 env 并启动 jar
+- `docs/08-production-deployment.md` 部署说明
+- 项目总览页「线上部署准备」区域
+
+**本次不做：** 实际连接阿里云 ECS / RDS / 域名解析
 
 ## V8 已完成能力
 
@@ -46,20 +62,11 @@
 - `README.md` 完善：定位、能力、技术栈、启动、样例数据、页面入口、FAQ
 - 项目总览页：快速开始、项目完成状态（V0～V8）、适用场景
 
-## V7 已完成能力
-
-- `/evaluation` 评测中心：单模式评测 + 三模式对比（VECTOR / BM25 / HYBRID）
-- `POST /api/evaluation/run`、`POST /api/evaluation/compare`
-
-## 当前阶段不做
-
-- Recall@K、MRR、自定义评测集持久化
-- 权限、多租户（后续规划）
-
 ## 版本关系
 
 | 版本 | 状态 |
 |------|------|
 | V0～V8 | 已完成 |
+| V9 | 进行中（V9-01 部署准备） |
 
-详见 `05-development-plan.md`、`07-change-log.md`。
+详见 `05-development-plan.md`、`07-change-log.md`、`08-production-deployment.md`。

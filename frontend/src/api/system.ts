@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { SystemStatus } from '@/types/system'
+import { API_BASE_URL } from '@/config/api'
 
 export interface ApiResponse<T> {
   code: number
@@ -15,7 +16,7 @@ export interface HealthData {
 }
 
 const http = axios.create({
-  baseURL: '',
+  baseURL: API_BASE_URL,
   timeout: 10000,
 })
 

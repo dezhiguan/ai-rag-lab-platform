@@ -89,6 +89,37 @@
       </el-row>
     </el-card>
 
+    <!-- 线上部署准备 -->
+    <el-card shadow="never" class="section-card">
+      <template #header>
+        <el-space>
+          <span>线上部署准备</span>
+          <el-tag type="warning" size="small">V9 云部署与在线体验</el-tag>
+        </el-space>
+      </template>
+      <el-table :data="deploymentReadiness" stripe style="width: 100%">
+        <el-table-column prop="item" label="准备项" width="200" />
+        <el-table-column prop="desc" label="说明" min-width="280" />
+        <el-table-column prop="path" label="文件 / 文档" min-width="240">
+          <template #default="{ row }">
+            <code class="deploy-path">{{ row.path }}</code>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template #default>
+            <el-tag type="success" size="small">已准备</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-alert
+        type="info"
+        :closable="false"
+        show-icon
+        class="usage-tip"
+        title="部署前准备已完成，尚未连接阿里云。完整步骤见 docs/08-production-deployment.md 与 README「生产环境部署」章节。"
+      />
+    </el-card>
+
     <el-card shadow="never" class="section-card">
       <template #header><span>版本能力路线图</span></template>
       <el-timeline>
@@ -284,6 +315,40 @@ const useCases: UseCaseItem[] = [
   { title: '检索策略对比', desc: 'Vector、BM25、Hybrid 与 Reranker 效果横向比较' },
   { title: 'RAG 效果评测', desc: '内置用例批量验收 Top1 文档命中率' },
   { title: '参数调优与问题排查', desc: '实验台调参、日志中心与慢查询分析定位瓶颈' },
+]
+
+interface DeploymentReadinessItem {
+  item: string
+  desc: string
+  path: string
+}
+
+const deploymentReadiness: DeploymentReadinessItem[] = [
+  {
+    item: '后端生产配置',
+    desc: 'prod profile：关闭 SQL 日志与 schema 自动初始化，环境变量驱动',
+    path: 'backend/src/main/resources/application-prod.yml',
+  },
+  {
+    item: '前端构建配置',
+    desc: 'VITE_API_BASE_URL；同域 Nginx 反代 /api 时留空',
+    path: 'frontend/.env.production.example',
+  },
+  {
+    item: 'Nginx 配置模板',
+    desc: '静态资源 + /api 反代，含 HTTPS 预留说明',
+    path: 'deploy/nginx.conf.example',
+  },
+  {
+    item: '生产环境变量模板',
+    desc: 'PostgreSQL、ES、模型 Key、存储路径等',
+    path: '.env.prod.example',
+  },
+  {
+    item: '部署说明',
+    desc: '打包、启动 jar、构建 dist、检查清单',
+    path: 'docs/08-production-deployment.md',
+  },
 ]
 
 interface FeatureEntry {
@@ -515,5 +580,11 @@ async function handleInitSample() {
   font-size: 13px;
   color: #606266;
   line-height: 1.5;
+}
+
+.deploy-path {
+  font-size: 12px;
+  color: #409eff;
+  word-break: break-all;
 }
 </style>

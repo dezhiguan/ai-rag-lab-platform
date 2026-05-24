@@ -242,6 +242,14 @@
 | **原因** | V8 收尾：便于新用户上手、学习与开源参考 |
 | **未改** | 后端业务接口与既有页面逻辑 |
 
+### V9-01：生产环境部署准备
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `application-prod.yml`、`.env.prod.example`、`frontend/.env.production.example`、`deploy/nginx.conf.example`、`scripts/run-backend-prod.sh`、`docs/08-production-deployment.md`；README 生产部署章节；项目总览「线上部署准备」 |
+| **原因** | V9 阿里云部署前准备：清晰的生产配置、构建方式与 Nginx 反代说明 |
+| **未改** | 业务 API、Debug / Evaluation / 实验台 / 日志 / 指标等页面逻辑 |
+
 ---
 
 ## 后续版本（占位，未实现）

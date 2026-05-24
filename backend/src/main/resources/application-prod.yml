@@ -1,0 +1,47 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      # 生产环境不重复执行 schema.sql，首次部署需手动或通过迁移脚本初始化
+      mode: never
+
+server:
+  port: ${SERVER_PORT:8080}
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+knife4j:
+  enable: ${KNIFE4J_ENABLE:false}
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:false}
+  swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:false}
+
+rag:
+  app:
+    version: V9
+  storage:
+    path: ${RAG_STORAGE_PATH:/var/lib/rag-lab/uploads}
+  embedding:
+    provider: ${RAG_EMBEDDING_PROVIDER:qwen}
+    model: ${RAG_EMBEDDING_MODEL:text-embedding-v4}
+    dimension: ${RAG_EMBEDDING_DIMENSION:1024}
+    api-key: ${DASHSCOPE_API_KEY:}
+    base-url: ${RAG_EMBEDDING_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+  chat:
+    provider: ${RAG_CHAT_PROVIDER:deepseek}
+    model: ${RAG_CHAT_MODEL:deepseek-chat}
+    api-key: ${DEEPSEEK_API_KEY:}
+    base-url: ${RAG_CHAT_BASE_URL:https://api.deepseek.com}
+  elasticsearch:
+    hosts: ${ES_HOSTS}
+    username: ${ES_USERNAME:}
+    password: ${ES_PASSWORD:}
