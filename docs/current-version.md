@@ -44,9 +44,16 @@
 
 - `deploy/app-layer/`：`.env.app.example`、`nginx-rag.conf.example`、`README.md`
 - `scripts/deploy-backend-app.sh`、`deploy-frontend-app.sh`、`check-app-layer.sh`
-- `docs/09-production-deployment.md` 应用层部署章节；项目总览更新
 
-**说明：** 公开文档不含真实 IP。
+### V9-06 双服务器实机部署与联调验收 ✅
+
+- `docs/11-dual-server-online-runbook.md` 实机步骤、检查清单、FAQ（含 ES 安全组 / SSH 隧道说明）
+- `scripts/verify-online-deployment.sh`、`init-online-data.sh`、`start-data-layer.sh`
+- `deploy/PRIVATE-DEPLOYMENT-NOTES.local.example` 本地私有 IP 记录
+- 项目总览「线上部署状态」：已联调 / 已部署 / 公网 IP 访问
+- **实机验收**：双服务器部署完成，`verify-online-deployment.sh` 5 PASS；样例 KB 已初始化（mock embedding）
+
+**说明：** 公开文档不含真实 IP/Key；实机在服务器 SSH 执行 Runbook。LLM 真实 Key 仅在服务器 `/opt/rag-lab/app/.env.app` 配置。
 
 ## V8 已完成能力
 

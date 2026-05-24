@@ -14,8 +14,11 @@
 6. 前端部署             → scripts/deploy-frontend-app.sh
 7. Nginx 配置           → deploy/app-layer/nginx-rag.conf.example
 8. 应用层检查           → scripts/check-app-layer.sh <ECS_PRIVATE_IP>
-9. 验证                 → http://<LIGHT_SERVER_PUBLIC_IP>/
+9. 验证                 → scripts/verify-online-deployment.sh
+10. 初始化线上数据       → scripts/init-online-data.sh
 ```
+
+实机逐步操作见 **[11-dual-server-online-runbook.md](11-dual-server-online-runbook.md)**。
 
 ---
 
@@ -244,7 +247,45 @@ npm run build
 
 ---
 
+## 实机联调验收（V9-06）
+
+在 ECS 与轻量服务器按 Runbook 完成部署后：
+
+```bash
+# ECS
+./scripts/start-data-layer.sh
+./scripts/check-data-layer.sh
+
+# 轻量服务器
+./scripts/deploy-backend-app.sh
+./scripts/deploy-frontend-app.sh
+./scripts/check-app-layer.sh <ECS_PRIVATE_IP>
+
+# 公网联调（勿将真实 IP 写入公开文档）
+export PUBLIC_BASE_URL="http://<LIGHT_SERVER_PUBLIC_IP>"
+export ECS_PRIVATE_IP="<ECS_PRIVATE_IP>"
+./scripts/verify-online-deployment.sh
+./scripts/init-online-data.sh
+```
+
+| 脚本 | 说明 |
+|------|------|
+| [11-dual-server-online-runbook.md](11-dual-server-online-runbook.md) | 实机步骤、检查清单、排查 |
+| [scripts/verify-online-deployment.sh](../scripts/verify-online-deployment.sh) | 公网前端 + API 验收 |
+| [scripts/init-online-data.sh](../scripts/init-online-data.sh) | 样例数据、向量、ES 索引 |
+| [scripts/start-data-layer.sh](../scripts/start-data-layer.sh) | ECS Compose 启动 |
+| [deploy/PRIVATE-DEPLOYMENT-NOTES.local.example](../deploy/PRIVATE-DEPLOYMENT-NOTES.local.example) | 本地私有 IP 记录模板 |
+
+真实公网/内网 IP 与 API Key **仅**写在 `deploy/PRIVATE-DEPLOYMENT-NOTES.local.md` 或服务器 `.env.app` / `.env.data`，勿提交 Git。
+
+---
+
 ## 5. 常见问题
+
+### 线上 80 端口无法访问
+
+- 见 [11-dual-server-online-runbook.md](11-dual-server-online-runbook.md) §8  
+- 检查 Nginx、安全组 80、后端与 Nginx 配置  
 
 ### 后端无法连接 PostgreSQL / ES
 
@@ -274,7 +315,7 @@ npm run build
 | [deploy/data-layer/README.md](../deploy/data-layer/README.md) | 数据层 Compose |
 | [deploy/data-layer/docker-compose.data.yml](../deploy/data-layer/docker-compose.data.yml) | PG / ES / Redis 定义 |
 | [scripts/check-data-layer.sh](../scripts/check-data-layer.sh) | 数据层健康检查 |
-| [10-aliyun-ecs-setup.md](10-aliyun-ecs-setup.md) | 双服务器环境准备 |
+| [11-dual-server-online-runbook.md](11-dual-server-online-runbook.md) | V9-06 实机联调 Runbook |
 | `.env.prod.example` | 生产环境变量（含内网占位符） |
 | `deploy/nginx.conf.example` | 应用入口层 Nginx |
 | `scripts/check-ecs-env.sh` | 轻量服务器环境检查 |

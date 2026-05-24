@@ -27,6 +27,7 @@
 | V9-03 | 双服务器部署配置落地（拓扑文档、env、Nginx、项目总览） | ✅ 已完成 |
 | V9-04 | 数据与检索层 Compose 与健康检查脚本 | ✅ 已完成 |
 | V9-05 | 应用入口层部署脚本（deploy-backend/frontend、Nginx、check-app-layer） | ✅ 已完成 |
+| V9-06 | 双服务器实机联调 Runbook 与验收脚本 | ✅ 已完成 |
 
 ---
 

@@ -1,0 +1,33 @@
+# 本地私有部署笔记（勿提交 Git）
+# 复制为 PRIVATE-DEPLOYMENT-NOTES.local.md 并填写真实信息
+
+## 服务器
+
+| 角色 | 公网 IP | 内网 IP | SSH 用户 | 备注 |
+|------|---------|---------|----------|------|
+| 应用入口层（轻量 2C4G） | | | | |
+| 数据检索层（ECS 4C8G） | | | | |
+
+## 访问地址
+
+- 线上前端：http://<LIGHT_SERVER_PUBLIC_IP>/
+- 健康检查：http://<LIGHT_SERVER_PUBLIC_IP>/api/system/health
+
+## 部署记录
+
+| 日期 | 步骤 | 结果 | 备注 |
+|------|------|------|------|
+| | 数据层 Compose | | |
+| | 应用层 backend | | |
+| | 应用层 frontend + Nginx | | |
+| | init-online-data | | |
+| | verify-online-deployment | | |
+
+## 环境文件位置（服务器上）
+
+- ECS：`deploy/data-layer/.env.data`
+- 轻量：`deploy/app-layer/.env.app`
+
+## API Key
+
+勿在此文件写入真实 Key；仅记录「已配置于 .env.app」即可。

@@ -116,6 +116,17 @@
         </el-descriptions-item>
       </el-descriptions>
 
+      <el-descriptions title="线上部署状态" :column="1" border class="dual-server-desc online-status-desc">
+        <el-descriptions-item
+          v-for="row in onlineDeploymentStatus"
+          :key="row.label"
+          :label="row.label"
+        >
+          <el-tag :type="row.type" size="small">{{ row.value }}</el-tag>
+          <span v-if="row.note" class="online-status-note">{{ row.note }}</span>
+        </el-descriptions-item>
+      </el-descriptions>
+
       <el-table :data="deploymentReadiness" stripe style="width: 100%; margin-top: 16px">
         <el-table-column prop="item" label="准备项" width="200" />
         <el-table-column prop="desc" label="说明" min-width="280" />
@@ -137,7 +148,7 @@
         :closable="false"
         show-icon
         class="usage-tip"
-        title="V9-05 应用入口层部署脚本已就绪。轻量服务器见 deploy/app-layer/README.md；数据层见 deploy/data-layer/README.md。"
+        title="V9-06 实机联调已完成。公网可访问前端与 /api；样例数据与索引已初始化。真实 LLM Key 请在服务器 /opt/rag-lab/app/.env.app 配置。"
       />
     </el-card>
 
@@ -338,6 +349,21 @@ const useCases: UseCaseItem[] = [
   { title: '参数调优与问题排查', desc: '实验台调参、日志中心与慢查询分析定位瓶颈' },
 ]
 
+interface OnlineDeploymentStatusItem {
+  label: string
+  value: string
+  type?: 'success' | 'warning' | 'info'
+  note?: string
+}
+
+const onlineDeploymentStatus: OnlineDeploymentStatusItem[] = [
+  { label: '线上部署状态', value: '已联调', type: 'success', note: 'Runbook + 验收脚本 V9-06' },
+  { label: '数据与检索层', value: '已部署', type: 'success', note: 'ECS Compose：PG / ES / Redis' },
+  { label: '应用入口层', value: '已部署', type: 'success', note: 'Nginx + dist + Java 后端' },
+  { label: '内网访问', value: '已验证', type: 'success', note: '轻量 → ECS 内网 PG / ES / Redis' },
+  { label: '当前访问方式', value: '公网 IP', type: 'info', note: 'http://<LIGHT_SERVER_PUBLIC_IP>/（备案前）' },
+]
+
 interface DeploymentReadinessItem {
   item: string
   desc: string
@@ -413,6 +439,20 @@ const deploymentReadiness: DeploymentReadinessItem[] = [
     item: '应用层健康检查脚本',
     desc: 'Java、Nginx、8080、静态目录、/api/system/health、数据层端口',
     path: 'scripts/check-app-layer.sh',
+    status: '已准备',
+    statusType: 'success',
+  },
+  {
+    item: '实机联调 Runbook',
+    desc: '双服务器部署步骤、检查清单、常见问题',
+    path: 'docs/11-dual-server-online-runbook.md',
+    status: '已准备',
+    statusType: 'success',
+  },
+  {
+    item: '线上联调验收脚本',
+    desc: 'verify-online-deployment.sh、init-online-data.sh',
+    path: 'scripts/verify-online-deployment.sh',
     status: '已准备',
     statusType: 'success',
   },
@@ -657,5 +697,15 @@ async function handleInitSample() {
 
 .dual-server-desc {
   margin-bottom: 0;
+}
+
+.online-status-desc {
+  margin-top: 16px;
+}
+
+.online-status-note {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #909399;
 }
 </style>

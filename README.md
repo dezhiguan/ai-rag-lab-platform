@@ -269,7 +269,7 @@ curl -X POST http://localhost:8080/api/search/index/rebuild
 - [docs/05-development-plan.md](docs/05-development-plan.md) — 开发计划
 - [docs/09-production-deployment.md](docs/09-production-deployment.md) — 生产环境部署
 - [docs/10-aliyun-ecs-setup.md](docs/10-aliyun-ecs-setup.md) — 双服务器环境准备
-- [deploy/app-layer/README.md](deploy/app-layer/README.md) — 应用入口层部署
+- [docs/11-dual-server-online-runbook.md](docs/11-dual-server-online-runbook.md) — 实机联调 Runbook
 
 ## 目录结构
 

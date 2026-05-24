@@ -282,6 +282,15 @@
 | **原因** | 轻量服务器标准化部署 Nginx + 前端 + 后端 |
 | **未改** | 业务 API、Debug/Evaluation 等页面 |
 
+### V9-06：双服务器实机部署与联调验收 ✅
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `docs/11-dual-server-online-runbook.md`（含 ES 9200 安全组 FAQ）；`verify-online-deployment.sh`、`init-online-data.sh`、`start-data-layer.sh`；私有笔记模板；09 文档与项目总览线上状态 |
+| **实机** | ECS 数据层 PG+ES 运行；轻量应用层 Nginx+后端+前端；ES 经 SSH 隧道；`verify-online-deployment.sh` 5 PASS；样例 KB 初始化 |
+| **原因** | V9 实机部署与联调验收标准化 |
+| **未改** | 业务 API；真实 IP/Key 不提交仓库 |
+
 ---
 
 ## 后续版本（占位，未实现）

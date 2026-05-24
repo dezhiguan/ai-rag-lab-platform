@@ -14,6 +14,8 @@ dist/
 .env.production
 deploy/data-layer/.env.data
 deploy/app-layer/.env.app
+deploy/app-layer/.env.es-test
+deploy/PRIVATE-DEPLOYMENT-NOTES.local.md
 
 # OS
 .DS_Store
