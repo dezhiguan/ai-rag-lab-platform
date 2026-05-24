@@ -10,6 +10,85 @@
       </div>
     </el-card>
 
+    <!-- 快速开始 -->
+    <el-card shadow="never" class="section-card">
+      <template #header><span>快速开始</span></template>
+      <el-row :gutter="16">
+        <el-col
+          v-for="item in quickStartItems"
+          :key="item.title"
+          :xs="24"
+          :sm="12"
+          :lg="8"
+        >
+          <el-card shadow="hover" class="quick-card">
+            <div class="quick-title">{{ item.title }}</div>
+            <p class="quick-desc">{{ item.desc }}</p>
+            <pre v-if="item.command" class="quick-command">{{ item.command }}</pre>
+            <el-space wrap>
+              <el-button
+                v-if="item.action === 'initSample'"
+                type="primary"
+                size="small"
+                :loading="initSampleLoading"
+                @click="handleInitSample"
+              >
+                一键初始化
+              </el-button>
+              <el-button
+                v-if="item.path"
+                type="primary"
+                size="small"
+                plain
+                @click="goTo(item.path)"
+              >
+                {{ item.linkLabel || '前往' }}
+              </el-button>
+            </el-space>
+          </el-card>
+        </el-col>
+      </el-row>
+    </el-card>
+
+    <!-- 项目完成状态 -->
+    <el-card shadow="never" class="section-card">
+      <template #header>
+        <el-space>
+          <span>项目完成状态</span>
+          <el-tag type="success" size="small">V0～V8 已完成</el-tag>
+        </el-space>
+      </template>
+      <el-table :data="versionCompletion" stripe style="width: 100%">
+        <el-table-column prop="version" label="版本" width="88" />
+        <el-table-column prop="title" label="名称" width="140" />
+        <el-table-column prop="summary" label="核心能力说明" min-width="280" />
+        <el-table-column label="状态" width="88">
+          <template #default>
+            <el-tag type="success" size="small">已完成</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
+    <!-- 适用场景 -->
+    <el-card shadow="never" class="section-card">
+      <template #header><span>适用场景</span></template>
+      <el-row :gutter="12">
+        <el-col
+          v-for="scene in useCases"
+          :key="scene.title"
+          :xs="24"
+          :sm="12"
+          :md="8"
+        >
+          <el-card shadow="hover" class="scene-card">
+            <div class="scene-title">{{ scene.title }}</div>
+            <p class="scene-desc">{{ scene.desc }}</p>
+          </el-card>
+        </el-col>
+      </el-row>
+    </el-card>
+
     <el-card shadow="never" class="section-card">
       <template #header><span>版本能力路线图</span></template>
       <el-timeline>
@@ -97,9 +176,13 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { initSampleData } from '@/api/sample'
 
 const router = useRouter()
+const initSampleLoading = ref(false)
 
 interface RoadmapItem {
   version: string
@@ -119,6 +202,88 @@ const versionRoadmap: RoadmapItem[] = [
   { version: 'V6', title: 'Reranker', desc: '轻量本地重排，可观察排名变化' },
   { version: 'V7', title: 'Evaluation', desc: '评测中心：Top1 命中、多模式对比' },
   { version: 'V8', title: '工程化增强', desc: '系统状态、指标、日志、慢查询、参数实验台', type: 'success' },
+]
+
+interface VersionCompletionItem {
+  version: string
+  title: string
+  summary: string
+}
+
+const versionCompletion: VersionCompletionItem[] = [
+  { version: 'V0', title: '项目骨架', summary: '前后端骨架、健康检查与 Dashboard 统计' },
+  { version: 'V1', title: '文档导入与分块', summary: '知识库、文档上传解析、固定分块与样例数据' },
+  { version: 'V2', title: 'Naive RAG', summary: 'PgVector 向量检索与 Chat 问答闭环' },
+  { version: 'V2.5', title: '真实模型接入', summary: 'Qwen Embedding、DeepSeek Chat Provider' },
+  { version: 'V3', title: 'Debug 可观察', summary: '召回、Context、Prompt、Answer 与耗时全链路' },
+  { version: 'V4', title: 'BM25', summary: 'Elasticsearch 关键词检索与索引重建' },
+  { version: 'V5', title: 'Hybrid Search', summary: 'Vector 与 BM25 应用层融合检索' },
+  { version: 'V6', title: 'Reranker', summary: '轻量本地重排与排名可观察' },
+  { version: 'V7', title: 'Evaluation', summary: '内置用例 Top1 命中与三模式评测对比' },
+  { version: 'V8', title: '工程化增强', summary: '系统状态、指标、日志、慢查询、参数实验与项目总览' },
+]
+
+interface QuickStartItem {
+  title: string
+  desc: string
+  command?: string
+  path?: string
+  linkLabel?: string
+  action?: 'initSample'
+}
+
+const quickStartItems: QuickStartItem[] = [
+  {
+    title: '启动后端',
+    desc: 'JDK 17 + Maven，dev profile',
+    command: 'cd backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev',
+  },
+  {
+    title: '启动前端',
+    desc: 'Node 18+，Vite 开发服务器',
+    command: 'cd frontend && npm install && npm run dev',
+  },
+  {
+    title: '初始化样例数据',
+    desc: '导入 3 个内置 Markdown 文档到样例知识库',
+    action: 'initSample',
+    path: '/kb',
+    linkLabel: '知识库',
+  },
+  {
+    title: '重建向量 / ES 索引',
+    desc: '问答页重建向量；Debug 页重建 ES（BM25/Hybrid）',
+    path: '/chat',
+    linkLabel: '问答 / Debug',
+  },
+  {
+    title: 'Debug 控制台',
+    desc: 'Vector / BM25 / Hybrid 与 Reranker 全链路',
+    path: '/debug',
+  },
+  {
+    title: 'Evaluation 评测中心',
+    desc: '单模式与三模式 Top1 命中率对比',
+    path: '/evaluation',
+  },
+  {
+    title: '参数实验台',
+    desc: '调整 Context 参数并多组对比',
+    path: '/rag-experiment',
+  },
+]
+
+interface UseCaseItem {
+  title: string
+  desc: string
+}
+
+const useCases: UseCaseItem[] = [
+  { title: 'RAG 学习实验', desc: '按版本理解文档分块、检索、生成与可观察链路' },
+  { title: '企业知识库问答原型', desc: '快速搭建知识库问答与引用来源展示' },
+  { title: '检索策略对比', desc: 'Vector、BM25、Hybrid 与 Reranker 效果横向比较' },
+  { title: 'RAG 效果评测', desc: '内置用例批量验收 Top1 文档命中率' },
+  { title: '参数调优与问题排查', desc: '实验台调参、日志中心与慢查询分析定位瓶颈' },
 ]
 
 interface FeatureEntry {
@@ -175,6 +340,23 @@ const usageSteps: UsageStep[] = [
 
 function goTo(path: string) {
   router.push(path)
+}
+
+async function handleInitSample() {
+  initSampleLoading.value = true
+  try {
+    const res = await initSampleData()
+    if (res.code === 200) {
+      ElMessage.success(res.data?.message || '样例数据初始化成功')
+    } else {
+      ElMessage.error(res.message || '初始化失败')
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : '请求失败'
+    ElMessage.error(message)
+  } finally {
+    initSampleLoading.value = false
+  }
 }
 </script>
 
@@ -283,5 +465,55 @@ function goTo(path: string) {
 
 .usage-tip {
   margin-top: 24px;
+}
+
+.quick-card {
+  margin-bottom: 12px;
+  min-height: 160px;
+}
+
+.quick-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 6px;
+}
+
+.quick-desc {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.5;
+}
+
+.quick-command {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #303133;
+}
+
+.scene-card {
+  margin-bottom: 12px;
+  min-height: 100px;
+}
+
+.scene-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.scene-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.5;
 }
 </style>

@@ -87,7 +87,7 @@ python3 scripts/run-v4-bm25-smoke-test.py
 
 ---
 
-## 当前：V8 工程化增强（进行中）
+## 当前：V8 工程化增强（已完成）
 
 | 任务 ID | 内容 | 状态 |
 |---------|------|------|
@@ -98,6 +98,7 @@ python3 scripts/run-v4-bm25-smoke-test.py
 | V8-05 | RAG 参数实验台（`/rag-experiment`、`POST /api/experiment/rag-query`） | ✅ 已完成 |
 | V8-06 | 参数实验台多组对比（页面状态，最多 5 组） | ✅ 已完成 |
 | V8-07 | 项目总览与能力导航（`/project-overview`） | ✅ 已完成 |
+| V8-08 | 项目收尾与开源说明（README、项目总览快速开始/完成状态/适用场景） | ✅ 已完成 |
 
 ---
 
