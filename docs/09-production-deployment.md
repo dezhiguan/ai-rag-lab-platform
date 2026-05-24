@@ -1,7 +1,20 @@
-# 08 - 生产环境部署说明
+# 09 - 生产环境部署说明
 
-> V9 云部署与在线体验环境 · 部署前准备文档  
-> 本次仅做配置与说明准备，不涉及实际阿里云资源创建。
+> V9 云部署与在线体验环境 · 生产部署文档  
+> V9-01 已完成配置与打包说明；**部署前须先完成 ECS 环境准备**（V9-02）。
+
+## 部署顺序
+
+```text
+1. ECS 环境准备     → docs/10-aliyun-ecs-setup.md
+2. 环境检查脚本     → scripts/check-ecs-env.sh
+3. 后端打包与部署   → 本文 §1
+4. 前端构建与部署   → 本文 §2
+5. Nginx 反向代理   → 本文 §3
+6. 验证与样例数据   → 本文 §4 检查清单
+```
+
+**请先完成 [10-aliyun-ecs-setup.md](10-aliyun-ecs-setup.md) 中的服务器初始化**，运行 `check-ecs-env.sh` 无 FAIL 后，再执行下文的后端部署、前端部署与 Nginx 配置。
 
 ## 架构概览
 
@@ -171,6 +184,7 @@ npm run preview
 
 | 步骤 | 命令 / 操作 |
 |------|-------------|
+| 0. ECS 环境准备 | 见 [10-aliyun-ecs-setup.md](10-aliyun-ecs-setup.md)，运行 `./scripts/check-ecs-env.sh` |
 | 1. 准备 `.env.prod` | `cp .env.prod.example .env.prod` 并填写 |
 | 2. 初始化数据库 | 执行 `schema.sql`（首次） |
 | 3. 打包后端 | `cd backend && mvn -DskipTests package` |
@@ -209,6 +223,8 @@ npm run preview
 
 | 路径 | 用途 |
 |------|------|
+| [10-aliyun-ecs-setup.md](10-aliyun-ecs-setup.md) | 阿里云 ECS 环境准备 |
+| [scripts/check-ecs-env.sh](../scripts/check-ecs-env.sh) | ECS 环境检查 |
 | `.env.prod.example` | 生产环境变量模板 |
 | `backend/src/main/resources/application-prod.yml` | 后端 prod profile |
 | `frontend/.env.production.example` | 前端生产 API 配置模板 |

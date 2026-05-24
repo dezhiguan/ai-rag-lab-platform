@@ -17,10 +17,17 @@
 - `frontend/.env.production.example` 前端生产 API 配置
 - `deploy/nginx.conf.example` Nginx 反代模板（含 HTTPS 预留说明）
 - `scripts/run-backend-prod.sh` 加载 env 并启动 jar
-- `docs/08-production-deployment.md` 部署说明
+- `docs/09-production-deployment.md` 部署说明
 - 项目总览页「线上部署准备」区域
 
-**本次不做：** 实际连接阿里云 ECS / RDS / 域名解析
+### V9-02 阿里云 ECS 部署环境准备
+
+- `docs/10-aliyun-ecs-setup.md` ECS 规格、安全组、初始化步骤、目录规划
+- `scripts/check-ecs-env.sh` 服务器环境检查脚本
+- 同机 AI 求职 Agent 部署隔离说明（预留，本项目不实现 Agent）
+- `docs/09-production-deployment.md` 补充 ECS 前置步骤与文档引用
+
+**本次不做：** 实际创建 ECS 实例、SSH 连接、域名解析
 
 ## V8 已完成能力
 
@@ -67,6 +74,6 @@
 | 版本 | 状态 |
 |------|------|
 | V0～V8 | 已完成 |
-| V9 | 进行中（V9-01 部署准备） |
+| V9 | 进行中（V9-01、V9-02 文档与脚本已完成） |
 
-详见 `05-development-plan.md`、`07-change-log.md`、`08-production-deployment.md`。
+详见 `05-development-plan.md`、`07-change-log.md`、`09-production-deployment.md`、`10-aliyun-ecs-setup.md`。

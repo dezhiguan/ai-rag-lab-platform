@@ -105,9 +105,11 @@
             <code class="deploy-path">{{ row.path }}</code>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
-          <template #default>
-            <el-tag type="success" size="small">已准备</el-tag>
+        <el-table-column label="状态" width="160">
+          <template #default="{ row }">
+            <el-tag :type="row.statusType || 'success'" size="small">
+              {{ row.status || '已准备' }}
+            </el-tag>
           </template>
         </el-table-column>
       </el-table>
@@ -116,7 +118,7 @@
         :closable="false"
         show-icon
         class="usage-tip"
-        title="部署前准备已完成，尚未连接阿里云。完整步骤见 docs/08-production-deployment.md 与 README「生产环境部署」章节。"
+        title="V9-01 配置与文档已就绪；V9-02 ECS 环境准备已规划，待实机执行。步骤见 docs/10-aliyun-ecs-setup.md → docs/09-production-deployment.md。"
       />
     </el-card>
 
@@ -321,6 +323,8 @@ interface DeploymentReadinessItem {
   item: string
   desc: string
   path: string
+  status?: string
+  statusType?: 'success' | 'warning' | 'info'
 }
 
 const deploymentReadiness: DeploymentReadinessItem[] = [
@@ -347,7 +351,14 @@ const deploymentReadiness: DeploymentReadinessItem[] = [
   {
     item: '部署说明',
     desc: '打包、启动 jar、构建 dist、检查清单',
-    path: 'docs/08-production-deployment.md',
+    path: 'docs/09-production-deployment.md',
+  },
+  {
+    item: '阿里云 ECS 环境准备',
+    desc: '服务器规格、初始化步骤、环境检查脚本；实机创建 ECS 后执行',
+    path: 'docs/10-aliyun-ecs-setup.md',
+    status: '已规划 / 待实机执行',
+    statusType: 'warning',
   },
 ]
 

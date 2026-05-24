@@ -250,6 +250,14 @@
 | **原因** | V9 阿里云部署前准备：清晰的生产配置、构建方式与 Nginx 反代说明 |
 | **未改** | 业务 API、Debug / Evaluation / 实验台 / 日志 / 指标等页面逻辑 |
 
+### V9-02：阿里云 ECS 部署环境准备
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `docs/10-aliyun-ecs-setup.md`、`scripts/check-ecs-env.sh`；`docs/09-production-deployment.md` 补充 ECS 前置步骤；项目总览增加 ECS 准备项；AI 求职 Agent 同机隔离说明 |
+| **原因** | V9 实机部署前：明确 ECS 规格、初始化与环境检查 |
+| **未改** | 业务 API、未实际创建云资源 |
+
 ---
 
 ## 后续版本（占位，未实现）

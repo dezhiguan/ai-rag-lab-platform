@@ -109,7 +109,7 @@ npm run dev
 
 ## 生产环境部署
 
-> 详细说明见 [docs/08-production-deployment.md](docs/08-production-deployment.md)
+> 详细说明见 [docs/09-production-deployment.md](docs/09-production-deployment.md)（部署前请先完成 [docs/10-aliyun-ecs-setup.md](docs/10-aliyun-ecs-setup.md)）
 
 ### 准备生产环境变量
 
@@ -237,7 +237,8 @@ curl -X POST http://localhost:8080/api/search/index/rebuild
 - [docs/02-architecture.md](docs/02-architecture.md) — 架构说明
 - [docs/03-api-design.md](docs/03-api-design.md) — 接口设计
 - [docs/05-development-plan.md](docs/05-development-plan.md) — 开发计划
-- [docs/08-production-deployment.md](docs/08-production-deployment.md) — 生产环境部署
+- [docs/09-production-deployment.md](docs/09-production-deployment.md) — 生产环境部署
+- [docs/10-aliyun-ecs-setup.md](docs/10-aliyun-ecs-setup.md) — 阿里云 ECS 环境准备
 
 ## 目录结构
 
@@ -250,7 +251,8 @@ ai-rag-lab-platform/
 ├── deploy/
 │   └── nginx.conf.example # Nginx 反代模板
 ├── scripts/
-│   └── run-backend-prod.sh
+│   ├── run-backend-prod.sh
+│   └── check-ecs-env.sh
 ├── docs/
 ├── backend/          # Spring Boot
 └── frontend/         # Vue 3 + Vite
