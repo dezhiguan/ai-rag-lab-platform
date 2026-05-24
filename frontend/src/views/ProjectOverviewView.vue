@@ -137,7 +137,7 @@
         :closable="false"
         show-icon
         class="usage-tip"
-        title="双服务器配置已落地（V9-03）。应用层部署见 docs/09-production-deployment.md，环境准备见 docs/10-aliyun-ecs-setup.md。真实 IP 仅配置在本地 .env.prod，勿提交仓库。"
+        title="V9-04 数据层 Compose 与健康检查脚本已就绪。ECS 上见 deploy/data-layer/README.md；应用层见 docs/09-production-deployment.md。"
       />
     </el-card>
 
@@ -380,6 +380,20 @@ const deploymentReadiness: DeploymentReadinessItem[] = [
     path: 'docs/10-aliyun-ecs-setup.md',
     status: '已规划',
     statusType: 'info',
+  },
+  {
+    item: '数据与检索层 Compose',
+    desc: 'PG + PgVector、Elasticsearch、Redis；卷 postgres_data / es_data / redis_data',
+    path: 'deploy/data-layer/docker-compose.data.yml',
+    status: '已准备',
+    statusType: 'success',
+  },
+  {
+    item: '数据层健康检查脚本',
+    desc: '检查 PG / ES / Redis 端口与服务；支持传入 <ECS_PRIVATE_IP>',
+    path: 'scripts/check-data-layer.sh',
+    status: '已准备',
+    statusType: 'success',
   },
 ]
 

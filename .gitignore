@@ -12,6 +12,7 @@ dist/
 .env
 .env.prod
 .env.production
+deploy/data-layer/.env.data
 
 # OS
 .DS_Store

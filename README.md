@@ -112,7 +112,24 @@ npm run dev
 > **双服务器方案**：应用入口层（轻量 2C4G，Nginx + 前端 + Java 后端）+ 数据检索层（ECS 4C8G，PostgreSQL / Elasticsearch / Redis 内网）。  
 > 详见 [docs/09-production-deployment.md](docs/09-production-deployment.md)、[docs/10-aliyun-ecs-setup.md](docs/10-aliyun-ecs-setup.md)。公开文档使用 `<ECS_PRIVATE_IP>` 等占位符，真实 IP 仅写在本地 `.env.prod`。
 
-### 准备生产环境变量
+### 数据与检索层（ECS）
+
+在 ECS 上使用 Docker Compose 启动 PostgreSQL、Elasticsearch、Redis：
+
+```bash
+cd deploy/data-layer
+cp .env.data.example .env.data   # 编辑后勿提交
+docker compose -f docker-compose.data.yml --env-file .env.data up -d
+```
+
+详见 [deploy/data-layer/README.md](deploy/data-layer/README.md)（启停、日志、状态、内网访问）。
+
+```bash
+# 健康检查（轻量服务器传入 ECS 内网 IP）
+./scripts/check-data-layer.sh <ECS_PRIVATE_IP>
+```
+
+### 准备生产环境变量（应用层）
 
 ```bash
 cp .env.prod.example .env.prod
@@ -251,10 +268,15 @@ ai-rag-lab-platform/
 ├── .env.example
 ├── .env.prod.example      # 生产环境变量模板
 ├── deploy/
-│   └── nginx.conf.example # Nginx 反代模板
+│   ├── nginx.conf.example
+│   └── data-layer/          # ECS 数据层 Compose
+│       ├── docker-compose.data.yml
+│       ├── .env.data.example
+│       └── README.md
 ├── scripts/
 │   ├── run-backend-prod.sh
-│   └── check-ecs-env.sh
+│   ├── check-ecs-env.sh
+│   └── check-data-layer.sh
 ├── docs/
 ├── backend/          # Spring Boot
 └── frontend/         # Vue 3 + Vite

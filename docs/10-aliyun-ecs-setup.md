@@ -58,25 +58,50 @@
 
 **原则：** 数据层 **不对 0.0.0.0/0 开放** 5432、9200、6379。
 
-### 2.3 数据层组件安装（概要）
+### 2.3 使用 Docker Compose 启动数据层（推荐）
 
-在 ECS 上安装并配置（具体命令按所选发行版调整）：
-
-1. **PostgreSQL 16 + PgVector 扩展**  
-2. **Elasticsearch 8.x**（单节点，生产注意 `vm.max_map_count`）  
-3. **Redis**（供后续 Agent / 缓存场景预留；RAG 当前业务未接入）
-
-创建数据库与用户示例：
+在 ECS 上安装 Docker 后，使用项目自带 Compose 一键启动 PG / ES / Redis：
 
 ```bash
-# 在 ECS 上执行（示例）
-sudo -u postgres psql -c "CREATE USER rag_user WITH PASSWORD '***';"
-sudo -u postgres psql -c "CREATE DATABASE rag_lab OWNER rag_user;"
-# 安装 pgvector 扩展后：
-psql -d rag_lab -c "CREATE EXTENSION IF NOT EXISTS vector;"
+cd deploy/data-layer
+cp .env.data.example .env.data
+# 编辑 POSTGRES_PASSWORD 等，勿提交 .env.data
+
+sudo sysctl -w vm.max_map_count=262144   # Elasticsearch 必需（首次）
+
+docker compose -f docker-compose.data.yml --env-file .env.data up -d
+docker compose -f docker-compose.data.yml --env-file .env.data ps
 ```
 
-### 2.4 内网连通验证（在轻量服务器执行）
+详细说明：[deploy/data-layer/README.md](../deploy/data-layer/README.md)
+
+### 2.4 Elasticsearch 内存（4C8G ECS）
+
+| 项 | 说明 |
+|----|------|
+| 默认 JVM | `ES_JAVA_OPTS=-Xms1g -Xmx2g`（见 `.env.data.example`） |
+| 原则 | ES 堆不宜超过 ECS 内存一半；为 PG、Redis、OS 预留 3～4GiB |
+| 调优 | 负载升高可在 `.env.data` 中将 `-Xmx` 调至 `2g`；用 `docker stats` 观察 |
+| 系统参数 | `vm.max_map_count=262144`，写入 `/etc/sysctl.conf` 持久化 |
+
+### 2.5 数据层健康检查
+
+**ECS 本机：**
+
+```bash
+chmod +x scripts/check-data-layer.sh
+./scripts/check-data-layer.sh
+```
+
+**轻量服务器（内网）：**
+
+```bash
+./scripts/check-data-layer.sh <ECS_PRIVATE_IP>
+```
+
+可选：设置 `POSTGRES_PASSWORD` 等环境变量后执行，以启用 `psql` / `redis-cli` 深度检查。
+
+### 2.6 内网连通验证（在轻量服务器执行）
 
 将 `<ECS_PRIVATE_IP>` 替换为实际内网地址（仅写在本地，勿写入公开文档提交）：
 
@@ -174,8 +199,8 @@ RAG 与 **AI 求职 Agent** 可共用 **应用入口层轻量服务器**，须�
 ## 5. 下一步
 
 1. 确认两台机器 **VPC 内网互通**  
-2. 完成数据层 PG / ES / Redis 安装与安全组  
-3. 完成应用层初始化与 `check-ecs-env.sh`  
+2. ECS：按 [deploy/data-layer/README.md](../deploy/data-layer/README.md) 启动 Compose 并通过 `check-data-layer.sh`  
+3. 轻量服务器：初始化与 `check-ecs-env.sh`  
 4. 按 [09-production-deployment.md](09-production-deployment.md) 部署 jar、dist、Nginx  
 5. 通过 `<LIGHT_SERVER_PUBLIC_IP>` 验证在线体验  
 
@@ -183,6 +208,7 @@ RAG 与 **AI 求职 Agent** 可共用 **应用入口层轻量服务器**，须�
 
 ## 相关文档
 
-- [09-production-deployment.md](09-production-deployment.md) — 打包、构建、Nginx、检查清单  
+- [09-production-deployment.md](09-production-deployment.md) — 应用层部署  
+- [deploy/data-layer/README.md](../deploy/data-layer/README.md) — 数据层 Compose  
 - [deploy/nginx.conf.example](../deploy/nginx.conf.example) — 应用入口层 Nginx  
 - [.env.prod.example](../.env.prod.example) — 环境变量模板  

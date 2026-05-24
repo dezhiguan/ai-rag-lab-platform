@@ -33,7 +33,14 @@
 - `deploy/nginx.conf.example`：仅反代本机 Java，不暴露 PG/ES/Redis
 - 项目总览「线上部署准备」展示双服务器架构与备案策略
 
-**说明：** Redis 仅 env 与文档预留，RAG 业务尚未接入；公开文档不含真实公网/内网 IP。
+### V9-04 数据与检索层服务部署脚本准备
+
+- `deploy/data-layer/docker-compose.data.yml`：PostgreSQL（PgVector）、Elasticsearch、Redis
+- `deploy/data-layer/.env.data.example`、`deploy/data-layer/README.md`
+- `scripts/check-data-layer.sh`：数据层健康检查（支持 `<ECS_PRIVATE_IP>` 参数）
+- 文档与项目总览更新；Redis 仅基础设施，RAG 业务未接入
+
+**说明：** 公开文档不含真实 IP。
 
 ## V8 已完成能力
 

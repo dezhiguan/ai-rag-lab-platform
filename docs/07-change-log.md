@@ -266,6 +266,14 @@
 | **原因** | 与已确定的轻量+ECS 分层部署一致；公开文档不含真实 IP |
 | **未改** | RAG 业务代码、Redis 业务接入、Debug/Evaluation 等页面 |
 
+### V9-04：数据与检索层服务部署脚本准备
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `deploy/data-layer/*` Compose + README + `.env.data.example`；`scripts/check-data-layer.sh`；更新 09/10 文档与项目总览 |
+| **原因** | ECS 上统一启动 PG / ES / Redis，ES JVM 适配 4C8G |
+| **未改** | 业务 API、Redis 应用接入 |
+
 ---
 
 ## 后续版本（占位，未实现）

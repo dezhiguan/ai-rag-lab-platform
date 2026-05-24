@@ -6,15 +6,15 @@
 ## 部署顺序
 
 ```text
-1. 双服务器环境准备  → docs/10-aliyun-ecs-setup.md
-   ├── 数据检索层（ECS 4C8G）：PostgreSQL、Elasticsearch、Redis
-   └── 应用入口层（轻量 2C4G）：JDK、Node、Nginx、目录
-2. 应用层环境检查    → scripts/check-ecs-env.sh（在轻量服务器执行）
-3. 配置 .env.prod    → 数据层地址填 <ECS_PRIVATE_IP>
-4. 后端打包与部署    → 在轻量服务器运行 jar
-5. 前端构建与部署    → dist 部署到轻量服务器 Nginx
-6. Nginx 反代        → 对外 80/443，/api → 本机 8080
-7. 验证              → 公网访问 <LIGHT_SERVER_PUBLIC_IP>
+1. 双服务器环境准备     → docs/10-aliyun-ecs-setup.md
+2. 数据层 Compose 启动  → deploy/data-layer/README.md（ECS 上执行）
+3. 数据层健康检查       → scripts/check-data-layer.sh <ECS_PRIVATE_IP>
+4. 应用层环境检查       → scripts/check-ecs-env.sh（轻量服务器）
+5. 配置 .env.prod       → POSTGRES / ES / REDIS 填 <ECS_PRIVATE_IP>
+6. 后端打包与部署       → 轻量服务器运行 jar
+7. 前端构建与部署       → dist → 轻量服务器 Nginx
+8. Nginx 反代           → 对外 80/443，/api → 本机 8080
+9. 验证                 → <LIGHT_SERVER_PUBLIC_IP>
 ```
 
 ---
@@ -61,6 +61,38 @@
 | 内网互通 | 两台机器 VPC 内网已互通后，在轻量服务器上 `curl` / `psql` 验证连通 |
 
 **备案策略（当前）：** 暂不备案，先使用公网 IP `<LIGHT_SERVER_PUBLIC_IP>` 提供在线体验；后续可切换域名并配置 HTTPS。
+
+---
+
+## 数据与检索层部署（ECS）
+
+PG、Elasticsearch、Redis **仅部署在 ECS**，通过 Docker Compose 统一启停；**不对公网开放** 5432 / 9200 / 6379，应用入口层经 **VPC 内网** `<ECS_PRIVATE_IP>` 访问。
+
+| 文件 | 说明 |
+|------|------|
+| [deploy/data-layer/docker-compose.data.yml](../deploy/data-layer/docker-compose.data.yml) | PostgreSQL（PgVector）、Elasticsearch、Redis |
+| [deploy/data-layer/.env.data.example](../deploy/data-layer/.env.data.example) | 数据层环境变量模板 |
+| [deploy/data-layer/README.md](../deploy/data-layer/README.md) | 启动、停止、日志、状态、内网访问说明 |
+| [scripts/check-data-layer.sh](../scripts/check-data-layer.sh) | 健康检查（支持传入 `<ECS_PRIVATE_IP>`） |
+
+### 快速命令（在 ECS 上）
+
+```bash
+cd deploy/data-layer
+cp .env.data.example .env.data    # 编辑密码，勿提交 Git
+docker compose -f docker-compose.data.yml --env-file .env.data up -d
+docker compose -f docker-compose.data.yml --env-file .env.data ps
+```
+
+### 从轻量服务器验证内网
+
+```bash
+./scripts/check-data-layer.sh <ECS_PRIVATE_IP>
+```
+
+Elasticsearch JVM 默认 `-Xms1g -Xmx2g`，适配 4C8G ECS，详见 `deploy/data-layer/README.md`。
+
+**Redis：** 已作为数据层服务启动；RAG 业务代码尚未接入，无需改应用配置。
 
 ---
 
@@ -172,10 +204,10 @@ npm run build
 
 | 步骤 | 操作 |
 |------|------|
-| 0 | 按 [10-aliyun-ecs-setup.md](10-aliyun-ecs-setup.md) 完成双机初始化；数据层仅内网开放 |
-| 1 | 轻量服务器：`./scripts/check-ecs-env.sh` 无 FAIL |
-| 2 | 轻量服务器：`cp .env.prod.example .env.prod`，`POSTGRES_HOST` / `ES_HOSTS` 填 `<ECS_PRIVATE_IP>` |
-| 3 | 从轻量服务器验证内网：`psql -h <ECS_PRIVATE_IP> ...`、`curl http://<ECS_PRIVATE_IP>:9200` |
+| 0 | 按 [10-aliyun-ecs-setup.md](10-aliyun-ecs-setup.md) 完成双机与安全组 |
+| 1 | ECS：`deploy/data-layer` 启动 Compose；`check-data-layer.sh` 本机通过 |
+| 2 | 轻量服务器：`check-data-layer.sh <ECS_PRIVATE_IP>` 内网通过 |
+| 3 | 轻量服务器：`check-ecs-env.sh` 无 FAIL；`cp .env.prod.example .env.prod` 并填写 |
 | 4 | 初始化 `schema.sql`（首次） |
 | 5 | 轻量服务器：打包并启动 jar |
 | 6 | 构建前端 `dist` 并 rsync 到 Nginx root |
@@ -208,6 +240,9 @@ npm run build
 
 | 路径 | 用途 |
 |------|------|
+| [deploy/data-layer/README.md](../deploy/data-layer/README.md) | 数据层 Compose 启停与日志 |
+| [deploy/data-layer/docker-compose.data.yml](../deploy/data-layer/docker-compose.data.yml) | PG / ES / Redis 定义 |
+| [scripts/check-data-layer.sh](../scripts/check-data-layer.sh) | 数据层健康检查 |
 | [10-aliyun-ecs-setup.md](10-aliyun-ecs-setup.md) | 双服务器环境准备 |
 | `.env.prod.example` | 生产环境变量（含内网占位符） |
 | `deploy/nginx.conf.example` | 应用入口层 Nginx |
