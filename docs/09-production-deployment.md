@@ -7,14 +7,14 @@
 
 ```text
 1. 双服务器环境准备     → docs/10-aliyun-ecs-setup.md
-2. 数据层 Compose 启动  → deploy/data-layer/README.md（ECS 上执行）
+2. 数据层 Compose 启动  → deploy/data-layer/README.md（ECS）
 3. 数据层健康检查       → scripts/check-data-layer.sh <ECS_PRIVATE_IP>
-4. 应用层环境检查       → scripts/check-ecs-env.sh（轻量服务器）
-5. 配置 .env.prod       → POSTGRES / ES / REDIS 填 <ECS_PRIVATE_IP>
-6. 后端打包与部署       → 轻量服务器运行 jar
-7. 前端构建与部署       → dist → 轻量服务器 Nginx
-8. Nginx 反代           → 对外 80/443，/api → 本机 8080
-9. 验证                 → <LIGHT_SERVER_PUBLIC_IP>
+4. 应用层配置           → deploy/app-layer/.env.app
+5. 后端部署             → scripts/deploy-backend-app.sh（轻量服务器）
+6. 前端部署             → scripts/deploy-frontend-app.sh
+7. Nginx 配置           → deploy/app-layer/nginx-rag.conf.example
+8. 应用层检查           → scripts/check-app-layer.sh <ECS_PRIVATE_IP>
+9. 验证                 → http://<LIGHT_SERVER_PUBLIC_IP>/
 ```
 
 ---
@@ -93,6 +93,35 @@ docker compose -f docker-compose.data.yml --env-file .env.data ps
 Elasticsearch JVM 默认 `-Xms1g -Xmx2g`，适配 4C8G ECS，详见 `deploy/data-layer/README.md`。
 
 **Redis：** 已作为数据层服务启动；RAG 业务代码尚未接入，无需改应用配置。
+
+---
+
+## 应用入口层部署（轻量服务器）
+
+Nginx、前端 `dist`、RAG Java 后端 **仅部署在轻量服务器**；公网入口统一由 Nginx 暴露（80 / 443），`/api` 反代本机 `8080`。数据层通过 `.env.app` 中的 **ECS 内网 IP** 访问。
+
+| 文件 | 说明 |
+|------|------|
+| [deploy/app-layer/README.md](../deploy/app-layer/README.md) | 应用层完整部署说明 |
+| [deploy/app-layer/.env.app.example](../deploy/app-layer/.env.app.example) | 应用层环境变量（含 `<ECS_PRIVATE_IP>`） |
+| [deploy/app-layer/nginx-rag.conf.example](../deploy/app-layer/nginx-rag.conf.example) | Nginx：`/` + `/api/` |
+| [scripts/deploy-backend-app.sh](../scripts/deploy-backend-app.sh) | 部署 jar、停止旧进程、启动与健康检查 |
+| [scripts/deploy-frontend-app.sh](../scripts/deploy-frontend-app.sh) | 构建并 rsync `dist` |
+| [scripts/check-app-layer.sh](../scripts/check-app-layer.sh) | Java / Nginx / 8080 / 静态目录 / health |
+
+### 快速命令（在轻量服务器）
+
+```bash
+cp deploy/app-layer/.env.app.example deploy/app-layer/.env.app   # 编辑，勿提交
+cd backend && mvn -DskipTests package && cd ..
+./scripts/deploy-backend-app.sh
+./scripts/deploy-frontend-app.sh
+sudo cp deploy/app-layer/nginx-rag.conf.example /etc/nginx/sites-available/rag-lab
+sudo nginx -t && sudo systemctl reload nginx
+./scripts/check-app-layer.sh <ECS_PRIVATE_IP>
+```
+
+访问：`http://<LIGHT_SERVER_PUBLIC_IP>/`
 
 ---
 
@@ -205,14 +234,13 @@ npm run build
 | 步骤 | 操作 |
 |------|------|
 | 0 | 按 [10-aliyun-ecs-setup.md](10-aliyun-ecs-setup.md) 完成双机与安全组 |
-| 1 | ECS：`deploy/data-layer` 启动 Compose；`check-data-layer.sh` 本机通过 |
-| 2 | 轻量服务器：`check-data-layer.sh <ECS_PRIVATE_IP>` 内网通过 |
-| 3 | 轻量服务器：`check-ecs-env.sh` 无 FAIL；`cp .env.prod.example .env.prod` 并填写 |
-| 4 | 初始化 `schema.sql`（首次） |
-| 5 | 轻量服务器：打包并启动 jar |
-| 6 | 构建前端 `dist` 并 rsync 到 Nginx root |
-| 7 | 配置 Nginx，重载 |
-| 8 | 浏览器访问 `<LIGHT_SERVER_PUBLIC_IP>`，初始化样例数据、重建向量与 ES 索引 |
+| 1 | ECS：数据层 Compose；`check-data-layer.sh` 本机通过 |
+| 2 | 轻量：`cp deploy/app-layer/.env.app.example deploy/app-layer/.env.app` |
+| 3 | 轻量：`deploy-backend-app.sh`、`deploy-frontend-app.sh` |
+| 4 | 轻量：安装 `nginx-rag.conf.example` 并重载 |
+| 5 | 轻量：`check-app-layer.sh <ECS_PRIVATE_IP>` |
+| 6 | 初始化 `schema.sql`（首次） |
+| 7 | 浏览器访问 `<LIGHT_SERVER_PUBLIC_IP>`，样例数据与索引 |
 
 ---
 
@@ -240,7 +268,10 @@ npm run build
 
 | 路径 | 用途 |
 |------|------|
-| [deploy/data-layer/README.md](../deploy/data-layer/README.md) | 数据层 Compose 启停与日志 |
+| [deploy/app-layer/README.md](../deploy/app-layer/README.md) | 应用入口层部署 |
+| [scripts/deploy-backend-app.sh](../scripts/deploy-backend-app.sh) | 后端部署脚本 |
+| [scripts/check-app-layer.sh](../scripts/check-app-layer.sh) | 应用层健康检查 |
+| [deploy/data-layer/README.md](../deploy/data-layer/README.md) | 数据层 Compose |
 | [deploy/data-layer/docker-compose.data.yml](../deploy/data-layer/docker-compose.data.yml) | PG / ES / Redis 定义 |
 | [scripts/check-data-layer.sh](../scripts/check-data-layer.sh) | 数据层健康检查 |
 | [10-aliyun-ecs-setup.md](10-aliyun-ecs-setup.md) | 双服务器环境准备 |

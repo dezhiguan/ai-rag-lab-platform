@@ -137,7 +137,7 @@
         :closable="false"
         show-icon
         class="usage-tip"
-        title="V9-04 数据层 Compose 与健康检查脚本已就绪。ECS 上见 deploy/data-layer/README.md；应用层见 docs/09-production-deployment.md。"
+        title="V9-05 应用入口层部署脚本已就绪。轻量服务器见 deploy/app-layer/README.md；数据层见 deploy/data-layer/README.md。"
       />
     </el-card>
 
@@ -392,6 +392,27 @@ const deploymentReadiness: DeploymentReadinessItem[] = [
     item: '数据层健康检查脚本',
     desc: '检查 PG / ES / Redis 端口与服务；支持传入 <ECS_PRIVATE_IP>',
     path: 'scripts/check-data-layer.sh',
+    status: '已准备',
+    statusType: 'success',
+  },
+  {
+    item: '应用入口层部署脚本',
+    desc: 'deploy-backend-app.sh、deploy-frontend-app.sh、.env.app',
+    path: 'deploy/app-layer/README.md',
+    status: '已准备',
+    statusType: 'success',
+  },
+  {
+    item: 'Nginx 应用层配置',
+    desc: '静态资源 + /api → 本机 8080；Vue Router history',
+    path: 'deploy/app-layer/nginx-rag.conf.example',
+    status: '已准备',
+    statusType: 'success',
+  },
+  {
+    item: '应用层健康检查脚本',
+    desc: 'Java、Nginx、8080、静态目录、/api/system/health、数据层端口',
+    path: 'scripts/check-app-layer.sh',
     status: '已准备',
     statusType: 'success',
   },

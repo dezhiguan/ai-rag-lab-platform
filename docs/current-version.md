@@ -40,6 +40,12 @@
 - `scripts/check-data-layer.sh`：数据层健康检查（支持 `<ECS_PRIVATE_IP>` 参数）
 - 文档与项目总览更新；Redis 仅基础设施，RAG 业务未接入
 
+### V9-05 应用入口层部署脚本准备
+
+- `deploy/app-layer/`：`.env.app.example`、`nginx-rag.conf.example`、`README.md`
+- `scripts/deploy-backend-app.sh`、`deploy-frontend-app.sh`、`check-app-layer.sh`
+- `docs/09-production-deployment.md` 应用层部署章节；项目总览更新
+
 **说明：** 公开文档不含真实 IP。
 
 ## V8 已完成能力

@@ -112,6 +112,17 @@ npm run dev
 > **双服务器方案**：应用入口层（轻量 2C4G，Nginx + 前端 + Java 后端）+ 数据检索层（ECS 4C8G，PostgreSQL / Elasticsearch / Redis 内网）。  
 > 详见 [docs/09-production-deployment.md](docs/09-production-deployment.md)、[docs/10-aliyun-ecs-setup.md](docs/10-aliyun-ecs-setup.md)。公开文档使用 `<ECS_PRIVATE_IP>` 等占位符，真实 IP 仅写在本地 `.env.prod`。
 
+### 应用入口层（轻量服务器）
+
+```bash
+cp deploy/app-layer/.env.app.example deploy/app-layer/.env.app
+./scripts/deploy-backend-app.sh
+./scripts/deploy-frontend-app.sh
+./scripts/check-app-layer.sh <ECS_PRIVATE_IP>
+```
+
+详见 [deploy/app-layer/README.md](deploy/app-layer/README.md)。
+
 ### 数据与检索层（ECS）
 
 在 ECS 上使用 Docker Compose 启动 PostgreSQL、Elasticsearch、Redis：
@@ -257,7 +268,8 @@ curl -X POST http://localhost:8080/api/search/index/rebuild
 - [docs/03-api-design.md](docs/03-api-design.md) — 接口设计
 - [docs/05-development-plan.md](docs/05-development-plan.md) — 开发计划
 - [docs/09-production-deployment.md](docs/09-production-deployment.md) — 生产环境部署
-- [docs/10-aliyun-ecs-setup.md](docs/10-aliyun-ecs-setup.md) — 阿里云 ECS 环境准备
+- [docs/10-aliyun-ecs-setup.md](docs/10-aliyun-ecs-setup.md) — 双服务器环境准备
+- [deploy/app-layer/README.md](deploy/app-layer/README.md) — 应用入口层部署
 
 ## 目录结构
 
@@ -269,14 +281,18 @@ ai-rag-lab-platform/
 ├── .env.prod.example      # 生产环境变量模板
 ├── deploy/
 │   ├── nginx.conf.example
-│   └── data-layer/          # ECS 数据层 Compose
-│       ├── docker-compose.data.yml
-│       ├── .env.data.example
+│   ├── data-layer/
+│   └── app-layer/           # 轻量服务器应用层
+│       ├── .env.app.example
+│       ├── nginx-rag.conf.example
 │       └── README.md
 ├── scripts/
 │   ├── run-backend-prod.sh
 │   ├── check-ecs-env.sh
-│   └── check-data-layer.sh
+│   ├── check-data-layer.sh
+│   ├── deploy-backend-app.sh
+│   ├── deploy-frontend-app.sh
+│   └── check-app-layer.sh
 ├── docs/
 ├── backend/          # Spring Boot
 └── frontend/         # Vue 3 + Vite

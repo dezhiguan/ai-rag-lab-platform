@@ -274,6 +274,14 @@
 | **原因** | ECS 上统一启动 PG / ES / Redis，ES JVM 适配 4C8G |
 | **未改** | 业务 API、Redis 应用接入 |
 
+### V9-05：应用入口层部署脚本准备
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `deploy/app-layer/*`；`deploy-backend-app.sh`、`deploy-frontend-app.sh`、`check-app-layer.sh`；09 文档与项目总览 |
+| **原因** | 轻量服务器标准化部署 Nginx + 前端 + 后端 |
+| **未改** | 业务 API、Debug/Evaluation 等页面 |
+
 ---
 
 ## 后续版本（占位，未实现）

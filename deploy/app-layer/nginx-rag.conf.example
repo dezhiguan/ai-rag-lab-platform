@@ -1,0 +1,62 @@
+# Nginx · RAG 应用入口层（轻量服务器 2C4G）
+#
+#   /        → 前端静态资源（Vue Router history）
+#   /api/    → 127.0.0.1:8080（本机 Java 后端）
+#   不反代 PostgreSQL / Elasticsearch / Redis
+#
+# 安装示例：
+#   sudo cp deploy/app-layer/nginx-rag.conf.example /etc/nginx/sites-available/rag-lab
+#   sudo ln -sf /etc/nginx/sites-available/rag-lab /etc/nginx/sites-enabled/rag-lab
+#   sudo nginx -t && sudo systemctl reload nginx
+#
+# 访问（备案前）：http://<LIGHT_SERVER_PUBLIC_IP>/
+
+upstream rag_lab_backend {
+    server 127.0.0.1:8080;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name your_domain.com;
+    # server_name _;
+
+    root /var/www/rag-lab/frontend;
+    index index.html;
+
+    client_max_body_size 25m;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://rag_lab_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
+    }
+
+    # 预留：AI 求职 Agent（独立 upstream，勿与 RAG 混用）
+    # location /agent-api/ {
+    #     proxy_pass http://127.0.0.1:8081;
+    # }
+
+    access_log /var/log/nginx/rag-lab.access.log;
+    error_log /var/log/nginx/rag-lab.error.log;
+}
+
+# HTTPS（备案并配置证书后）
+# server {
+#     listen 443 ssl http2;
+#     server_name your_domain.com;
+#     ssl_certificate     /etc/nginx/ssl/your_domain.com/cert.pem;
+#     ssl_certificate_key /etc/nginx/ssl/your_domain.com/cert.key;
+#     root /var/www/rag-lab/frontend;
+#     ...
+# }
