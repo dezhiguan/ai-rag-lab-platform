@@ -123,6 +123,17 @@ ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS used_in_prompt SMALLINT N
 ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS filter_reason VARCHAR(50);
 ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS search_mode VARCHAR(20);
 ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS enable_rerank SMALLINT NOT NULL DEFAULT 0;
+
+-- V11：Token 用量与预估费用
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS question_tokens INT;
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS context_tokens INT;
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS system_prompt_tokens INT;
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS answer_tokens INT;
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS input_tokens INT;
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS output_tokens INT;
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS total_tokens INT;
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS estimated_cost DECIMAL(12, 6);
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS price_configured SMALLINT;
 ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS original_rank INT;
 ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS rerank_rank INT;
 ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS rerank_score DOUBLE PRECISION;

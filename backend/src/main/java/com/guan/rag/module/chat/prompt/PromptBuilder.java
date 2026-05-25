@@ -32,4 +32,9 @@ public class PromptBuilder {
                 .replace("{context}", safeContext)
                 .replace("{question}", safeQuestion);
     }
+
+    /** 系统指令壳（不含实际上下文与用户问题），用于 Token 估算 */
+    public String buildSystemShell() {
+        return build("（无相关上下文）", "");
+    }
 }

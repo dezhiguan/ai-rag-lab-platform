@@ -57,6 +57,8 @@
         </el-descriptions>
       </el-card>
 
+      <TokenUsagePanel :usage="detail.tokenUsage" />
+
       <el-card shadow="never" class="panel">
         <template #header>
           <span>召回 Chunk（{{ detail.retrievedChunks.length }}，进入 Prompt {{ detail.contextChunks?.length ?? 0 }}）</span>
@@ -198,6 +200,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getDebugQueryLog } from '@/api/debug'
+import TokenUsagePanel from '@/components/TokenUsagePanel.vue'
 import type { DebugQueryResult, DebugRetrievedChunk } from '@/types/debug'
 import { filterReasonLabel } from '@/utils/contextFilter'
 import { formatOptionalScore, hasHybridObservability, hybridSourceLabel } from '@/utils/hybridDebug'

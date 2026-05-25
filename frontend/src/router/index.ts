@@ -51,6 +51,11 @@ const router = createRouter({
           component: () => import('@/views/SlowQueryAnalysisView.vue'),
         },
         {
+          path: 'token-cost',
+          name: 'TokenCost',
+          component: () => import('@/views/TokenCostView.vue'),
+        },
+        {
           path: 'rag-experiment',
           name: 'RagExperiment',
           component: () => import('@/views/RagExperimentView.vue'),

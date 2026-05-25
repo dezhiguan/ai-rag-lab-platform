@@ -1,5 +1,6 @@
 package com.guan.rag.module.debug.response;
 
+import com.guan.rag.module.token.response.TokenUsageResponse;
 import lombok.Builder;
 import lombok.Data;
 
@@ -24,4 +25,5 @@ public class DebugQueryResponse {
     private String prompt;
     private String answer;
     private DebugLatencyResponse latency;
+    private TokenUsageResponse tokenUsage;
 }

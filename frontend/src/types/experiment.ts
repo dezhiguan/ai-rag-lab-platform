@@ -1,4 +1,5 @@
 import type { DebugRetrievedChunk, DebugLatency } from '@/types/debug'
+import type { TokenUsage } from '@/types/token'
 
 export interface ExperimentRagQueryRequest {
   kbId: number
@@ -38,6 +39,7 @@ export interface ExperimentRagQueryResult {
   latency: DebugLatency
   usedParams: ExperimentParams
   impact: ExperimentImpact
+  tokenUsage?: TokenUsage
 }
 
 /** 页面内实验对比条目（不落库） */

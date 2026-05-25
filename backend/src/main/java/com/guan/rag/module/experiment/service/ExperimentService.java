@@ -68,6 +68,7 @@ public class ExperimentService {
                         .contextCount(contextCount)
                         .filteredCount(Math.max(retrievedCount - contextCount, 0))
                         .build())
+                .tokenUsage(pipelineResult.getTokenUsage())
                 .build();
     }
 }

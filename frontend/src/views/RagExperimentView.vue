@@ -252,6 +252,12 @@
         <el-table-column label="总 ms" width="68">
           <template #default="{ row }">{{ row.result.latency.totalTimeMs }}</template>
         </el-table-column>
+        <el-table-column label="总 Token" width="80">
+          <template #default="{ row }">{{ row.result.tokenUsage?.totalTokens ?? '—' }}</template>
+        </el-table-column>
+        <el-table-column label="预估费用" width="100" show-overflow-tooltip>
+          <template #default="{ row }">{{ formatTokenCost(row.result.tokenUsage) }}</template>
+        </el-table-column>
         <el-table-column label="Answer 摘要" min-width="160" show-overflow-tooltip>
           <template #default="{ row }">{{ summarizeAnswer(row.result.answer) }}</template>
         </el-table-column>
@@ -265,6 +271,8 @@
     </el-card>
 
     <template v-if="result">
+      <TokenUsagePanel :usage="result.tokenUsage" />
+
       <el-card shadow="never" class="panel">
         <template #header>
           <div class="card-header">
@@ -367,6 +375,8 @@ import { useRouter } from 'vue-router'
 import { listKnowledgeBases, type KnowledgeBase } from '@/api/knowledgeBase'
 import { runRagExperiment } from '@/api/experiment'
 import type { ExperimentCompareEntry, ExperimentRagQueryResult } from '@/types/experiment'
+import type { TokenUsage } from '@/types/token'
+import TokenUsagePanel from '@/components/TokenUsagePanel.vue'
 
 interface QuickQuestion {
   label: string
@@ -408,6 +418,12 @@ function applyQuickQuestion(text: string) {
 function formatScore(score: number | undefined): string {
   if (score == null) return '-'
   return score.toFixed(4)
+}
+
+function formatTokenCost(usage?: TokenUsage | null): string {
+  if (!usage) return '—'
+  if (!usage.priceConfigured) return '未配置'
+  return `¥${Number(usage.estimatedCost ?? 0).toFixed(4)}`
 }
 
 function summarizeAnswer(text: string): string {

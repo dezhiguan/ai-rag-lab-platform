@@ -23,6 +23,9 @@ import com.guan.rag.module.search.SearchMode;
 import com.guan.rag.module.search.hybrid.HybridSearchResult;
 import com.guan.rag.module.search.hybrid.HybridSearchService;
 import com.guan.rag.module.search.service.Bm25SearchService;
+import com.guan.rag.module.token.TokenUsageResult;
+import com.guan.rag.module.token.TokenUsageService;
+import com.guan.rag.module.token.response.TokenUsageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +52,7 @@ public class RagQueryPipelineService {
     private final ChatModelProviderRouter chatModelProviderRouter;
     private final DebugQueryLogMapper debugQueryLogMapper;
     private final DebugRetrievalLogMapper debugRetrievalLogMapper;
+    private final TokenUsageService tokenUsageService;
 
     @Transactional
     public DebugQueryResponse execute(RagQueryPipelineRequest request) {
@@ -111,6 +115,16 @@ public class RagQueryPipelineService {
 
         long totalTimeMs = System.currentTimeMillis() - totalStart;
 
+        TokenUsageResult tokenUsage = tokenUsageService.buildUsage(
+                question,
+                context,
+                result.answer(),
+                chatProvider,
+                chatModel,
+                result.promptTokens(),
+                result.completionTokens()
+        );
+
         Long queryLogId = null;
         if (request.isPersistLog()) {
             DebugQueryLog queryLog = new DebugQueryLog();
@@ -129,6 +143,7 @@ public class RagQueryPipelineService {
             queryLog.setRetrievalTimeMs(retrievalTimeMs);
             queryLog.setGenerationTimeMs(generationTimeMs);
             queryLog.setTotalTimeMs(totalTimeMs);
+            applyTokenUsage(queryLog, tokenUsage);
             debugQueryLogMapper.insert(queryLog);
             queryLogId = queryLog.getId();
             saveRetrievalLogs(queryLogId, request.getKbId(), retrievedChunks);
@@ -154,7 +169,20 @@ public class RagQueryPipelineService {
                         .generationTimeMs(generationTimeMs)
                         .totalTimeMs(totalTimeMs)
                         .build())
+                .tokenUsage(TokenUsageResponse.from(tokenUsage))
                 .build();
+    }
+
+    private void applyTokenUsage(DebugQueryLog queryLog, TokenUsageResult tokenUsage) {
+        queryLog.setQuestionTokens(tokenUsage.getQuestionTokens());
+        queryLog.setContextTokens(tokenUsage.getContextTokens());
+        queryLog.setSystemPromptTokens(tokenUsage.getSystemPromptTokens());
+        queryLog.setAnswerTokens(tokenUsage.getAnswerTokens());
+        queryLog.setInputTokens(tokenUsage.getInputTokens());
+        queryLog.setOutputTokens(tokenUsage.getOutputTokens());
+        queryLog.setTotalTokens(tokenUsage.getTotalTokens());
+        queryLog.setEstimatedCost(tokenUsage.getEstimatedCost());
+        queryLog.setPriceConfigured(tokenUsage.isPriceConfigured() ? 1 : 0);
     }
 
     private List<RetrievedChunkResponse> retrieveChunks(SearchMode searchMode, Long kbId, String question, int topK) {

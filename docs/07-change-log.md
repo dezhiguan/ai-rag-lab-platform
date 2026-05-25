@@ -4,6 +4,21 @@
 
 ---
 
+## V11：Token 用量与成本监控
+
+### V11-01：Token 用量与成本监控最小闭环 ✅
+
+| 项 | 内容 |
+|----|------|
+| **后端** | `TokenUsageService` 工程估算（中文 1 字≈1 token，其他约 4 字符≈1 token）；`TokenUsageResponse` |
+| **Debug / 实验台** | 查询响应增加 `tokenUsage`；`rag_query_log` 持久化 Token 与 `estimated_cost` |
+| **定价** | 静态单价：deepseek-chat / deepseek-v4-pro / mock / local；未知模型显示「未配置价格」 |
+| **前端** | Debug / Debug 详情 / 参数实验台 KPI 卡片；对比表增加总 Token、预估费用列 |
+| **看板** | `/token-cost`「Token 成本」页；`GET /api/token-cost/overview` 累计与近 7 天统计 |
+| **菜单** | 可观测分组新增 Token 成本；guest / admin 均可查看 |
+
+---
+
 ## V10.5：线上体验与页面布局优化
 
 ### V10.5-01：全局 UI/UX 优化与项目总览页重构 ✅

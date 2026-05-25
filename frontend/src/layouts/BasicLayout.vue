@@ -93,6 +93,7 @@ const menuGroups: MenuGroup[] = [
       { path: '/rag-metrics', label: 'RAG 指标', guestVisible: true },
       { path: '/rag-query-logs', label: '查询日志中心', guestVisible: true },
       { path: '/slow-query-analysis', label: '慢查询分析', guestVisible: true },
+      { path: '/token-cost', label: 'Token 成本', guestVisible: true },
     ],
   },
   {
@@ -125,6 +126,7 @@ const activeMenu = computed(() => {
   if (p.startsWith('/rag-experiment')) return '/rag-experiment'
   if (p.startsWith('/rag-query-logs')) return '/rag-query-logs'
   if (p.startsWith('/slow-query-analysis')) return '/slow-query-analysis'
+  if (p.startsWith('/token-cost')) return '/token-cost'
   if (p.startsWith('/rag-metrics')) return '/rag-metrics'
   if (p.startsWith('/system-status')) return '/system-status'
   return p

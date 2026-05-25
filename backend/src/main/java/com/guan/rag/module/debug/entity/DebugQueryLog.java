@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -47,6 +48,17 @@ public class DebugQueryLog {
     private Long generationTimeMs;
 
     private Long totalTimeMs;
+
+    private Integer questionTokens;
+    private Integer contextTokens;
+    private Integer systemPromptTokens;
+    private Integer answerTokens;
+    private Integer inputTokens;
+    private Integer outputTokens;
+    private Integer totalTokens;
+    private BigDecimal estimatedCost;
+    /** 1=已配置模型单价，0=未配置 */
+    private Integer priceConfigured;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;

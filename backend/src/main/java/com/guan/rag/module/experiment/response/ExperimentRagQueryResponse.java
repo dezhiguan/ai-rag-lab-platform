@@ -2,6 +2,7 @@ package com.guan.rag.module.experiment.response;
 
 import com.guan.rag.module.debug.response.DebugLatencyResponse;
 import com.guan.rag.module.debug.response.DebugRetrievedChunkResponse;
+import com.guan.rag.module.token.response.TokenUsageResponse;
 import lombok.Builder;
 import lombok.Data;
 
@@ -22,6 +23,7 @@ public class ExperimentRagQueryResponse {
     private DebugLatencyResponse latency;
     private ExperimentParamsResponse usedParams;
     private ExperimentImpactResponse impact;
+    private TokenUsageResponse tokenUsage;
 
     @Data
     @Builder

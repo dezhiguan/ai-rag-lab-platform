@@ -19,6 +19,8 @@ export interface DebugRetrievedChunk {
   rerankScore?: number | null
 }
 
+import type { TokenUsage } from './token'
+
 export interface DebugLatency {
   retrievalTimeMs: number
   generationTimeMs: number
@@ -51,6 +53,7 @@ export interface DebugQueryResult {
   prompt: string
   answer: string
   latency: DebugLatency
+  tokenUsage?: TokenUsage
 }
 
 export interface DebugQueryLogSummary {

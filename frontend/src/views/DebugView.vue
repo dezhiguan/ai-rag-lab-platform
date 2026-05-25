@@ -177,6 +177,8 @@
         </el-descriptions>
       </el-card>
 
+      <TokenUsagePanel :usage="result.tokenUsage" />
+
       <el-card shadow="never" class="panel">
         <template #header>
           <span>召回 Chunk（{{ result.retrievedChunks.length }}，进入 Prompt {{ result.contextChunks.length }}）</span>
@@ -419,6 +421,7 @@ import {
   summarizeRerankChanges,
 } from '@/utils/rerankDebug'
 import { usePermission } from '@/composables/usePermission'
+import TokenUsagePanel from '@/components/TokenUsagePanel.vue'
 
 interface QuickTest {
   label: string

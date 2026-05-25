@@ -15,6 +15,8 @@ import com.guan.rag.module.rag.pipeline.RagQueryPipelineRequest;
 import com.guan.rag.module.rag.pipeline.RagQueryPipelineService;
 import com.guan.rag.module.kb.service.KnowledgeBaseService;
 import com.guan.rag.module.search.SearchMode;
+import com.guan.rag.module.token.TokenUsageService;
+import com.guan.rag.module.token.response.TokenUsageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,7 @@ public class DebugService {
     private final RagQueryPipelineService ragQueryPipelineService;
     private final DebugQueryLogMapper debugQueryLogMapper;
     private final DebugRetrievalLogMapper debugRetrievalLogMapper;
+    private final TokenUsageService tokenUsageService;
 
     @Transactional
     public DebugQueryResponse query(DebugQueryRequest request) {
@@ -92,7 +95,36 @@ public class DebugService {
                         .generationTimeMs(queryLog.getGenerationTimeMs())
                         .totalTimeMs(queryLog.getTotalTimeMs())
                         .build())
+                .tokenUsage(resolveTokenUsage(queryLog))
                 .build();
+    }
+
+    private TokenUsageResponse resolveTokenUsage(DebugQueryLog queryLog) {
+        TokenUsageResponse persisted = TokenUsageResponse.from(tokenUsageService.fromPersisted(
+                queryLog.getQuestionTokens(),
+                queryLog.getContextTokens(),
+                queryLog.getSystemPromptTokens(),
+                queryLog.getAnswerTokens(),
+                queryLog.getInputTokens(),
+                queryLog.getOutputTokens(),
+                queryLog.getTotalTokens(),
+                queryLog.getEstimatedCost(),
+                queryLog.getPriceConfigured() != null && queryLog.getPriceConfigured() == 1,
+                queryLog.getChatProvider(),
+                queryLog.getChatModel()
+        ));
+        if (persisted != null) {
+            return persisted;
+        }
+        return TokenUsageResponse.from(tokenUsageService.buildUsage(
+                queryLog.getQuestion(),
+                queryLog.getContext(),
+                queryLog.getAnswer(),
+                queryLog.getChatProvider(),
+                queryLog.getChatModel(),
+                null,
+                null
+        ));
     }
 
     private DebugRetrievedChunkResponse toRetrievedChunk(DebugRetrievalLog log) {
