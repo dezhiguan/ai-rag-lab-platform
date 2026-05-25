@@ -119,6 +119,8 @@ public class RagQueryPipelineService {
                 question,
                 context,
                 result.answer(),
+                embeddingProvider,
+                embeddingModel,
                 chatProvider,
                 chatModel,
                 result.promptTokens(),
@@ -181,7 +183,10 @@ public class RagQueryPipelineService {
         queryLog.setInputTokens(tokenUsage.getInputTokens());
         queryLog.setOutputTokens(tokenUsage.getOutputTokens());
         queryLog.setTotalTokens(tokenUsage.getTotalTokens());
-        queryLog.setEstimatedCost(tokenUsage.getEstimatedCost());
+        queryLog.setEstimatedCost(tokenUsage.getChatCost());
+        queryLog.setEmbeddingTokens((long) tokenUsage.getEmbeddingTokens());
+        queryLog.setEmbeddingCost(tokenUsage.getEmbeddingCost());
+        queryLog.setTotalCost(tokenUsage.getTotalCost());
         queryLog.setPriceConfigured(tokenUsage.isPriceConfigured() ? 1 : 0);
     }
 

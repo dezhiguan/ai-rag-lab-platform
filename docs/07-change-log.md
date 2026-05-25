@@ -6,6 +6,16 @@
 
 ## V11：Token 用量与成本监控
 
+### V11-02：qwen/text-embedding-v4 Embedding 成本统计 ✅
+
+| 项 | 内容 |
+|----|------|
+| **数据库** | `rag_query_log` 新增 `embedding_tokens`、`embedding_cost`、`total_cost` |
+| **成本口径** | Embedding Token = 问题文本估算；费用 = tokens/1000×¥0.0007；`totalCost = embeddingCost + chatCost` |
+| **API** | `tokenUsage` 增加 embedding/chat/total 分项字段；Debug 与参数实验台一致 |
+| **前端** | Token 卡片 Embedding / Chat / Total 三块；Token 成本页 qwen Embedding 统计 |
+| **兼容** | 老日志无 embedding 字段时按 0 处理，不报错 |
+
 ### V11-01：Token 用量与成本监控最小闭环 ✅
 
 | 项 | 内容 |

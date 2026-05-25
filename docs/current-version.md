@@ -2,7 +2,7 @@
 
 ## 当前版本
 
-**V11：Token 用量与成本监控（进行中）**
+**V11：Token 用量与成本监控（已完成）**
 
 **上一完成版本：V10.5 线上体验与页面布局优化**
 
@@ -16,6 +16,11 @@
 - Debug、参数实验台查询结果展示 `tokenUsage`
 - `rag_query_log` 持久化 Token 字段
 - `/token-cost` Token 成本看板（近 7 天与全量统计）
+
+### V11-02 qwen Embedding 成本统计 ✅
+
+- `qwen/text-embedding-v4` Embedding Token 与费用纳入单次查询总成本
+- `totalCost = embeddingCost + chatCost`；看板分项展示 qwen Embedding 统计
 
 ## V10.5 已完成能力
 

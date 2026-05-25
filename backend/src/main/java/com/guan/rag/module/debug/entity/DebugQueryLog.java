@@ -56,7 +56,12 @@ public class DebugQueryLog {
     private Integer inputTokens;
     private Integer outputTokens;
     private Integer totalTokens;
+    /** Chat 分项预估费用（元） */
     private BigDecimal estimatedCost;
+    private Long embeddingTokens;
+    private BigDecimal embeddingCost;
+    /** Embedding + Chat 总费用（元） */
+    private BigDecimal totalCost;
     /** 1=已配置模型单价，0=未配置 */
     private Integer priceConfigured;
 

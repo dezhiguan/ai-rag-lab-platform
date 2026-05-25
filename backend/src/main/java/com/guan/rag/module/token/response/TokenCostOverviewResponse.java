@@ -14,6 +14,8 @@ public class TokenCostOverviewResponse {
     private List<String> capabilities;
     private TokenCostStatsResponse allTime;
     private TokenCostStatsResponse recent7Days;
+    private EmbeddingCostStatsResponse embeddingAllTime;
+    private EmbeddingCostStatsResponse embeddingRecent7Days;
     private List<ModelPriceInfoResponse> modelPrices;
 
     @Data
@@ -24,6 +26,18 @@ public class TokenCostOverviewResponse {
         private BigDecimal totalCost;
         private long avgTokens;
         private BigDecimal avgCost;
+    }
+
+    @Data
+    @Builder
+    public static class EmbeddingCostStatsResponse {
+        private long queryCount;
+        private long embeddingTokens;
+        private BigDecimal embeddingCost;
+        private long avgEmbeddingTokens;
+        private BigDecimal avgEmbeddingCost;
+        private String embeddingProvider;
+        private String embeddingModel;
     }
 
     @Data

@@ -16,12 +16,25 @@ public class TokenUsageResponse {
     private int answerTokens;
     private int inputTokens;
     private int outputTokens;
+
+    private String embeddingProvider;
+    private String embeddingModel;
+    private int embeddingTokens;
+    private BigDecimal embeddingCost;
+
+    private String chatProvider;
+    private String chatModel;
+    private int chatInputTokens;
+    private int chatOutputTokens;
+    private BigDecimal chatCost;
+
     private int totalTokens;
+    private BigDecimal totalCost;
+
+    /** 兼容 V11-01，等同 totalCost */
     private BigDecimal estimatedCost;
     private boolean priceConfigured;
     private String costNote;
-    private String chatProvider;
-    private String chatModel;
 
     public static TokenUsageResponse from(TokenUsageResult result) {
         if (result == null) {
@@ -34,12 +47,20 @@ public class TokenUsageResponse {
                 .answerTokens(result.getAnswerTokens())
                 .inputTokens(result.getInputTokens())
                 .outputTokens(result.getOutputTokens())
+                .embeddingProvider(result.getEmbeddingProvider())
+                .embeddingModel(result.getEmbeddingModel())
+                .embeddingTokens(result.getEmbeddingTokens())
+                .embeddingCost(result.getEmbeddingCost())
+                .chatProvider(result.getChatProvider())
+                .chatModel(result.getChatModel())
+                .chatInputTokens(result.getChatInputTokens())
+                .chatOutputTokens(result.getChatOutputTokens())
+                .chatCost(result.getChatCost())
                 .totalTokens(result.getTotalTokens())
+                .totalCost(result.getTotalCost())
                 .estimatedCost(result.getEstimatedCost())
                 .priceConfigured(result.isPriceConfigured())
                 .costNote(result.getCostNote())
-                .chatProvider(result.getChatProvider())
-                .chatModel(result.getChatModel())
                 .build();
     }
 }

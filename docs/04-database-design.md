@@ -124,6 +124,13 @@ Schema 定义见：`backend/src/main/resources/db/schema.sql`
 | retrieval_time_ms / generation_time_ms / total_time_ms | BIGINT | 耗时 |
 | search_mode | VARCHAR(20) | V4：`VECTOR` / `BM25`；V5：`HYBRID` |
 | enable_rerank | SMALLINT | V6：是否启用轻量 Reranker（0/1） |
+| question_tokens / context_tokens / system_prompt_tokens / answer_tokens | INT | V11：Chat 分项 Token |
+| input_tokens / output_tokens / total_tokens | INT | V11：Chat 输入输出与总 Token（含 Embedding） |
+| estimated_cost | NUMERIC(12,6) | V11：Chat 分项费用（元） |
+| embedding_tokens | BIGINT | V11-02：Embedding Token（默认 0） |
+| embedding_cost | NUMERIC(18,8) | V11-02：Embedding 费用（元） |
+| total_cost | NUMERIC(18,8) | V11-02：Embedding + Chat 总费用（元） |
+| price_configured | SMALLINT | V11：是否已配置单价 |
 | created_at | TIMESTAMP | |
 | deleted | SMALLINT | |
 

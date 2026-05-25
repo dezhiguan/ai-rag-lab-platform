@@ -252,10 +252,16 @@
         <el-table-column label="总 ms" width="68">
           <template #default="{ row }">{{ row.result.latency.totalTimeMs }}</template>
         </el-table-column>
+        <el-table-column label="Emb Token" width="88">
+          <template #default="{ row }">{{ row.result.tokenUsage?.embeddingTokens ?? '—' }}</template>
+        </el-table-column>
+        <el-table-column label="Emb 费用" width="92" show-overflow-tooltip>
+          <template #default="{ row }">{{ formatEmbeddingCost(row.result.tokenUsage) }}</template>
+        </el-table-column>
         <el-table-column label="总 Token" width="80">
           <template #default="{ row }">{{ row.result.tokenUsage?.totalTokens ?? '—' }}</template>
         </el-table-column>
-        <el-table-column label="预估费用" width="100" show-overflow-tooltip>
+        <el-table-column label="总费用" width="100" show-overflow-tooltip>
           <template #default="{ row }">{{ formatTokenCost(row.result.tokenUsage) }}</template>
         </el-table-column>
         <el-table-column label="Answer 摘要" min-width="160" show-overflow-tooltip>
@@ -422,8 +428,14 @@ function formatScore(score: number | undefined): string {
 
 function formatTokenCost(usage?: TokenUsage | null): string {
   if (!usage) return '—'
-  if (!usage.priceConfigured) return '未配置'
-  return `¥${Number(usage.estimatedCost ?? 0).toFixed(4)}`
+  const cost = Number(usage.totalCost ?? usage.estimatedCost ?? 0)
+  if (usage.priceConfigured === false && cost === 0) return '未配置'
+  return `¥${cost.toFixed(4)}`
+}
+
+function formatEmbeddingCost(usage?: TokenUsage | null): string {
+  if (!usage) return '—'
+  return `¥${Number(usage.embeddingCost ?? 0).toFixed(4)}`
 }
 
 function summarizeAnswer(text: string): string {

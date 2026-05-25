@@ -123,10 +123,19 @@
 | **用途** | RAG 参数实验：复用 Debug 查询链路，Context 参数仅对本次请求生效 |
 | **版本** | V8-05 |
 | **请求 Body** | `kbId`、`question`（必填）；`topK`（默认 5）、`searchMode`（VECTOR/BM25/HYBRID）、`enableRerank`（默认 false）、`maxChunks`（默认 2）、`minScore`（默认 0.45）、`maxScoreGap`（默认 0.35） |
-| **返回 data** | `queryLogId`、`answer`、`prompt`、`context`、`retrievedChunks[]`、`contextChunks[]`、`latency`、`usedParams`、`impact` |
+| **返回 data** | `queryLogId`、`answer`、`prompt`、`context`、`retrievedChunks[]`、`contextChunks[]`、`latency`、`usedParams`、`impact`、`tokenUsage`（字段同 Debug 查询） |
 | **impact** | `retrievedCount`、`contextCount`、`filteredCount` |
 
 实验仍会写入 `rag_query_log` / `rag_retrieval_log`，便于日志中心与指标统计；**不修改** `application.yml` 全局 Context 配置。
+
+### GET /api/token-cost/overview
+
+| 项 | 说明 |
+|----|------|
+| **用途** | Token 成本看板：全链路 + qwen Embedding 分项统计 |
+| **版本** | V11-01 / V11-02 |
+| **鉴权** | Bearer Token（guest / admin 均可） |
+| **返回 data** | `allTime`、`recent7Days`（总 Token / 总费用）、`embeddingAllTime`、`embeddingRecent7Days`（qwen Embedding Token / 费用）、`modelPrices[]` |
 
 ---
 
@@ -306,7 +315,21 @@
 | **用途** | 执行完整 Debug 查询（召回 → Context 过滤 → Prompt → 回答） |
 | **版本** | V3（`searchMode` 为 V4 扩展） |
 | **请求 Body** | `kbId`（必填）、`question`（必填）、`topK`（默认 5）、`searchMode`（`VECTOR` 默认 / `BM25` / `HYBRID`）、`enableRerank`（可选，默认 false，V6） |
-| **返回 data** | `queryLogId`、`kbId`、`question`、`searchMode`、`enableRerank`、`embeddingProvider`、`embeddingModel`、`chatProvider`、`chatModel`、`retrievedChunks[]`、`contextChunks[]`、`context`、`prompt`、`answer`、`latency`（`retrievalTimeMs`、`generationTimeMs`、`totalTimeMs`） |
+| **返回 data** | `queryLogId`、`kbId`、`question`、`searchMode`、`enableRerank`、`embeddingProvider`、`embeddingModel`、`chatProvider`、`chatModel`、`retrievedChunks[]`、`contextChunks[]`、`context`、`prompt`、`answer`、`latency`（`retrievalTimeMs`、`generationTimeMs`、`totalTimeMs`）、`tokenUsage`（V11） |
+
+**tokenUsage（V11-01 / V11-02）：**
+
+| 字段 | 说明 |
+|------|------|
+| `embeddingProvider` / `embeddingModel` | 如 `qwen` / `text-embedding-v4` |
+| `embeddingTokens` | 用户问题文本估算（Embedding 调用） |
+| `embeddingCost` | `embeddingTokens / 1000 × 单价`（元） |
+| `chatInputTokens` / `chatOutputTokens` | Chat 输入 / 输出 Token |
+| `chatCost` | Chat 分项费用（元） |
+| `totalTokens` | `embeddingTokens + chatInput + chatOutput` |
+| `totalCost` | `embeddingCost + chatCost`（元） |
+| `questionTokens` / `contextTokens` / `systemPromptTokens` / `answerTokens` | Chat 明细（兼容） |
+| `estimatedCost` | 等同 `totalCost`（兼容 V11-01） |
 
 **retrievedChunks / contextChunks 单条字段：**
 

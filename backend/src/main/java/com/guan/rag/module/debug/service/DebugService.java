@@ -101,17 +101,24 @@ public class DebugService {
 
     private TokenUsageResponse resolveTokenUsage(DebugQueryLog queryLog) {
         TokenUsageResponse persisted = TokenUsageResponse.from(tokenUsageService.fromPersisted(
-                queryLog.getQuestionTokens(),
-                queryLog.getContextTokens(),
-                queryLog.getSystemPromptTokens(),
-                queryLog.getAnswerTokens(),
-                queryLog.getInputTokens(),
-                queryLog.getOutputTokens(),
-                queryLog.getTotalTokens(),
-                queryLog.getEstimatedCost(),
-                queryLog.getPriceConfigured() != null && queryLog.getPriceConfigured() == 1,
-                queryLog.getChatProvider(),
-                queryLog.getChatModel()
+                new TokenUsageService.DebugQueryLogTokenFields(
+                        queryLog.getQuestionTokens(),
+                        queryLog.getContextTokens(),
+                        queryLog.getSystemPromptTokens(),
+                        queryLog.getAnswerTokens(),
+                        queryLog.getInputTokens(),
+                        queryLog.getOutputTokens(),
+                        queryLog.getTotalTokens(),
+                        queryLog.getEstimatedCost(),
+                        queryLog.getEmbeddingTokens(),
+                        queryLog.getEmbeddingCost(),
+                        queryLog.getTotalCost(),
+                        queryLog.getPriceConfigured(),
+                        queryLog.getEmbeddingProvider(),
+                        queryLog.getEmbeddingModel(),
+                        queryLog.getChatProvider(),
+                        queryLog.getChatModel()
+                )
         ));
         if (persisted != null) {
             return persisted;
@@ -120,6 +127,8 @@ public class DebugService {
                 queryLog.getQuestion(),
                 queryLog.getContext(),
                 queryLog.getAnswer(),
+                queryLog.getEmbeddingProvider(),
+                queryLog.getEmbeddingModel(),
                 queryLog.getChatProvider(),
                 queryLog.getChatModel(),
                 null,

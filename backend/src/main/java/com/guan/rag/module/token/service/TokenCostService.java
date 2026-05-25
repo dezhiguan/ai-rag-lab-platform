@@ -1,6 +1,7 @@
 package com.guan.rag.module.token.service;
 
 import com.guan.rag.module.token.mapper.TokenCostMapper;
+import com.guan.rag.module.token.model.EmbeddingCostStatsRow;
 import com.guan.rag.module.token.model.TokenCostStatsRow;
 import com.guan.rag.module.token.response.TokenCostOverviewResponse;
 import lombok.RequiredArgsConstructor;
@@ -20,13 +21,20 @@ public class TokenCostService {
         return TokenCostOverviewResponse.builder()
                 .tokenTrackingEnabled(true)
                 .capabilities(List.of(
-                        "Debug 查询已展示 Token 组成与预估费用",
-                        "参数实验台已展示单次实验 Token 与对比表费用列",
-                        "查询日志已持久化 Token 字段，看板展示累计统计"
+                        "Debug / 参数实验台：Embedding + Chat + Total 分项 Token 与费用",
+                        "qwen/text-embedding-v4：按问题 Token × 单价估算 Embedding 成本",
+                        "查询日志持久化 embedding_tokens、embedding_cost、total_cost"
                 ))
                 .allTime(toStats(tokenCostMapper.aggregateAll()))
                 .recent7Days(toStats(tokenCostMapper.aggregateRecent()))
+                .embeddingAllTime(toEmbeddingStats(tokenCostMapper.aggregateEmbeddingAll()))
+                .embeddingRecent7Days(toEmbeddingStats(tokenCostMapper.aggregateEmbeddingRecent()))
                 .modelPrices(List.of(
+                        TokenCostOverviewResponse.ModelPriceInfoResponse.builder()
+                                .model("qwen / text-embedding-v4")
+                                .inputPriceNote("约 ¥0.0007 / 千 tokens（问题文本估算）")
+                                .outputPriceNote("—")
+                                .build(),
                         TokenCostOverviewResponse.ModelPriceInfoResponse.builder()
                                 .model("deepseek-chat")
                                 .inputPriceNote("约 ¥1 / 百万 input tokens")
@@ -51,9 +59,9 @@ public class TokenCostService {
             return TokenCostOverviewResponse.TokenCostStatsResponse.builder()
                     .queryCount(0)
                     .totalTokens(0)
-                    .totalCost(BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP))
+                    .totalCost(BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP))
                     .avgTokens(0)
-                    .avgCost(BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP))
+                    .avgCost(BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP))
                     .build();
         }
         return TokenCostOverviewResponse.TokenCostStatsResponse.builder()
@@ -65,10 +73,33 @@ public class TokenCostService {
                 .build();
     }
 
+    private TokenCostOverviewResponse.EmbeddingCostStatsResponse toEmbeddingStats(EmbeddingCostStatsRow row) {
+        if (row == null || row.getQueryCount() == null || row.getQueryCount() == 0) {
+            return TokenCostOverviewResponse.EmbeddingCostStatsResponse.builder()
+                    .queryCount(0)
+                    .embeddingTokens(0)
+                    .embeddingCost(BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP))
+                    .avgEmbeddingTokens(0)
+                    .avgEmbeddingCost(BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP))
+                    .embeddingProvider("qwen")
+                    .embeddingModel("text-embedding-v4")
+                    .build();
+        }
+        return TokenCostOverviewResponse.EmbeddingCostStatsResponse.builder()
+                .queryCount(row.getQueryCount())
+                .embeddingTokens(row.getEmbeddingTokens() != null ? row.getEmbeddingTokens() : 0)
+                .embeddingCost(scaleCost(row.getEmbeddingCost()))
+                .avgEmbeddingTokens(row.getAvgEmbeddingTokens() != null ? row.getAvgEmbeddingTokens().longValue() : 0)
+                .avgEmbeddingCost(scaleCost(row.getAvgEmbeddingCost()))
+                .embeddingProvider("qwen")
+                .embeddingModel("text-embedding-v4")
+                .build();
+    }
+
     private BigDecimal scaleCost(BigDecimal value) {
         if (value == null) {
-            return BigDecimal.ZERO.setScale(6, RoundingMode.HALF_UP);
+            return BigDecimal.ZERO.setScale(8, RoundingMode.HALF_UP);
         }
-        return value.setScale(6, RoundingMode.HALF_UP);
+        return value.setScale(8, RoundingMode.HALF_UP);
     }
 }

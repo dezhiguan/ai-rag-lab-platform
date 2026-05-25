@@ -134,6 +134,11 @@ ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS output_tokens INT;
 ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS total_tokens INT;
 ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS estimated_cost DECIMAL(12, 6);
 ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS price_configured SMALLINT;
+
+-- V11-02：Embedding 分项成本
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS embedding_tokens BIGINT DEFAULT 0;
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS embedding_cost NUMERIC(18, 8) DEFAULT 0;
+ALTER TABLE rag_query_log ADD COLUMN IF NOT EXISTS total_cost NUMERIC(18, 8) DEFAULT 0;
 ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS original_rank INT;
 ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS rerank_rank INT;
 ALTER TABLE rag_retrieval_log ADD COLUMN IF NOT EXISTS rerank_score DOUBLE PRECISION;
