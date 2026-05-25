@@ -41,6 +41,15 @@
 | **用途** | 退出登录，服务端作废 Token |
 | **鉴权** | Bearer Token |
 
+### guest 只读体验模式（V10-02）
+
+| 项 | 说明 |
+|----|------|
+| **角色** | `guest` 为只读体验账号；`admin` 为管理员，完整权限 |
+| **guest 允许** | 查询类 POST（Debug、Evaluation、实验台、Chat 问答等）及各类 GET |
+| **guest 禁止** | `POST /api/kb`、`DELETE /api/kb/{id}`、`POST .../documents/upload`、`POST /api/sample/init`、`POST .../embedding/rebuild`、`POST /api/search/index/rebuild` |
+| **错误码** | HTTP 403，`code: 403`，`message`: 当前为体验账号，不支持该操作 |
+
 ---
 
 ## 系统接口

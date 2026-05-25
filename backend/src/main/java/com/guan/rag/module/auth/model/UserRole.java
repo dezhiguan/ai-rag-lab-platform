@@ -5,8 +5,8 @@ import lombok.Getter;
 @Getter
 public enum UserRole {
 
-    ADMIN("ADMIN", "管理员", "管理员"),
-    GUEST("GUEST", "体验用户", "体验用户");
+    ADMIN("ADMIN", "管理员", "管理员模式"),
+    GUEST("GUEST", "体验用户", "只读体验模式");
 
     private final String code;
     private final String label;

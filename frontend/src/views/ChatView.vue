@@ -50,9 +50,17 @@
             <el-tag type="info">总 Chunk：{{ embeddingStatus?.totalChunks ?? 0 }}</el-tag>
             <el-tag type="success">已向量化：{{ embeddingStatus?.embeddedChunks ?? 0 }}</el-tag>
             <el-tag type="warning">未向量化：{{ embeddingStatus?.notEmbeddedChunks ?? 0 }}</el-tag>
-            <el-button type="primary" :loading="rebuilding" @click="handleRebuild">
+            <el-button
+              v-if="canWrite"
+              type="primary"
+              :loading="rebuilding"
+              @click="handleRebuild"
+            >
               重建向量
             </el-button>
+            <el-tooltip v-else content="当前为体验账号，不支持该操作" placement="top">
+              <el-button type="primary" disabled>重建向量</el-button>
+            </el-tooltip>
           </el-space>
           <div class="rebuild-hint">
             切换 Embedding Provider 或模型后，需要重新重建向量。
@@ -155,6 +163,7 @@ import { sendChat } from '@/api/chat'
 import { getModelProviders, type ModelProviders } from '@/api/model'
 import type { EmbeddingStatus } from '@/types/embedding'
 import type { ChatSource } from '@/types/chat'
+import { usePermission } from '@/composables/usePermission'
 
 interface QuickTest {
   label: string
@@ -163,6 +172,7 @@ interface QuickTest {
 }
 
 const modelProviders = ref<ModelProviders | null>(null)
+const { canWrite, requireWrite } = usePermission()
 const knowledgeBases = ref<KnowledgeBase[]>([])
 const selectedKbId = ref<number | undefined>()
 const embeddingStatus = ref<EmbeddingStatus | null>(null)
@@ -223,6 +233,7 @@ function handleNewSession() {
 }
 
 async function handleRebuild() {
+  if (!requireWrite()) return
   if (!selectedKbId.value) return
   rebuilding.value = true
   try {

@@ -21,8 +21,20 @@
       <el-descriptions :column="1" border>
         <el-descriptions-item label="当前用户">{{ authStore.username }}</el-descriptions-item>
         <el-descriptions-item label="当前角色">{{ authStore.roleLabel }}</el-descriptions-item>
-        <el-descriptions-item label="当前模式">{{ authStore.modeLabel }}</el-descriptions-item>
+        <el-descriptions-item label="当前模式">
+          <el-tag :type="authStore.isGuest ? 'warning' : 'success'" size="small">
+            {{ authStore.modeLabel }}
+          </el-tag>
+        </el-descriptions-item>
       </el-descriptions>
+      <el-alert
+        v-if="authStore.isGuest"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="guest-mode-alert"
+        title="只读体验模式：可浏览 Debug、评测、参数实验台与可观测看板；不可创建知识库、上传文档或重建索引。"
+      />
     </el-card>
 
     <!-- 快速开始 -->
@@ -41,15 +53,20 @@
             <p class="quick-desc">{{ item.desc }}</p>
             <pre v-if="item.command" class="quick-command">{{ item.command }}</pre>
             <el-space wrap>
-              <el-button
-                v-if="item.action === 'initSample'"
-                type="primary"
-                size="small"
-                :loading="initSampleLoading"
-                @click="handleInitSample"
-              >
-                一键初始化
-              </el-button>
+              <template v-if="item.action === 'initSample'">
+                <el-button
+                  v-if="canWrite"
+                  type="primary"
+                  size="small"
+                  :loading="initSampleLoading"
+                  @click="handleInitSample"
+                >
+                  一键初始化
+                </el-button>
+                <el-tooltip v-else content="当前为体验账号，不支持该操作" placement="top">
+                  <el-button type="primary" size="small" disabled>一键初始化</el-button>
+                </el-tooltip>
+              </template>
               <el-button
                 v-if="item.path"
                 type="primary"
@@ -259,9 +276,11 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { initSampleData } from '@/api/sample'
 import { useAuthStore } from '@/stores/auth'
+import { usePermission } from '@/composables/usePermission'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { canWrite, requireWrite } = usePermission()
 const initSampleLoading = ref(false)
 
 interface RoadmapItem {
@@ -532,6 +551,7 @@ function goTo(path: string) {
 }
 
 async function handleInitSample() {
+  if (!requireWrite()) return
   initSampleLoading.value = true
   try {
     const res = await initSampleData()
@@ -586,6 +606,10 @@ async function handleInitSample() {
 
 .section-card {
   margin-bottom: 16px;
+}
+
+.guest-mode-alert {
+  margin-top: 12px;
 }
 
 .roadmap-title {

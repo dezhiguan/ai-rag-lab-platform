@@ -7,8 +7,20 @@
           <span class="title">{{ kb?.name ?? '知识库' }}</span>
         </div>
         <div class="actions">
-          <el-button :loading="initLoading" @click="handleInitSample">初始化样例数据</el-button>
-          <UploadDocument v-if="kbId" :kb-id="kbId" @success="loadDocuments" />
+          <template v-if="canWrite">
+            <el-button :loading="initLoading" @click="handleInitSample">初始化样例数据</el-button>
+            <UploadDocument v-if="kbId" :kb-id="kbId" @success="loadDocuments" />
+          </template>
+          <template v-else>
+            <el-tooltip content="当前为体验账号，不支持该操作" placement="top">
+              <el-button disabled>初始化样例数据</el-button>
+            </el-tooltip>
+            <el-tooltip content="当前为体验账号，不支持该操作" placement="top">
+              <span>
+                <UploadDocument v-if="kbId" :kb-id="kbId" :disabled="true" @success="loadDocuments" />
+              </span>
+            </el-tooltip>
+          </template>
         </div>
       </div>
     </template>
@@ -56,9 +68,11 @@ import { listDocuments, type DocumentItem } from '@/api/document'
 import { initSampleData } from '@/api/sample'
 import DocumentStatusTag from '@/components/DocumentStatusTag.vue'
 import UploadDocument from '@/components/UploadDocument.vue'
+import { usePermission } from '@/composables/usePermission'
 
 const route = useRoute()
 const router = useRouter()
+const { canWrite, requireWrite } = usePermission()
 const kbId = computed(() => Number(route.params.kbId))
 
 const kbLoading = ref(false)
@@ -96,6 +110,7 @@ async function loadDocuments() {
 }
 
 async function handleInitSample() {
+  if (!requireWrite()) return
   initLoading.value = true
   try {
     const res = await initSampleData()

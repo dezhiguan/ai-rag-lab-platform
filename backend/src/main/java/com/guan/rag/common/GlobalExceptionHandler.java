@@ -1,6 +1,7 @@
 package com.guan.rag.common;
 
 import com.guan.rag.common.exception.BusinessException;
+import com.guan.rag.common.exception.ForbiddenException;
 import com.guan.rag.common.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiResponse<Void> handleUnauthorized(UnauthorizedException ex) {
         return ApiResponse.fail(401, ex.getMessage());
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiResponse<Void> handleForbidden(ForbiddenException ex) {
+        return ApiResponse.fail(403, ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

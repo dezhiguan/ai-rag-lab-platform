@@ -14,7 +14,17 @@
 | **前端** | Pinia auth store、路由守卫、Axios Bearer token、布局栏用户与退出 |
 | **配置** | `rag.auth.*`；`AUTH_ADMIN_PASSWORD` / `AUTH_GUEST_PASSWORD` 环境变量 |
 | **放行** | `GET /api/system/health` 无需登录 |
-| **未改** | guest 危险操作限制留待后续 V10 任务 |
+| **未改** | guest 危险操作限制留待 V10-02 |
+
+### V10-02：体验账号只读模式与危险操作保护 ✅
+
+| 项 | 内容 |
+|----|------|
+| **变更** | guest 只读体验模式；`GuestWriteInterceptor` 后端拦截危险写 API；前端按钮禁用与 `requireWrite` 提示 |
+| **guest 禁止** | 创建/删除知识库、上传文档、初始化样例、重建向量、重建 ES 索引 |
+| **guest 允许** | Debug/Evaluation/实验台查询、系统状态、RAG 指标、查询日志、慢查询分析 |
+| **模式展示** | 管理员模式 / 只读体验模式（项目总览 + 顶栏） |
+| **admin** | 完整权限不变 |
 
 ---
 

@@ -13,6 +13,9 @@ export const useAuthStore = defineStore('auth', {
     username: (state) => state.user?.username ?? '',
     roleLabel: (state) => state.user?.roleLabel ?? '',
     modeLabel: (state) => state.user?.mode ?? '',
+    isAdmin: (state) => state.user?.role === 'ADMIN',
+    canWrite: (state) => state.user?.role === 'ADMIN',
+    isGuest: (state) => state.user?.role === 'GUEST',
   },
   actions: {
     setSession(token: string, user: AuthUser) {

@@ -3,7 +3,10 @@
     <template #header>
       <div class="toolbar">
         <span>知识库列表</span>
-        <el-button type="primary" @click="showCreate = true">创建知识库</el-button>
+        <el-button v-if="canWrite" type="primary" @click="showCreate = true">创建知识库</el-button>
+        <el-tooltip v-else content="当前为体验账号，不支持该操作" placement="top">
+          <el-button type="primary" disabled>创建知识库</el-button>
+        </el-tooltip>
       </div>
     </template>
 
@@ -15,7 +18,17 @@
       <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="goDocuments(row.id)">文档</el-button>
-          <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
+          <el-button
+            v-if="canWrite"
+            link
+            type="danger"
+            @click="handleDelete(row.id)"
+          >
+            删除
+          </el-button>
+          <el-tooltip v-else content="当前为体验账号，不支持该操作" placement="top">
+            <el-button link type="danger" disabled>删除</el-button>
+          </el-tooltip>
         </template>
       </el-table-column>
     </el-table>
@@ -47,8 +60,10 @@ import {
   listKnowledgeBases,
   type KnowledgeBase,
 } from '@/api/knowledgeBase'
+import { usePermission } from '@/composables/usePermission'
 
 const router = useRouter()
+const { canWrite, requireWrite } = usePermission()
 const loading = ref(false)
 const creating = ref(false)
 const showCreate = ref(false)
@@ -68,6 +83,7 @@ async function loadList() {
 }
 
 async function handleCreate() {
+  if (!requireWrite()) return
   if (!form.name.trim()) {
     ElMessage.warning('请输入知识库名称')
     return
@@ -95,6 +111,7 @@ async function handleCreate() {
 }
 
 async function handleDelete(id: number) {
+  if (!requireWrite()) return
   await ElMessageBox.confirm('确定删除该知识库及其文档吗？', '提示', { type: 'warning' })
   try {
     const res = await deleteKnowledgeBase(id)

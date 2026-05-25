@@ -67,9 +67,17 @@
 
         <el-form-item v-if="searchMode === 'BM25' || searchMode === 'HYBRID'" label="ES 索引">
           <el-space wrap>
-            <el-button size="small" :loading="rebuildingIndex" @click="handleRebuildEsIndex">
+            <el-button
+              v-if="canWrite"
+              size="small"
+              :loading="rebuildingIndex"
+              @click="handleRebuildEsIndex"
+            >
               重建 ES 索引
             </el-button>
+            <el-tooltip v-else content="当前为体验账号，不支持该操作" placement="top">
+              <el-button size="small" disabled>重建 ES 索引</el-button>
+            </el-tooltip>
             <span v-if="esIndexInfo" class="es-hint">
               已同步 {{ esIndexInfo.syncedCount }} 条 → {{ esIndexInfo.indexName }}
             </span>
@@ -418,6 +426,7 @@ import {
   sortChunksForDisplay,
   summarizeRerankChanges,
 } from '@/utils/rerankDebug'
+import { usePermission } from '@/composables/usePermission'
 
 interface QuickTest {
   label: string
@@ -425,6 +434,7 @@ interface QuickTest {
 }
 
 const router = useRouter()
+const { canWrite, requireWrite } = usePermission()
 const modelProviders = ref<ModelProviders | null>(null)
 const knowledgeBases = ref<KnowledgeBase[]>([])
 const selectedKbId = ref<number | undefined>()
@@ -538,6 +548,7 @@ function applyQuickTest(item: QuickTest) {
 }
 
 async function handleRebuildEsIndex() {
+  if (!requireWrite()) return
   rebuildingIndex.value = true
   try {
     const res = await rebuildSearchIndex()

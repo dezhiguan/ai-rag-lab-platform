@@ -10,6 +10,14 @@
 
 ## V10 进行中能力
 
+### V10-02 体验账号只读模式与危险操作保护 ✅
+
+- guest **只读体验模式**：顶栏与项目总览展示「只读体验模式」
+- 后端 `GuestWriteInterceptor`：拦截 guest 危险写 API（403 + 友好提示）
+- 前端 `usePermission` / `requireWrite`：危险按钮禁用 + 点击提示
+- guest 导航精简：隐藏 Dashboard、知识库、问答、About（可直接访问 URL 只读浏览）
+- admin 保持完整权限
+
 ### V10-01 新增登录入口与体验账号访问保护 ✅
 
 - 前端 `/login` 登录页；登录成功进入 `/project-overview`

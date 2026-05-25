@@ -8,21 +8,18 @@
         router
         class="menu"
       >
-        <el-menu-item index="/project-overview">项目总览</el-menu-item>
-        <el-menu-item index="/dashboard">Dashboard</el-menu-item>
-        <el-menu-item index="/system-status">系统状态</el-menu-item>
-        <el-menu-item index="/rag-metrics">RAG 指标</el-menu-item>
-        <el-menu-item index="/rag-query-logs">查询日志中心</el-menu-item>
-        <el-menu-item index="/slow-query-analysis">慢查询分析</el-menu-item>
-        <el-menu-item index="/rag-experiment">参数实验台</el-menu-item>
-        <el-menu-item index="/kb">知识库</el-menu-item>
-        <el-menu-item index="/chat">问答</el-menu-item>
-        <el-menu-item index="/evaluation">评测中心</el-menu-item>
-        <el-menu-item index="/debug">Debug</el-menu-item>
-        <el-menu-item index="/about">About</el-menu-item>
+        <el-menu-item
+          v-for="item in visibleMenuItems"
+          :key="item.path"
+          :index="item.path"
+        >
+          {{ item.label }}
+        </el-menu-item>
       </el-menu>
       <div class="user-area">
-        <el-tag size="small" type="info">{{ authStore.roleLabel }}</el-tag>
+        <el-tag size="small" :type="authStore.isGuest ? 'warning' : 'success'">
+          {{ authStore.modeLabel }}
+        </el-tag>
         <el-dropdown trigger="click" @command="handleCommand">
           <span class="user-trigger">
             {{ authStore.username }}
@@ -30,7 +27,7 @@
           </span>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item disabled>{{ authStore.modeLabel }}</el-dropdown-item>
+              <el-dropdown-item disabled>{{ authStore.roleLabel }}</el-dropdown-item>
               <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -52,6 +49,31 @@ import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+
+interface MenuItem {
+  path: string
+  label: string
+  guestVisible: boolean
+}
+
+const allMenuItems: MenuItem[] = [
+  { path: '/project-overview', label: '项目总览', guestVisible: true },
+  { path: '/dashboard', label: 'Dashboard', guestVisible: false },
+  { path: '/system-status', label: '系统状态', guestVisible: true },
+  { path: '/rag-metrics', label: 'RAG 指标', guestVisible: true },
+  { path: '/rag-query-logs', label: '查询日志中心', guestVisible: true },
+  { path: '/slow-query-analysis', label: '慢查询分析', guestVisible: true },
+  { path: '/rag-experiment', label: '参数实验台', guestVisible: true },
+  { path: '/kb', label: '知识库', guestVisible: false },
+  { path: '/chat', label: '问答', guestVisible: false },
+  { path: '/evaluation', label: '评测中心', guestVisible: true },
+  { path: '/debug', label: 'Debug', guestVisible: true },
+  { path: '/about', label: 'About', guestVisible: false },
+]
+
+const visibleMenuItems = computed(() =>
+  allMenuItems.filter((item) => authStore.isAdmin || item.guestVisible),
+)
 
 const activeMenu = computed(() => {
   if (route.path.startsWith('/debug')) return '/debug'
