@@ -68,6 +68,7 @@
         </el-form-item>
       </el-form>
 
+      <div class="rag-table-scroll">
       <el-table
         v-loading="loading"
         :data="records"
@@ -105,6 +106,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
 
       <div class="pagination-wrap">
         <el-pagination

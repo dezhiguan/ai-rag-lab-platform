@@ -1,5 +1,5 @@
 <template>
-  <div class="evaluation-page">
+  <div class="rag-page evaluation-page">
     <el-card shadow="never" class="panel">
       <template #header>
         <div class="card-header">
@@ -103,6 +103,7 @@
       <template #header>
         <span>多模式对比统计</span>
       </template>
+      <div class="rag-table-scroll">
       <el-table :data="compareResult.modeSummaries" stripe style="width: 100%">
         <el-table-column prop="searchMode" label="检索模式" width="100" />
         <el-table-column prop="totalCount" label="总用例" width="80" />
@@ -126,6 +127,7 @@
           <template #default="{ row }">{{ row.totalLatencyMs }}</template>
         </el-table-column>
       </el-table>
+      </div>
       <p class="stats-meta">
         Reranker：{{ compareResult.enableRerank ? '已启用' : '未启用' }} · 对比 VECTOR / BM25 / HYBRID
       </p>
@@ -136,6 +138,7 @@
       <template #header>
         <span>多模式对比明细</span>
       </template>
+      <div class="rag-table-scroll">
       <el-table :data="compareResult.cases" stripe style="width: 100%">
         <el-table-column prop="question" label="问题" min-width="180" show-overflow-tooltip />
         <el-table-column prop="expectedDocument" label="期望文档" width="150" />
@@ -164,6 +167,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
     </el-card>
 
     <!-- 单模式统计 -->
@@ -171,28 +175,24 @@
       <template #header>
         <span>单模式统计 · {{ runResult.searchMode }}</span>
       </template>
-      <el-row :gutter="16" class="stats-row">
-        <el-col :xs="12" :sm="6">
-          <el-statistic title="总用例数" :value="runResult.totalCount" />
-        </el-col>
-        <el-col :xs="12" :sm="6">
-          <el-statistic title="通过数">
-            <template #default>
-              <span class="stat-pass">{{ runResult.passedCount }}</span>
-            </template>
-          </el-statistic>
-        </el-col>
-        <el-col :xs="12" :sm="6">
-          <el-statistic title="失败数">
-            <template #default>
-              <span class="stat-fail">{{ runResult.failedCount }}</span>
-            </template>
-          </el-statistic>
-        </el-col>
-        <el-col :xs="12" :sm="6">
-          <el-statistic title="通过率" :value="singlePassRatePercent" suffix="%" />
-        </el-col>
-      </el-row>
+      <div class="rag-grid rag-grid-3 stats-kpi-row">
+        <div class="rag-kpi-card">
+          <div class="label">总用例数</div>
+          <div class="value">{{ runResult.totalCount }}</div>
+        </div>
+        <div class="rag-kpi-card">
+          <div class="label">通过</div>
+          <div class="value stat-pass">{{ runResult.passedCount }}</div>
+        </div>
+        <div class="rag-kpi-card">
+          <div class="label">失败</div>
+          <div class="value stat-fail">{{ runResult.failedCount }}</div>
+        </div>
+        <div class="rag-kpi-card">
+          <div class="label">通过率</div>
+          <div class="value">{{ formatPassRate(runResult.passRate) }}</div>
+        </div>
+      </div>
       <p class="stats-meta">
         检索模式：{{ runResult.searchMode }} · Reranker：{{ runResult.enableRerank ? '已启用' : '未启用' }}
         · 平均耗时 {{ runResult.avgLatencyMs ?? '—' }} ms · 总耗时 {{ runResult.totalLatencyMs }} ms
@@ -256,11 +256,6 @@ const needsVectorEmbedding = computed(
 )
 
 const hasAnyResult = computed(() => runResult.value != null || compareResult.value != null)
-
-const singlePassRatePercent = computed(() => {
-  if (!runResult.value) return 0
-  return Math.round((runResult.value.passRate ?? 0) * 1000) / 10
-})
 
 onMounted(async () => {
   await Promise.all([loadKnowledgeBases(), loadTestCases()])

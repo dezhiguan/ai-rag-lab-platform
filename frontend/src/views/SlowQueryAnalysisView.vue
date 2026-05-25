@@ -35,6 +35,7 @@
         <el-tag type="info" size="large">当前展示：{{ records.length }} 条</el-tag>
       </div>
 
+      <div class="rag-table-scroll">
       <el-table
         :data="records"
         stripe
@@ -79,11 +80,9 @@
             </el-space>
           </template>
         </el-table-column>
-        <el-table-column label="优化建议" min-width="220">
+        <el-table-column label="优化建议" min-width="200" show-overflow-tooltip>
           <template #default="{ row }">
-            <ul class="suggestion-list">
-              <li v-for="item in row.suggestions" :key="item">{{ item }}</li>
-            </ul>
+            {{ row.suggestions?.join('；') || '—' }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="100" fixed="right">
@@ -94,6 +93,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
     </el-card>
   </div>
 </template>

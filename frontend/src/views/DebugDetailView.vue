@@ -70,6 +70,7 @@
           :title="`重排摘要：${rerankSummaryText}`"
           description="按重排后排名展示；V6-02 之前的历史记录可能无重排明细字段。"
         />
+        <div class="rag-table-scroll">
         <el-table :data="displayRetrievedChunks" stripe style="width: 100%">
           <el-table-column
             prop="rankPosition"
@@ -150,6 +151,7 @@
             </template>
           </el-table-column>
         </el-table>
+        </div>
         <el-collapse class="chunk-collapse">
           <el-collapse-item
             v-for="chunk in displayRetrievedChunks"

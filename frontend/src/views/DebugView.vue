@@ -1,5 +1,5 @@
 <template>
-  <div class="debug-page">
+  <div class="rag-page debug-page">
     <el-card shadow="never" class="panel">
       <template #header>
         <div class="card-header">
@@ -8,20 +8,10 @@
         </div>
       </template>
 
-      <el-descriptions v-if="modelProviders" :column="2" border size="small" class="provider-block">
-        <el-descriptions-item label="Embedding Provider">
-          {{ modelProviders.embeddingProvider }}
-        </el-descriptions-item>
-        <el-descriptions-item label="Embedding Model">
-          {{ modelProviders.embeddingModel }}
-        </el-descriptions-item>
-        <el-descriptions-item label="Chat Provider">
-          {{ modelProviders.chatProvider }}
-        </el-descriptions-item>
-        <el-descriptions-item label="Chat Model">
-          {{ modelProviders.chatModel }}
-        </el-descriptions-item>
-      </el-descriptions>
+      <el-space v-if="modelProviders" wrap class="provider-inline rag-muted">
+        <span>Embedding: {{ modelProviders.embeddingProvider }} / {{ modelProviders.embeddingModel }}</span>
+        <span>Chat: {{ modelProviders.chatProvider }} / {{ modelProviders.chatModel }}</span>
+      </el-space>
 
       <el-form label-width="100px" class="debug-form">
         <el-form-item label="知识库">
@@ -200,6 +190,7 @@
           :title="`重排摘要：${rerankSummaryText}`"
           description="表格按重排后排名（rerankRank）展示；Context / Prompt 已使用重排后顺序。"
         />
+        <div class="rag-table-scroll">
         <el-table :data="displayRetrievedChunks" stripe style="width: 100%" empty-text="无召回结果">
           <el-table-column
             prop="rankPosition"
@@ -284,6 +275,7 @@
             </template>
           </el-table-column>
         </el-table>
+        </div>
         <el-collapse class="chunk-collapse">
           <el-collapse-item
             v-for="chunk in displayRetrievedChunks"

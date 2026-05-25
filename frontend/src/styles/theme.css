@@ -1,0 +1,131 @@
+:root {
+  --rag-primary: #2563eb;
+  --rag-primary-soft: #eff6ff;
+  --rag-bg: #f6f8fb;
+  --rag-card-bg: #ffffff;
+  --rag-border: #e5e7eb;
+  --rag-text-main: #1f2937;
+  --rag-text-secondary: #6b7280;
+  --rag-radius: 12px;
+  --rag-shadow-card: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --rag-sidebar-width: 220px;
+  --rag-header-height: 56px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  color: var(--rag-text-main);
+  background: var(--rag-bg);
+  overflow-x: hidden;
+}
+
+.rag-page {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.rag-page-header {
+  margin-bottom: 20px;
+}
+
+.rag-page-header h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--rag-text-main);
+}
+
+.rag-page-header p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--rag-text-secondary);
+  line-height: 1.6;
+}
+
+.rag-section-card {
+  margin-bottom: 16px;
+  border-radius: var(--rag-radius);
+  border: 1px solid var(--rag-border);
+  box-shadow: var(--rag-shadow-card);
+}
+
+.rag-section-card .el-card__header {
+  font-weight: 600;
+  color: var(--rag-text-main);
+  border-bottom: 1px solid var(--rag-border);
+}
+
+.rag-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.rag-grid-2 {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.rag-grid-3 {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.rag-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rag-table-scroll .el-table {
+  min-width: max-content;
+}
+
+.rag-muted {
+  color: var(--rag-text-secondary);
+  font-size: 13px;
+}
+
+.rag-kpi-card {
+  padding: 16px 18px;
+  background: var(--rag-card-bg);
+  border: 1px solid var(--rag-border);
+  border-radius: var(--rag-radius);
+  box-shadow: var(--rag-shadow-card);
+}
+
+.rag-kpi-card .label {
+  font-size: 13px;
+  color: var(--rag-text-secondary);
+  margin-bottom: 8px;
+}
+
+.rag-kpi-card .value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--rag-text-main);
+}
+
+.rag-entry-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-radius: var(--rag-radius);
+}
+
+.rag-entry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--rag-shadow-card);
+}

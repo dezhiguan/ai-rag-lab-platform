@@ -156,6 +156,7 @@
         </div>
       </template>
 
+      <div class="rag-table-scroll">
       <el-table
         :data="compareList"
         stripe
@@ -260,6 +261,7 @@
           </template>
         </el-table-column>
       </el-table>
+      </div>
     </el-card>
 
     <template v-if="result">
